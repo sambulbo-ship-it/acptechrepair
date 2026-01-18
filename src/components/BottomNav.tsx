@@ -1,6 +1,6 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Wrench, PlusCircle, Settings } from 'lucide-react';
+import { Wrench, PlusCircle, Users, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const BottomNav = () => {
@@ -9,8 +9,9 @@ export const BottomNav = () => {
   const navigate = useNavigate();
 
   const navItems = [
-    { path: '/', icon: Wrench, label: t('machines') },
+    { path: '/', icon: Wrench, label: t('equipment') },
     { path: '/add', icon: PlusCircle, label: t('addMachine') },
+    { path: '/team', icon: Users, label: t('team') },
     { path: '/settings', icon: Settings, label: t('settings') },
   ];
 
@@ -26,12 +27,12 @@ export const BottomNav = () => {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-4 py-2 touch-target transition-colors',
+                'flex flex-col items-center justify-center gap-1 px-3 py-2 touch-target transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground'
               )}
             >
               <Icon className={cn('w-6 h-6', isActive && 'stroke-[2.5]')} />
-              <span className="text-xs font-medium">{item.label}</span>
+              <span className="text-[10px] font-medium">{item.label}</span>
             </button>
           );
         })}

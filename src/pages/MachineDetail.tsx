@@ -5,6 +5,8 @@ import { useMachines } from '@/hooks/useMachines';
 import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
+import { getCategoryIconComponent } from '@/components/CategoryIcon';
+import { getCategoryLabel } from '@/data/equipmentData';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,14 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { EntryType } from '@/types/machine';
-import { Plus, Trash2, MapPin, Hash, Building, Settings2 } from 'lucide-react';
+import { Plus, Trash2, MapPin, Hash, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const MachineDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine } = useMachines();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, team, currentUser } = useMachines();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [entryForm, setEntryForm] = useState({
@@ -27,7 +29,7 @@ const MachineDetail = () => {
     description: '',
     workPerformed: '',
     partsReplaced: '',
-    technician: '',
+    technicianId: currentUser?.id || '',
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -37,14 +39,25 @@ const MachineDetail = () => {
   if (!machine) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Machine not found</p>
+        <p className="text-muted-foreground">
+          {language === 'fr' ? 'Équipement non trouvé' : 'Equipment not found'}
+        </p>
       </div>
     );
   }
 
+  const CategoryIcon = getCategoryIconComponent(machine.category);
+
   const handleAddEntry = () => {
-    if (!entryForm.description || !entryForm.technician) {
-      toast.error(t('language') === 'Langue' ? 'Veuillez remplir les champs obligatoires' : 'Please fill in required fields');
+    if (!entryForm.description) {
+      toast.error(language === 'fr' ? 'Veuillez ajouter une description' : 'Please add a description');
+      return;
+    }
+
+    const technician = team.find(m => m.id === entryForm.technicianId) || currentUser;
+    
+    if (!technician) {
+      toast.error(language === 'fr' ? 'Sélectionnez un technicien' : 'Select a technician');
       return;
     }
 
@@ -54,7 +67,8 @@ const MachineDetail = () => {
       description: entryForm.description,
       workPerformed: entryForm.workPerformed,
       partsReplaced: entryForm.partsReplaced,
-      technician: entryForm.technician,
+      technicianId: technician.id,
+      technicianName: technician.name,
       date: new Date(entryForm.date),
     });
 
@@ -63,18 +77,18 @@ const MachineDetail = () => {
       description: '',
       workPerformed: '',
       partsReplaced: '',
-      technician: '',
+      technicianId: currentUser?.id || '',
       date: new Date().toISOString().split('T')[0],
     });
     setIsSheetOpen(false);
-    toast.success(t('language') === 'Langue' ? 'Entrée ajoutée' : 'Entry added');
+    toast.success(language === 'fr' ? 'Entrée ajoutée' : 'Entry added');
   };
 
   const handleDeleteMachine = () => {
-    if (confirm(t('language') === 'Langue' ? 'Êtes-vous sûr?' : 'Are you sure?')) {
+    if (confirm(language === 'fr' ? 'Supprimer cet équipement?' : 'Delete this equipment?')) {
       deleteMachine(machine.id);
       navigate('/');
-      toast.success(t('language') === 'Langue' ? 'Machine supprimée' : 'Machine deleted');
+      toast.success(language === 'fr' ? 'Équipement supprimé' : 'Equipment deleted');
     }
   };
 
@@ -96,11 +110,17 @@ const MachineDetail = () => {
       <div className="p-4 space-y-4">
         {/* Machine Info Card */}
         <div className="ios-card p-4">
-          <div className="flex items-start justify-between mb-4">
-            <div>
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <CategoryIcon className="w-7 h-7 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
               <h2 className="text-xl font-bold text-foreground">{machine.name}</h2>
               <p className="text-sm text-muted-foreground">
-                {machine.manufacturer} {machine.model}
+                {machine.brand} {machine.model}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {getCategoryLabel(machine.category, language)}
               </p>
             </div>
             <StatusBadge status={machine.status} />
@@ -109,20 +129,14 @@ const MachineDetail = () => {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Hash className="w-4 h-4" />
-              <span>{machine.serialNumber}</span>
+              <span className="truncate">{machine.serialNumber}</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="w-4 h-4" />
-              <span>{machine.location}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Building className="w-4 h-4" />
-              <span>{machine.manufacturer}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Settings2 className="w-4 h-4" />
-              <span>{machine.type || '-'}</span>
-            </div>
+            {machine.location && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                <span className="truncate">{machine.location}</span>
+              </div>
+            )}
           </div>
 
           {machine.notes && (
@@ -132,13 +146,29 @@ const MachineDetail = () => {
           )}
         </div>
 
+        {/* No Current User Warning */}
+        {!currentUser && team.length === 0 && (
+          <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-xl border border-warning/30">
+            <AlertCircle className="w-5 h-5 text-warning flex-shrink-0" />
+            <p className="text-sm text-warning">
+              {language === 'fr' 
+                ? 'Ajoutez des membres dans l\'onglet Équipe pour enregistrer des entrées'
+                : 'Add team members in the Team tab to log entries'}
+            </p>
+          </div>
+        )}
+
         {/* History Section */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('history')}</h3>
           
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="sm" className="rounded-full gap-1">
+              <Button 
+                size="sm" 
+                className="rounded-full gap-1"
+                disabled={team.length === 0 && !currentUser}
+              >
                 <Plus className="w-4 h-4" />
                 {t('addEntry')}
               </Button>
@@ -148,7 +178,7 @@ const MachineDetail = () => {
                 <SheetTitle>{t('addEntry')}</SheetTitle>
               </SheetHeader>
               
-              <div className="space-y-4 overflow-y-auto">
+              <div className="space-y-4 overflow-y-auto pb-8">
                 <div className="space-y-2">
                   <Label>{t('entryType')}</Label>
                   <Select
@@ -179,12 +209,21 @@ const MachineDetail = () => {
 
                 <div className="space-y-2">
                   <Label>{t('technician')} *</Label>
-                  <Input
-                    value={entryForm.technician}
-                    onChange={(e) => setEntryForm(prev => ({ ...prev, technician: e.target.value }))}
-                    className="h-12 bg-secondary border-0 rounded-xl"
-                    required
-                  />
+                  <Select
+                    value={entryForm.technicianId}
+                    onValueChange={(value) => setEntryForm(prev => ({ ...prev, technicianId: value }))}
+                  >
+                    <SelectTrigger className="h-12 bg-secondary border-0 rounded-xl">
+                      <SelectValue placeholder={t('selectTechnician')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {team.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name} {member.role ? `(${member.role})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -193,6 +232,7 @@ const MachineDetail = () => {
                     value={entryForm.description}
                     onChange={(e) => setEntryForm(prev => ({ ...prev, description: e.target.value }))}
                     className="bg-secondary border-0 rounded-xl min-h-[80px]"
+                    placeholder={language === 'fr' ? 'Décrivez le problème ou l\'intervention...' : 'Describe the issue or work done...'}
                     required
                   />
                 </div>
@@ -203,6 +243,7 @@ const MachineDetail = () => {
                     value={entryForm.workPerformed}
                     onChange={(e) => setEntryForm(prev => ({ ...prev, workPerformed: e.target.value }))}
                     className="bg-secondary border-0 rounded-xl min-h-[80px]"
+                    placeholder={language === 'fr' ? 'Travaux effectués...' : 'Work performed...'}
                   />
                 </div>
 
@@ -213,6 +254,7 @@ const MachineDetail = () => {
                       value={entryForm.partsReplaced}
                       onChange={(e) => setEntryForm(prev => ({ ...prev, partsReplaced: e.target.value }))}
                       className="h-12 bg-secondary border-0 rounded-xl"
+                      placeholder={language === 'fr' ? 'Ex: Fader, alimentation...' : 'Ex: Fader, power supply...'}
                     />
                   </div>
                 )}

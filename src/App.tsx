@@ -7,6 +7,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import Index from "./pages/Index";
 import AddMachine from "./pages/AddMachine";
 import MachineDetail from "./pages/MachineDetail";
+import Team from "./pages/Team";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/add" element={<AddMachine />} />
               <Route path="/machine/:id" element={<MachineDetail />} />
+              <Route path="/team" element={<Team />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

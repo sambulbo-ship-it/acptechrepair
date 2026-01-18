@@ -56,7 +56,7 @@ export const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
             )}
             
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">{t('technician')}:</span> {entry.technician}
+              <span className="font-medium">{t('technician')}:</span> {entry.technicianName}
             </p>
           </div>
         </div>
