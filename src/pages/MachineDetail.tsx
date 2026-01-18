@@ -11,6 +11,7 @@ import { PhotoCapture } from '@/components/PhotoCapture';
 import { CodeDisplay } from '@/components/QRCodeDisplay';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel } from '@/data/equipmentData';
+import { MaintenanceScheduleCard } from '@/components/MaintenanceScheduleCard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -183,6 +184,12 @@ const MachineDetail = () => {
             </p>
           )}
         </div>
+
+        {/* Maintenance Schedule */}
+        <MaintenanceScheduleCard 
+          machineId={machine.id} 
+          machineName={machine.name} 
+        />
 
         {/* No Team Members Warning */}
         {team.length === 0 && (

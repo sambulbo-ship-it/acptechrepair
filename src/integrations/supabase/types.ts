@@ -135,12 +135,73 @@ export type Database = {
           },
         ]
       }
+      maintenance_schedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          interval_days: number
+          last_maintenance_date: string | null
+          machine_id: string
+          next_maintenance_date: string
+          notes: string | null
+          reminder_days_before: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          interval_days?: number
+          last_maintenance_date?: string | null
+          machine_id: string
+          next_maintenance_date: string
+          notes?: string | null
+          reminder_days_before?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          interval_days?: number
+          last_maintenance_date?: string | null
+          machine_id?: string
+          next_maintenance_date?: string
+          notes?: string | null
+          reminder_days_before?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_schedules_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: true
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedules_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string
           id: string
           notify_machine_in_repair: boolean
           notify_machine_ready: boolean
+          notify_maintenance_reminder: boolean
           notify_new_team_member: boolean
           notify_status_critical: boolean
           notify_stock_in: boolean
@@ -154,6 +215,7 @@ export type Database = {
           id?: string
           notify_machine_in_repair?: boolean
           notify_machine_ready?: boolean
+          notify_maintenance_reminder?: boolean
           notify_new_team_member?: boolean
           notify_status_critical?: boolean
           notify_stock_in?: boolean
@@ -167,6 +229,7 @@ export type Database = {
           id?: string
           notify_machine_in_repair?: boolean
           notify_machine_ready?: boolean
+          notify_maintenance_reminder?: boolean
           notify_new_team_member?: boolean
           notify_status_critical?: boolean
           notify_stock_in?: boolean

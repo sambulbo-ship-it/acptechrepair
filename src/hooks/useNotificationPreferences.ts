@@ -13,6 +13,7 @@ export interface NotificationPreferences {
   notify_stock_in: boolean;
   notify_status_critical: boolean;
   notify_new_team_member: boolean;
+  notify_maintenance_reminder: boolean;
 }
 
 const defaultPreferences: Omit<NotificationPreferences, 'id' | 'workspace_id' | 'user_id'> = {
@@ -22,6 +23,7 @@ const defaultPreferences: Omit<NotificationPreferences, 'id' | 'workspace_id' | 
   notify_stock_in: true,
   notify_status_critical: true,
   notify_new_team_member: true,
+  notify_maintenance_reminder: true,
 };
 
 export const useNotificationPreferences = () => {
