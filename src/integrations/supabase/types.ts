@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       diagnostic_entries: {
         Row: {
           created_at: string
@@ -412,6 +430,7 @@ export type Database = {
     }
     Functions: {
       is_any_workspace_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_app_admin: { Args: { _user_id: string }; Returns: boolean }
       is_workspace_admin: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean

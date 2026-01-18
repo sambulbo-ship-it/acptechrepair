@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Smartphone, Apple, Monitor, Check, Share } from "lucide-react";
+import { Download, Smartphone, Apple, Monitor, Check, Share, QrCode } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -165,6 +166,27 @@ const Install = () => {
               </ol>
             </div>
           )}
+
+          {/* QR Code Section */}
+          <div className="pt-4 border-t">
+            <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+              <QrCode className="w-4 h-4" />
+              <span className="text-sm font-medium">Scanner pour installer</span>
+            </div>
+            <div className="flex justify-center p-4 bg-white rounded-lg">
+              <QRCodeSVG 
+                value={window.location.origin + "/install"} 
+                size={150}
+                level="M"
+                includeMargin={false}
+                bgColor="#ffffff"
+                fgColor="#000000"
+              />
+            </div>
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Scannez ce code depuis un autre appareil pour installer l'app
+            </p>
+          </div>
 
           <div className="pt-4 border-t">
             <Button variant="ghost" onClick={() => navigate("/")} className="w-full">

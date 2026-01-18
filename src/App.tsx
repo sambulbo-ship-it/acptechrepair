@@ -10,6 +10,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 import { WorkspaceSplashScreen } from "./components/WorkspaceSplashScreen";
+import { InstallBanner } from "./components/InstallBanner";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -152,6 +153,7 @@ const App = () => (
             <BrowserRouter>
               <div className="dark">
                 <AppRoutes />
+                <InstallBanner />
               </div>
             </BrowserRouter>
           </TooltipProvider>
