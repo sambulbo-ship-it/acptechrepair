@@ -1,0 +1,298 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Workspace {
+  id: string;
+  name: string;
+  invite_code: string;
+  created_at: string;
+  role: 'admin' | 'member';
+}
+
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  workspaces: Workspace[];
+  currentWorkspace: Workspace | null;
+  setCurrentWorkspace: (workspace: Workspace | null) => void;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
+  joinWorkspace: (inviteCode: string) => Promise<{ error: Error | null; workspace?: Workspace }>;
+  createWorkspace: (name: string) => Promise<{ error: Error | null; workspace?: Workspace }>;
+  refreshWorkspaces: () => Promise<void>;
+  isWorkspaceAdmin: boolean;
+  canCreateWorkspace: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const CURRENT_WORKSPACE_KEY = 'current_workspace_id';
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null);
+
+  // Check if current user is admin of current workspace
+  const isWorkspaceAdmin = currentWorkspace?.role === 'admin';
+
+  // Check if user can create workspace (is admin of any workspace OR no workspaces exist yet)
+  const canCreateWorkspace = workspaces.some(w => w.role === 'admin') || workspaces.length === 0;
+
+  const refreshWorkspaces = async () => {
+    if (!user) {
+      setWorkspaces([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('workspace_members')
+      .select(`
+        workspace_id,
+        role,
+        workspaces (
+          id,
+          name,
+          invite_code,
+          created_at
+        )
+      `)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error fetching workspaces:', error);
+      return;
+    }
+
+    const fetchedWorkspaces: Workspace[] = (data || [])
+      .filter(item => item.workspaces)
+      .map(item => ({
+        id: item.workspaces.id,
+        name: item.workspaces.name,
+        invite_code: item.workspaces.invite_code,
+        created_at: item.workspaces.created_at,
+        role: item.role as 'admin' | 'member',
+      }));
+
+    setWorkspaces(fetchedWorkspaces);
+
+    // Restore current workspace from localStorage or pick first
+    const savedWorkspaceId = localStorage.getItem(CURRENT_WORKSPACE_KEY);
+    if (savedWorkspaceId) {
+      const saved = fetchedWorkspaces.find(w => w.id === savedWorkspaceId);
+      if (saved) {
+        setCurrentWorkspaceState(saved);
+      } else if (fetchedWorkspaces.length > 0) {
+        setCurrentWorkspaceState(fetchedWorkspaces[0]);
+        localStorage.setItem(CURRENT_WORKSPACE_KEY, fetchedWorkspaces[0].id);
+      }
+    } else if (fetchedWorkspaces.length > 0) {
+      setCurrentWorkspaceState(fetchedWorkspaces[0]);
+      localStorage.setItem(CURRENT_WORKSPACE_KEY, fetchedWorkspaces[0].id);
+    }
+  };
+
+  const setCurrentWorkspace = (workspace: Workspace | null) => {
+    setCurrentWorkspaceState(workspace);
+    if (workspace) {
+      localStorage.setItem(CURRENT_WORKSPACE_KEY, workspace.id);
+    } else {
+      localStorage.removeItem(CURRENT_WORKSPACE_KEY);
+    }
+  };
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+
+        // Defer workspace fetch with setTimeout to avoid deadlock
+        if (session?.user) {
+          setTimeout(() => {
+            refreshWorkspaces();
+          }, 0);
+        } else {
+          setWorkspaces([]);
+          setCurrentWorkspaceState(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      if (session?.user) {
+        setTimeout(() => {
+          refreshWorkspaces();
+        }, 0);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error as Error | null };
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    return { error: error as Error | null };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setWorkspaces([]);
+    setCurrentWorkspaceState(null);
+    localStorage.removeItem(CURRENT_WORKSPACE_KEY);
+  };
+
+  const joinWorkspace = async (inviteCode: string): Promise<{ error: Error | null; workspace?: Workspace }> => {
+    if (!user) {
+      return { error: new Error('Non connecté') };
+    }
+
+    // Find workspace by invite code
+    const { data: workspaceData, error: findError } = await supabase
+      .from('workspaces')
+      .select('id, name, invite_code, created_at')
+      .eq('invite_code', inviteCode.toUpperCase())
+      .maybeSingle();
+
+    if (findError || !workspaceData) {
+      return { error: new Error('Code d\'invitation invalide') };
+    }
+
+    // Check if already a member
+    const { data: existingMember } = await supabase
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', workspaceData.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existingMember) {
+      return { error: new Error('Vous êtes déjà membre de cet espace') };
+    }
+
+    // Join workspace as member
+    const { error: joinError } = await supabase
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspaceData.id,
+        user_id: user.id,
+        role: 'member',
+      });
+
+    if (joinError) {
+      return { error: new Error('Erreur lors de la connexion à l\'espace') };
+    }
+
+    await refreshWorkspaces();
+
+    const workspace: Workspace = {
+      id: workspaceData.id,
+      name: workspaceData.name,
+      invite_code: workspaceData.invite_code,
+      created_at: workspaceData.created_at,
+      role: 'member',
+    };
+
+    return { error: null, workspace };
+  };
+
+  const createWorkspace = async (name: string): Promise<{ error: Error | null; workspace?: Workspace }> => {
+    if (!user) {
+      return { error: new Error('Non connecté') };
+    }
+
+    // Create workspace
+    const { data: workspaceData, error: createError } = await supabase
+      .from('workspaces')
+      .insert({
+        name,
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (createError || !workspaceData) {
+      console.error('Create workspace error:', createError);
+      return { error: new Error('Erreur lors de la création de l\'espace') };
+    }
+
+    // Add creator as admin
+    const { error: memberError } = await supabase
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspaceData.id,
+        user_id: user.id,
+        role: 'admin',
+      });
+
+    if (memberError) {
+      console.error('Add member error:', memberError);
+      return { error: new Error('Erreur lors de l\'ajout comme admin') };
+    }
+
+    await refreshWorkspaces();
+
+    const workspace: Workspace = {
+      id: workspaceData.id,
+      name: workspaceData.name,
+      invite_code: workspaceData.invite_code,
+      created_at: workspaceData.created_at,
+      role: 'admin',
+    };
+
+    return { error: null, workspace };
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      workspaces,
+      currentWorkspace,
+      setCurrentWorkspace,
+      signIn,
+      signUp,
+      signOut,
+      joinWorkspace,
+      createWorkspace,
+      refreshWorkspaces,
+      isWorkspaceAdmin,
+      canCreateWorkspace,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useMachines } from '@/hooks/useMachines';
+import { useCloudData } from '@/hooks/useCloudData';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 const AddMachine = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const { addMachine } = useMachines();
+  const { addMachine } = useCloudData();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -33,7 +33,7 @@ const AddMachine = () => {
   const selectedCategory = formData.category ? getCategoryById(formData.category) : null;
   const availableBrands = selectedCategory?.brands || [];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.category || !formData.serialNumber) {
@@ -43,7 +43,7 @@ const AddMachine = () => {
 
     const finalBrand = formData.brand === 'Other' ? formData.customBrand : formData.brand;
 
-    addMachine({
+    const result = await addMachine({
       name: formData.name,
       category: formData.category as EquipmentCategory,
       brand: finalBrand,
@@ -54,8 +54,12 @@ const AddMachine = () => {
       notes: formData.notes,
     });
 
-    toast.success(language === 'fr' ? 'Équipement ajouté' : 'Equipment added');
-    navigate('/');
+    if (result) {
+      toast.success(language === 'fr' ? 'Équipement ajouté' : 'Equipment added');
+      navigate('/');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding equipment');
+    }
   };
 
   const updateField = (field: string, value: string) => {
