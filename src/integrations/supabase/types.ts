@@ -117,6 +117,100 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          notify_machine_in_repair: boolean
+          notify_machine_ready: boolean
+          notify_new_team_member: boolean
+          notify_status_critical: boolean
+          notify_stock_in: boolean
+          notify_stock_out: boolean
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_machine_in_repair?: boolean
+          notify_machine_ready?: boolean
+          notify_new_team_member?: boolean
+          notify_status_critical?: boolean
+          notify_stock_in?: boolean
+          notify_stock_out?: boolean
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_machine_in_repair?: boolean
+          notify_machine_ready?: boolean
+          notify_new_team_member?: boolean
+          notify_status_critical?: boolean
+          notify_stock_in?: boolean
+          notify_stock_out?: boolean
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_sync: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          operation: string
+          record_id: string | null
+          synced_at: string | null
+          table_name: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          operation: string
+          record_id?: string | null
+          synced_at?: string | null
+          table_name: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          operation?: string
+          record_id?: string | null
+          synced_at?: string | null
+          table_name?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_sync_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_history: {
         Row: {
           device_info: string | null
@@ -285,21 +379,30 @@ export type Database = {
           created_by: string | null
           id: string
           invite_code: string
+          logo_url: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
           invite_code?: string
+          logo_url?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
           invite_code?: string
+          logo_url?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
         }
         Relationships: []
       }
