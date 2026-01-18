@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Machine, DiagnosticEntry, TeamMember, MachineStatus, EntryType } from '@/types/machine';
@@ -48,69 +48,85 @@ export const useCloudData = () => {
   const [entries, setEntries] = useState<DiagnosticEntry[]>([]);
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Prevent race conditions with ref
+  const isMountedRef = useRef(true);
+  const fetchingRef = useRef(false);
 
-  // Transform DB row to frontend Machine type
-  const dbToMachine = (row: DbMachine): Machine => ({
-    id: row.id,
-    name: row.name,
-    category: row.category as EquipmentCategory,
+  // Transform DB row to frontend Machine type - with safe defaults
+  const dbToMachine = useCallback((row: DbMachine): Machine => ({
+    id: row.id || '',
+    name: row.name || 'Sans nom',
+    category: (row.category as EquipmentCategory) || 'other',
     brand: row.brand || '',
     model: row.model || '',
     serialNumber: row.serial_number || '',
     location: row.location || '',
-    status: row.status as MachineStatus,
+    status: (row.status as MachineStatus) || 'operational',
     notes: row.notes || '',
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  });
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+  }), []);
 
-  // Transform DB row to frontend DiagnosticEntry type
-  const dbToEntry = (row: DbEntry): DiagnosticEntry => ({
-    id: row.id,
-    machineId: row.machine_id,
-    type: row.type as EntryType,
-    description: row.description,
-    workPerformed: row.description, // Use description as work performed
+  // Transform DB row to frontend DiagnosticEntry type - with safe defaults
+  const dbToEntry = useCallback((row: DbEntry): DiagnosticEntry => ({
+    id: row.id || '',
+    machineId: row.machine_id || '',
+    type: (row.type as EntryType) || 'diagnostic',
+    description: row.description || '',
+    workPerformed: row.description || '',
     technicianId: row.created_by || '',
-    technicianName: row.technician || '',
+    technicianName: row.technician || 'Inconnu',
     photos: (row.photos || []).map((url, idx) => ({
       id: `photo-${idx}`,
-      dataUrl: url,
-      createdAt: new Date(row.created_at),
+      dataUrl: url || '',
+      createdAt: row.created_at ? new Date(row.created_at) : new Date(),
     })),
-    date: new Date(row.created_at),
-    createdAt: new Date(row.created_at),
-  });
+    date: row.created_at ? new Date(row.created_at) : new Date(),
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+  }), []);
 
-  // Transform DB row to frontend TeamMember type
-  const dbToTeamMember = (row: DbTeamMember): TeamMember => ({
-    id: row.id,
-    name: row.name,
+  // Transform DB row to frontend TeamMember type - with safe defaults
+  const dbToTeamMember = useCallback((row: DbTeamMember): TeamMember => ({
+    id: row.id || '',
+    name: row.name || 'Sans nom',
     role: row.role || undefined,
-    createdAt: new Date(row.created_at),
-  });
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+  }), []);
 
-  // Fetch all data for current workspace
+  // Fetch all data for current workspace with error handling
   const fetchData = useCallback(async () => {
-    if (!currentWorkspace) {
-      setMachines([]);
-      setEntries([]);
-      setTeam([]);
-      setLoading(false);
+    if (!currentWorkspace || fetchingRef.current) {
+      if (!currentWorkspace) {
+        setMachines([]);
+        setEntries([]);
+        setTeam([]);
+        setLoading(false);
+      }
       return;
     }
 
+    fetchingRef.current = true;
     setLoading(true);
+    setError(null);
 
     try {
-      // Fetch machines
-      const { data: machinesData, error: machinesError } = await supabase
+      // Fetch machines with timeout
+      const machinesPromise = supabase
         .from('machines')
         .select('*')
         .eq('workspace_id', currentWorkspace.id)
         .order('created_at', { ascending: false });
 
-      if (machinesError) throw machinesError;
+      const { data: machinesData, error: machinesError } = await machinesPromise;
+
+      if (!isMountedRef.current) return;
+
+      if (machinesError) {
+        console.error('Error fetching machines:', machinesError);
+        throw new Error('Erreur lors du chargement des équipements');
+      }
 
       const fetchedMachines = (machinesData || []).map(dbToMachine);
       setMachines(fetchedMachines);
@@ -124,8 +140,14 @@ export const useCloudData = () => {
           .in('machine_id', machineIds)
           .order('created_at', { ascending: false });
 
-        if (entriesError) throw entriesError;
-        setEntries((entriesData || []).map(dbToEntry));
+        if (!isMountedRef.current) return;
+
+        if (entriesError) {
+          console.error('Error fetching entries:', entriesError);
+          // Don't throw - entries are secondary data
+        } else {
+          setEntries((entriesData || []).map(dbToEntry));
+        }
       } else {
         setEntries([]);
       }
@@ -137,185 +159,273 @@ export const useCloudData = () => {
         .eq('workspace_id', currentWorkspace.id)
         .order('created_at', { ascending: false });
 
-      if (teamError) throw teamError;
-      setTeam((teamData || []).map(dbToTeamMember));
+      if (!isMountedRef.current) return;
 
-    } catch (error) {
-      console.error('Error fetching data:', error);
+      if (teamError) {
+        console.error('Error fetching team:', teamError);
+        // Don't throw - team is secondary data
+      } else {
+        setTeam((teamData || []).map(dbToTeamMember));
+      }
+
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      const message = err instanceof Error ? err.message : 'Erreur inconnue';
+      setError(message);
+      console.error('fetchData error:', err);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        fetchingRef.current = false;
+      }
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, dbToMachine, dbToEntry, dbToTeamMember]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Fetch data when workspace changes
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Machine operations
+  // Machine operations with optimistic updates and error handling
   const addMachine = async (machine: Omit<Machine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Machine | null> => {
-    if (!currentWorkspace || !user) return null;
-
-    const { data, error } = await supabase
-      .from('machines')
-      .insert({
-        workspace_id: currentWorkspace.id,
-        name: machine.name,
-        category: machine.category,
-        brand: machine.brand || null,
-        model: machine.model || null,
-        serial_number: machine.serialNumber || null,
-        location: machine.location || null,
-        status: machine.status,
-        notes: machine.notes || null,
-        created_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding machine:', error);
+    if (!currentWorkspace || !user) {
+      console.error('addMachine: no workspace or user');
       return null;
     }
 
-    const newMachine = dbToMachine(data);
-    setMachines(prev => [newMachine, ...prev]);
-    return newMachine;
+    try {
+      const { data, error } = await supabase
+        .from('machines')
+        .insert({
+          workspace_id: currentWorkspace.id,
+          name: machine.name || 'Sans nom',
+          category: machine.category || 'other',
+          brand: machine.brand || null,
+          model: machine.model || null,
+          serial_number: machine.serialNumber || null,
+          location: machine.location || null,
+          status: machine.status || 'operational',
+          notes: machine.notes || null,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding machine:', error);
+        return null;
+      }
+
+      if (!data) return null;
+
+      const newMachine = dbToMachine(data);
+      setMachines(prev => [newMachine, ...prev]);
+      return newMachine;
+    } catch (err) {
+      console.error('addMachine error:', err);
+      return null;
+    }
   };
 
   const updateMachine = async (id: string, updates: Partial<Machine>): Promise<boolean> => {
-    const dbUpdates: Record<string, unknown> = {};
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.category !== undefined) dbUpdates.category = updates.category;
-    if (updates.brand !== undefined) dbUpdates.brand = updates.brand || null;
-    if (updates.model !== undefined) dbUpdates.model = updates.model || null;
-    if (updates.serialNumber !== undefined) dbUpdates.serial_number = updates.serialNumber || null;
-    if (updates.location !== undefined) dbUpdates.location = updates.location || null;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
+    if (!id) return false;
 
-    const { error } = await supabase
-      .from('machines')
-      .update(dbUpdates)
-      .eq('id', id);
+    try {
+      const dbUpdates: Record<string, unknown> = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.category !== undefined) dbUpdates.category = updates.category;
+      if (updates.brand !== undefined) dbUpdates.brand = updates.brand || null;
+      if (updates.model !== undefined) dbUpdates.model = updates.model || null;
+      if (updates.serialNumber !== undefined) dbUpdates.serial_number = updates.serialNumber || null;
+      if (updates.location !== undefined) dbUpdates.location = updates.location || null;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
 
-    if (error) {
-      console.error('Error updating machine:', error);
+      const { error } = await supabase
+        .from('machines')
+        .update(dbUpdates)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating machine:', error);
+        return false;
+      }
+
+      setMachines(prev =>
+        prev.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date() } : m)
+      );
+      return true;
+    } catch (err) {
+      console.error('updateMachine error:', err);
       return false;
     }
-
-    setMachines(prev =>
-      prev.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date() } : m)
-    );
-    return true;
   };
 
   const deleteMachine = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('machines')
-      .delete()
-      .eq('id', id);
+    if (!id) return false;
 
-    if (error) {
-      console.error('Error deleting machine:', error);
+    try {
+      const { error } = await supabase
+        .from('machines')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting machine:', error);
+        return false;
+      }
+
+      setMachines(prev => prev.filter(m => m.id !== id));
+      setEntries(prev => prev.filter(e => e.machineId !== id));
+      return true;
+    } catch (err) {
+      console.error('deleteMachine error:', err);
       return false;
     }
-
-    setMachines(prev => prev.filter(m => m.id !== id));
-    setEntries(prev => prev.filter(e => e.machineId !== id));
-    return true;
   };
 
-  const getMachine = (id: string) => machines.find(m => m.id === id);
+  const getMachine = useCallback((id: string) => {
+    if (!id) return undefined;
+    return machines.find(m => m.id === id);
+  }, [machines]);
 
   // Entry operations
   const addEntry = async (entry: Omit<DiagnosticEntry, 'id' | 'createdAt'>): Promise<DiagnosticEntry | null> => {
-    if (!user) return null;
-
-    const { data, error } = await supabase
-      .from('diagnostic_entries')
-      .insert({
-        machine_id: entry.machineId,
-        type: entry.type,
-        description: entry.description,
-        priority: 'medium',
-        technician: entry.technicianName || null,
-        photos: entry.photos?.map(p => p.dataUrl) || [],
-        created_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding entry:', error);
+    if (!user || !entry.machineId) {
+      console.error('addEntry: missing user or machineId');
       return null;
     }
 
-    const newEntry = dbToEntry(data);
-    setEntries(prev => [newEntry, ...prev]);
-    return newEntry;
+    try {
+      const { data, error } = await supabase
+        .from('diagnostic_entries')
+        .insert({
+          machine_id: entry.machineId,
+          type: entry.type || 'diagnostic',
+          description: entry.description || '',
+          priority: 'medium',
+          technician: entry.technicianName || null,
+          photos: entry.photos?.map(p => p.dataUrl).filter(Boolean) || [],
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding entry:', error);
+        return null;
+      }
+
+      if (!data) return null;
+
+      const newEntry = dbToEntry(data);
+      setEntries(prev => [newEntry, ...prev]);
+      return newEntry;
+    } catch (err) {
+      console.error('addEntry error:', err);
+      return null;
+    }
   };
 
-  const getEntriesForMachine = (machineId: string) =>
-    entries
+  const getEntriesForMachine = useCallback((machineId: string) => {
+    if (!machineId) return [];
+    return entries
       .filter(e => e.machineId === machineId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => {
+        const dateA = a.date instanceof Date ? a.date.getTime() : new Date(a.date).getTime();
+        const dateB = b.date instanceof Date ? b.date.getTime() : new Date(b.date).getTime();
+        return dateB - dateA;
+      });
+  }, [entries]);
 
   const deleteEntry = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('diagnostic_entries')
-      .delete()
-      .eq('id', id);
+    if (!id) return false;
 
-    if (error) {
-      console.error('Error deleting entry:', error);
+    try {
+      const { error } = await supabase
+        .from('diagnostic_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting entry:', error);
+        return false;
+      }
+
+      setEntries(prev => prev.filter(e => e.id !== id));
+      return true;
+    } catch (err) {
+      console.error('deleteEntry error:', err);
       return false;
     }
-
-    setEntries(prev => prev.filter(e => e.id !== id));
-    return true;
   };
 
   // Team operations
   const addTeamMember = async (name: string, role?: string): Promise<TeamMember | null> => {
-    if (!currentWorkspace) return null;
-
-    const { data, error } = await supabase
-      .from('team_members')
-      .insert({
-        workspace_id: currentWorkspace.id,
-        name,
-        role: role || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding team member:', error);
+    if (!currentWorkspace || !name?.trim()) {
+      console.error('addTeamMember: missing workspace or name');
       return null;
     }
 
-    const newMember = dbToTeamMember(data);
-    setTeam(prev => [newMember, ...prev]);
-    return newMember;
+    try {
+      const { data, error } = await supabase
+        .from('team_members')
+        .insert({
+          workspace_id: currentWorkspace.id,
+          name: name.trim(),
+          role: role?.trim() || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding team member:', error);
+        return null;
+      }
+
+      if (!data) return null;
+
+      const newMember = dbToTeamMember(data);
+      setTeam(prev => [newMember, ...prev]);
+      return newMember;
+    } catch (err) {
+      console.error('addTeamMember error:', err);
+      return null;
+    }
   };
 
   const removeTeamMember = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('team_members')
-      .delete()
-      .eq('id', id);
+    if (!id) return false;
 
-    if (error) {
-      console.error('Error removing team member:', error);
+    try {
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error removing team member:', error);
+        return false;
+      }
+
+      setTeam(prev => prev.filter(m => m.id !== id));
+      return true;
+    } catch (err) {
+      console.error('removeTeamMember error:', err);
       return false;
     }
-
-    setTeam(prev => prev.filter(m => m.id !== id));
-    return true;
   };
 
-  // Statistics
-  const getStats = () => {
+  // Statistics with safe calculations
+  const getStats = useCallback(() => {
     const operational = machines.filter(m => m.status === 'operational').length;
     const needsAttention = machines.filter(m => m.status === 'needs-attention').length;
     const outOfService = machines.filter(m => m.status === 'out-of-service').length;
@@ -327,13 +437,14 @@ export const useCloudData = () => {
       outOfService,
       totalEntries: entries.length,
     };
-  };
+  }, [machines, entries]);
 
   return {
     machines,
     entries,
     team,
     loading,
+    error,
     addMachine,
     updateMachine,
     deleteMachine,

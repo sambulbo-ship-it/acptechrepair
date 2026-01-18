@@ -18,7 +18,7 @@ export const PhotoCapture = ({ photos, onPhotosChange, maxPhotos = 5 }: PhotoCap
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     const newPhotos: EntryPhoto[] = [];
 
@@ -37,14 +37,21 @@ export const PhotoCapture = ({ photos, onPhotosChange, maxPhotos = 5 }: PhotoCap
         });
       } catch (error) {
         console.error('Error processing image:', error);
+        // Continue with other images even if one fails
       }
     }
 
-    onPhotosChange([...photos, ...newPhotos]);
+    if (newPhotos.length > 0) {
+      onPhotosChange([...photos, ...newPhotos]);
+    }
     
-    // Reset inputs
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    // Reset inputs safely
+    try {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+    } catch (e) {
+      // Some browsers throw on input reset
+    }
   };
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
