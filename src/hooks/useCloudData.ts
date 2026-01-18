@@ -96,6 +96,21 @@ export const useCloudData = () => {
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
   }), []);
 
+  // Notification callbacks - can be set externally
+  const notificationCallbacksRef = useRef<{
+    onNewEntry?: (machineName: string, entryType: string, priority: string) => void;
+    onStatusChange?: (machineName: string, oldStatus: string, newStatus: string) => void;
+    onTeamMemberAdded?: (memberName: string) => void;
+  }>({});
+
+  const setNotificationCallbacks = useCallback((callbacks: {
+    onNewEntry?: (machineName: string, entryType: string, priority: string) => void;
+    onStatusChange?: (machineName: string, oldStatus: string, newStatus: string) => void;
+    onTeamMemberAdded?: (memberName: string) => void;
+  }) => {
+    notificationCallbacksRef.current = callbacks;
+  }, []);
+
   // Handle realtime machine changes
   const handleMachineChange = useCallback((payload: RealtimePostgresChangesPayload<DbMachine>) => {
     if (!isMountedRef.current) return;
@@ -111,6 +126,17 @@ export const useCloudData = () => {
       });
     } else if (payload.eventType === 'UPDATE' && payload.new) {
       const updatedMachine = dbToMachine(payload.new as DbMachine);
+      const oldMachine = machines.find(m => m.id === updatedMachine.id);
+      
+      // Notify on status change
+      if (oldMachine && oldMachine.status !== updatedMachine.status) {
+        notificationCallbacksRef.current.onStatusChange?.(
+          updatedMachine.name,
+          oldMachine.status,
+          updatedMachine.status
+        );
+      }
+      
       setMachines(prev => 
         prev.map(m => m.id === updatedMachine.id ? updatedMachine : m)
       );
@@ -119,7 +145,7 @@ export const useCloudData = () => {
       setMachines(prev => prev.filter(m => m.id !== deletedId));
       setEntries(prev => prev.filter(e => e.machineId !== deletedId));
     }
-  }, [dbToMachine]);
+  }, [dbToMachine, machines]);
 
   // Handle realtime entry changes
   const handleEntryChange = useCallback((payload: RealtimePostgresChangesPayload<DbEntry>) => {
@@ -129,6 +155,20 @@ export const useCloudData = () => {
     
     if (payload.eventType === 'INSERT' && payload.new) {
       const newEntry = dbToEntry(payload.new as DbEntry);
+      const newDbEntry = payload.new as DbEntry;
+      
+      // Don't notify for entries we just created ourselves
+      if (newDbEntry.created_by !== user?.id) {
+        const machine = machines.find(m => m.id === newEntry.machineId);
+        if (machine) {
+          notificationCallbacksRef.current.onNewEntry?.(
+            machine.name,
+            newEntry.type,
+            newDbEntry.priority || 'medium'
+          );
+        }
+      }
+      
       setEntries(prev => {
         if (prev.some(e => e.id === newEntry.id)) return prev;
         return [newEntry, ...prev];
@@ -142,7 +182,7 @@ export const useCloudData = () => {
       const deletedId = (payload.old as DbEntry).id;
       setEntries(prev => prev.filter(e => e.id !== deletedId));
     }
-  }, [dbToEntry]);
+  }, [dbToEntry, machines, user?.id]);
 
   // Handle realtime team member changes
   const handleTeamChange = useCallback((payload: RealtimePostgresChangesPayload<DbTeamMember>) => {
@@ -152,6 +192,10 @@ export const useCloudData = () => {
     
     if (payload.eventType === 'INSERT' && payload.new) {
       const newMember = dbToTeamMember(payload.new as DbTeamMember);
+      
+      // Notify on new team member
+      notificationCallbacksRef.current.onTeamMemberAdded?.(newMember.name);
+      
       setTeam(prev => {
         if (prev.some(m => m.id === newMember.id)) return prev;
         return [newMember, ...prev];
@@ -579,5 +623,6 @@ export const useCloudData = () => {
     removeTeamMember,
     getStats,
     refreshData: fetchData,
+    setNotificationCallbacks,
   };
 };

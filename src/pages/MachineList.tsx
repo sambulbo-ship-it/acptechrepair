@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCloudData } from '@/hooks/useCloudData';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
@@ -16,9 +17,23 @@ const MachineList = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { currentWorkspace } = useAuth();
-  const { machines, loading, getStats } = useCloudData();
+  const { machines, loading, getStats, setNotificationCallbacks } = useCloudData();
+  const { notifyNewEntry, notifyStatusChange, notifyTeamMemberAdded, permission } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<EquipmentCategory | 'all'>('all');
+
+  // Setup notification callbacks
+  useEffect(() => {
+    if (permission === 'granted') {
+      setNotificationCallbacks({
+        onNewEntry: notifyNewEntry,
+        onStatusChange: notifyStatusChange,
+        onTeamMemberAdded: notifyTeamMemberAdded,
+      });
+    } else {
+      setNotificationCallbacks({});
+    }
+  }, [permission, setNotificationCallbacks, notifyNewEntry, notifyStatusChange, notifyTeamMemberAdded]);
 
   const stats = getStats();
 
