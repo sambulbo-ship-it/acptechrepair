@@ -1,23 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Machine, DiagnosticEntry } from '@/types/machine';
+import { Machine, DiagnosticEntry, TeamMember } from '@/types/machine';
 
 const MACHINES_KEY = 'machines_data';
 const ENTRIES_KEY = 'diagnostic_entries';
+const TEAM_KEY = 'team_members';
+const CURRENT_USER_KEY = 'current_user';
 
 export const useMachines = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [entries, setEntries] = useState<DiagnosticEntry[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [currentUser, setCurrentUserState] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedMachines = localStorage.getItem(MACHINES_KEY);
     const storedEntries = localStorage.getItem(ENTRIES_KEY);
+    const storedTeam = localStorage.getItem(TEAM_KEY);
+    const storedCurrentUser = localStorage.getItem(CURRENT_USER_KEY);
     
     if (storedMachines) {
       setMachines(JSON.parse(storedMachines));
     }
     if (storedEntries) {
       setEntries(JSON.parse(storedEntries));
+    }
+    if (storedTeam) {
+      setTeam(JSON.parse(storedTeam));
+    }
+    if (storedCurrentUser) {
+      setCurrentUserState(JSON.parse(storedCurrentUser));
     }
     setLoading(false);
   }, []);
@@ -34,6 +46,44 @@ export const useMachines = () => {
     }
   }, [entries, loading]);
 
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem(TEAM_KEY, JSON.stringify(team));
+    }
+  }, [team, loading]);
+
+  useEffect(() => {
+    if (!loading && currentUser) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
+    }
+  }, [currentUser, loading]);
+
+  // Team management
+  const addTeamMember = (name: string, role?: string) => {
+    const newMember: TeamMember = {
+      id: crypto.randomUUID(),
+      name,
+      role,
+      createdAt: new Date(),
+    };
+    setTeam(prev => [...prev, newMember]);
+    return newMember;
+  };
+
+  const removeTeamMember = (id: string) => {
+    setTeam(prev => prev.filter(m => m.id !== id));
+  };
+
+  const setCurrentUser = (member: TeamMember | null) => {
+    setCurrentUserState(member);
+    if (member) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(member));
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
+  };
+
+  // Machine management
   const addMachine = (machine: Omit<Machine, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newMachine: Machine = {
       ...machine,
@@ -60,6 +110,7 @@ export const useMachines = () => {
 
   const getMachine = (id: string) => machines.find(m => m.id === id);
 
+  // Entry management
   const addEntry = (entry: Omit<DiagnosticEntry, 'id' | 'createdAt'>) => {
     const newEntry: DiagnosticEntry = {
       ...entry,
@@ -79,9 +130,26 @@ export const useMachines = () => {
     setEntries(prev => prev.filter(e => e.id !== id));
   };
 
+  // Statistics
+  const getStats = () => {
+    const operational = machines.filter(m => m.status === 'operational').length;
+    const needsAttention = machines.filter(m => m.status === 'needs-attention').length;
+    const outOfService = machines.filter(m => m.status === 'out-of-service').length;
+    
+    return {
+      total: machines.length,
+      operational,
+      needsAttention,
+      outOfService,
+      totalEntries: entries.length,
+    };
+  };
+
   return {
     machines,
     entries,
+    team,
+    currentUser,
     loading,
     addMachine,
     updateMachine,
@@ -90,5 +158,9 @@ export const useMachines = () => {
     addEntry,
     getEntriesForMachine,
     deleteEntry,
+    addTeamMember,
+    removeTeamMember,
+    setCurrentUser,
+    getStats,
   };
 };

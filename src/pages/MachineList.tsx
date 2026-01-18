@@ -5,28 +5,65 @@ import { useMachines } from '@/hooks/useMachines';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
-import { Search, Wrench } from 'lucide-react';
+import { equipmentCategories, EquipmentCategory, getCategoryLabel } from '@/data/equipmentData';
+import { Search, Wrench, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const MachineList = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const { machines, loading } = useMachines();
+  const { machines, loading, currentUser, getStats } = useMachines();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<EquipmentCategory | 'all'>('all');
 
-  const filteredMachines = machines.filter(
-    (machine) =>
+  const stats = getStats();
+
+  const filteredMachines = machines.filter((machine) => {
+    const matchesSearch = 
       machine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       machine.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      machine.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      machine.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      machine.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      machine.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'all' || machine.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <Header title={t('machines')} />
+      <Header title={t('equipment')} />
       
-      <div className="p-4">
-        <div className="relative mb-4">
+      <div className="p-4 space-y-4">
+        {/* Current User Banner */}
+        {currentUser && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-xl text-sm">
+            <User className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground">{t('currentUser')}:</span>
+            <span className="font-medium text-foreground">{currentUser.name}</span>
+          </div>
+        )}
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="ios-card p-3 text-center">
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+            <p className="text-xs text-muted-foreground">{t('totalEquipment')}</p>
+          </div>
+          <div className="ios-card p-3 text-center">
+            <p className="text-2xl font-bold text-success">{stats.operational}</p>
+            <p className="text-xs text-muted-foreground">{t('inService')}</p>
+          </div>
+          <div className="ios-card p-3 text-center">
+            <p className="text-2xl font-bold text-warning">{stats.needsAttention + stats.outOfService}</p>
+            <p className="text-xs text-muted-foreground">{t('needsWork')}</p>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             type="search"
@@ -35,6 +72,35 @@ const MachineList = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-12 bg-secondary border-0 rounded-xl"
           />
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={cn(
+              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+              selectedCategory === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-secondary-foreground'
+            )}
+          >
+            {t('allCategories')}
+          </button>
+          {equipmentCategories.filter(c => c.id !== 'other').map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                selectedCategory === cat.id
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground'
+              )}
+            >
+              {language === 'fr' ? cat.labelFr : cat.labelEn}
+            </button>
+          ))}
         </div>
 
         {loading ? (
