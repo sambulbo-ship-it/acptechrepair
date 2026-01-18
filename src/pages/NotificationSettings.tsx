@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Bell, 
   BellRing, 
@@ -19,7 +21,9 @@ import {
   PackagePlus,
   AlertTriangle,
   UserPlus,
-  ArrowLeft
+  TestTube,
+  Smartphone,
+  Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,6 +34,8 @@ const notificationTypes = [
     description: 'Quand une machine entre en réparation',
     icon: Wrench,
     color: 'text-warning',
+    bgColor: 'bg-warning/10',
+    example: '🛠️ Machine X est entrée en réparation',
   },
   {
     key: 'notify_machine_ready' as const,
@@ -37,34 +43,44 @@ const notificationTypes = [
     description: 'Quand une réparation est terminée',
     icon: CheckCircle2,
     color: 'text-success',
+    bgColor: 'bg-success/10',
+    example: '✅ Machine X est maintenant opérationnelle',
   },
   {
     key: 'notify_stock_out' as const,
     label: 'Sortie de stock',
-    description: 'Quand un équipement sort du stock',
+    description: 'Quand un équipement entre en maintenance',
     icon: PackageMinus,
-    color: 'text-destructive',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
+    example: '📤 Machine X est en maintenance',
   },
   {
     key: 'notify_stock_in' as const,
-    label: 'Entrée en stock',
-    description: 'Quand un équipement entre en stock',
+    label: 'Retour en stock',
+    description: 'Quand un équipement redevient opérationnel',
     icon: PackagePlus,
     color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    example: '📥 Machine X est de retour opérationnelle',
   },
   {
     key: 'notify_status_critical' as const,
     label: 'Statut critique',
-    description: 'Quand une machine passe en état critique',
+    description: 'Quand une machine passe hors service',
     icon: AlertTriangle,
     color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+    example: '🚨 Machine X est maintenant hors service',
   },
   {
     key: 'notify_new_team_member' as const,
     label: 'Nouveau membre',
     description: "Quand quelqu'un rejoint l'équipe",
     icon: UserPlus,
-    color: 'text-primary',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    example: '👤 Jean Dupont a rejoint l\'équipe',
   },
 ];
 
@@ -72,9 +88,10 @@ const NotificationSettings = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { currentWorkspace } = useAuth();
-  const { preferences, loading, updatePreference } = useNotificationPreferences();
-  const { permission, isSupported, requestPermission } = useNotifications();
+  const { preferences, loading, updatePreference, updateAllPreferences } = useNotificationPreferences();
+  const { permission, isSupported, requestPermission, sendNotification } = useNotifications();
   const [updating, setUpdating] = useState<string | null>(null);
+  const [testingSent, setTestingSent] = useState(false);
 
   const handleToggle = async (key: keyof typeof preferences & string, currentValue: boolean) => {
     if (!preferences) return;
@@ -95,6 +112,48 @@ const NotificationSettings = () => {
     }
   };
 
+  const handleEnableAll = async () => {
+    const allEnabled = {
+      notify_machine_in_repair: true,
+      notify_machine_ready: true,
+      notify_stock_out: true,
+      notify_stock_in: true,
+      notify_status_critical: true,
+      notify_new_team_member: true,
+    };
+    await updateAllPreferences(allEnabled);
+  };
+
+  const handleDisableAll = async () => {
+    const allDisabled = {
+      notify_machine_in_repair: false,
+      notify_machine_ready: false,
+      notify_stock_out: false,
+      notify_stock_in: false,
+      notify_status_critical: false,
+      notify_new_team_member: false,
+    };
+    await updateAllPreferences(allDisabled);
+  };
+
+  const handleTestNotification = () => {
+    sendNotification({
+      title: '🔔 Test de notification',
+      body: 'Les notifications fonctionnent correctement !',
+      tag: 'test-notification',
+    });
+    setTestingSent(true);
+    toast.success('Notification de test envoyée !');
+    setTimeout(() => setTestingSent(false), 3000);
+  };
+
+  const enabledCount = preferences 
+    ? Object.entries(preferences)
+        .filter(([key]) => key.startsWith('notify_'))
+        .filter(([, value]) => value === true)
+        .length
+    : 0;
+
   if (!currentWorkspace) {
     return (
       <div className="min-h-screen bg-background pb-24">
@@ -114,93 +173,175 @@ const NotificationSettings = () => {
       <div className="p-4 space-y-4">
         {/* Permission status */}
         {isSupported && permission !== 'granted' && (
-          <div className="ios-card p-4 border-warning/50 bg-warning/10">
-            <div className="flex items-center gap-3 mb-3">
-              <BellRing className="w-6 h-6 text-warning" />
-              <div>
-                <h3 className="font-medium text-foreground">Activer les notifications</h3>
-                <p className="text-sm text-muted-foreground">
-                  Autorisez les notifications pour recevoir des alertes
-                </p>
+          <Card className="border-warning/50 bg-warning/5">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-warning/20">
+                  <BellRing className="w-5 h-5 text-warning" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Activer les notifications</CardTitle>
+                  <CardDescription>
+                    Autorisez les notifications pour recevoir des alertes en temps réel
+                  </CardDescription>
+                </div>
               </div>
-            </div>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleEnableNotifications}
+                className="w-full"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                Autoriser les notifications
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status Card */}
+        {permission === 'granted' && (
+          <Card className="border-success/50 bg-success/5">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-success/20">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Notifications actives</p>
+                    <p className="text-xs text-muted-foreground">
+                      {enabledCount} type{enabledCount > 1 ? 's' : ''} activé{enabledCount > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleTestNotification}
+                  disabled={testingSent}
+                >
+                  <TestTube className="w-4 h-4 mr-2" />
+                  {testingSent ? 'Envoyé !' : 'Tester'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick actions */}
+        {!loading && preferences && (
+          <div className="flex gap-2">
             <Button 
-              onClick={handleEnableNotifications}
-              className="w-full"
-              variant="outline"
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={handleEnableAll}
             >
-              <Bell className="w-4 h-4 mr-2" />
-              Autoriser les notifications
+              Tout activer
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={handleDisableAll}
+            >
+              Tout désactiver
             </Button>
           </div>
         )}
 
         {/* Notification preferences */}
-        <div className="ios-card overflow-hidden">
-          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            Types de notifications
-          </h3>
-
-          {loading ? (
-            <div className="p-4 space-y-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
-                  </div>
-                  <Skeleton className="h-6 w-11 rounded-full" />
-                </div>
-              ))}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Types de notifications</CardTitle>
             </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {notificationTypes.map(({ key, label, description, icon: Icon, color }) => {
-                const isEnabled = preferences?.[key] ?? true;
-                const isUpdating = updating === key;
-
-                return (
-                  <div
-                    key={key}
-                    className="px-4 py-4 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`p-2 rounded-lg bg-muted ${color}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Label 
-                          htmlFor={key} 
-                          className="text-sm font-medium text-foreground cursor-pointer"
-                        >
-                          {label}
-                        </Label>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {description}
-                        </p>
-                      </div>
+            <CardDescription>
+              Personnalisez les alertes que vous souhaitez recevoir
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-4 space-y-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-48" />
                     </div>
-                    <Switch
-                      id={key}
-                      checked={isEnabled}
-                      onCheckedChange={() => handleToggle(key, isEnabled)}
-                      disabled={isUpdating}
-                    />
+                    <Skeleton className="h-6 w-11 rounded-full" />
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {notificationTypes.map(({ key, label, description, example, icon: Icon, color, bgColor }) => {
+                  const isEnabled = preferences?.[key] ?? true;
+                  const isUpdating = updating === key;
+
+                  return (
+                    <div
+                      key={key}
+                      className="px-4 py-4 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`p-2 rounded-lg ${bgColor}`}>
+                            <Icon className={`w-5 h-5 ${color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <Label 
+                              htmlFor={key} 
+                              className="text-sm font-medium text-foreground cursor-pointer"
+                            >
+                              {label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {description}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          id={key}
+                          checked={isEnabled}
+                          onCheckedChange={() => handleToggle(key, isEnabled)}
+                          disabled={isUpdating}
+                        />
+                      </div>
+                      {isEnabled && (
+                        <div className="ml-12 pl-1">
+                          <p className="text-xs text-muted-foreground italic">
+                            Exemple: {example}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Info card */}
-        <div className="ios-card p-4">
-          <p className="text-sm text-muted-foreground">
-            Les notifications vous permettent de rester informé des activités importantes 
-            de votre espace de travail. Vous pouvez personnaliser chaque type selon vos besoins.
-          </p>
-        </div>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex gap-3">
+              <Info className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  Les notifications vous alertent en temps réel quand le statut d'une machine change.
+                </p>
+                <p>
+                  <Smartphone className="w-4 h-4 inline mr-1" />
+                  Sur mobile, installez l'app pour recevoir les notifications même quand l'application est fermée.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <BottomNav />
