@@ -7,6 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
   Table, 
   TableBody, 
   TableCell, 
@@ -46,9 +53,18 @@ import {
   BarChart3
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, subDays, startOfDay, eachDayOfInterval } from 'date-fns';
+import { format, subDays, startOfDay, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfWeek, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area } from 'recharts';
+
+type PeriodFilter = '7d' | '30d' | '90d' | '1y';
+
+const PERIOD_OPTIONS: { value: PeriodFilter; label: string; days: number }[] = [
+  { value: '7d', label: '7 derniers jours', days: 7 },
+  { value: '30d', label: '30 derniers jours', days: 30 },
+  { value: '90d', label: '90 derniers jours', days: 90 },
+  { value: '1y', label: '1 an', days: 365 },
+];
 
 interface WorkspaceWithStats {
   id: string;
@@ -104,6 +120,7 @@ export default function Admin() {
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [addingAdmin, setAddingAdmin] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalMachines: 0,
     totalScans: 0,
@@ -121,24 +138,27 @@ export default function Admin() {
     }
   }, [isAppAdmin, navigate]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (period: PeriodFilter = periodFilter) => {
     try {
+      const periodConfig = PERIOD_OPTIONS.find(p => p.value === period) || PERIOD_OPTIONS[1];
+      const startDate = subDays(new Date(), periodConfig.days);
+      
       // Fetch all machines with status
       const { data: machinesData } = await supabase
         .from('machines')
         .select('id, status, workspace_id');
 
-      // Fetch all scans from last 30 days
-      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      // Fetch scans for selected period
       const { data: scansData } = await supabase
         .from('scan_history')
         .select('id, scanned_at, workspace_id')
-        .gte('scanned_at', thirtyDaysAgo);
+        .gte('scanned_at', startDate.toISOString());
 
-      // Fetch all diagnostic entries from last 30 days
+      // Fetch diagnostic entries for selected period
       const { data: entriesData } = await supabase
         .from('diagnostic_entries')
-        .select('id, created_at, machine_id');
+        .select('id, created_at, machine_id')
+        .gte('created_at', startDate.toISOString());
 
       // Calculate machines by status
       const statusCounts = (machinesData || []).reduce((acc, m) => {
@@ -166,33 +186,120 @@ export default function Admin() {
         color: statusColors[status] || '#8b5cf6',
       }));
 
-      // Calculate activity by day (last 14 days)
-      const last14Days = eachDayOfInterval({
-        start: subDays(new Date(), 13),
-        end: new Date(),
-      });
+      // Calculate activity based on period
+      let activityByDay: { date: string; scans: number; entries: number }[] = [];
+      
+      if (period === '7d') {
+        // Daily for 7 days
+        const days = eachDayOfInterval({
+          start: subDays(new Date(), 6),
+          end: new Date(),
+        });
+        
+        activityByDay = days.map(day => {
+          const dayStart = startOfDay(day);
+          const dayEnd = new Date(dayStart);
+          dayEnd.setDate(dayEnd.getDate() + 1);
 
-      const activityByDay = last14Days.map(day => {
-        const dayStart = startOfDay(day);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setDate(dayEnd.getDate() + 1);
+          const scansCount = (scansData || []).filter(s => {
+            const scanDate = new Date(s.scanned_at);
+            return scanDate >= dayStart && scanDate < dayEnd;
+          }).length;
 
-        const scansCount = (scansData || []).filter(s => {
-          const scanDate = new Date(s.scanned_at);
-          return scanDate >= dayStart && scanDate < dayEnd;
-        }).length;
+          const entriesCount = (entriesData || []).filter(e => {
+            const entryDate = new Date(e.created_at);
+            return entryDate >= dayStart && entryDate < dayEnd;
+          }).length;
 
-        const entriesCount = (entriesData || []).filter(e => {
-          const entryDate = new Date(e.created_at);
-          return entryDate >= dayStart && entryDate < dayEnd;
-        }).length;
+          return {
+            date: format(day, 'EEE dd', { locale: fr }),
+            scans: scansCount,
+            entries: entriesCount,
+          };
+        });
+      } else if (period === '30d') {
+        // Daily for 30 days (show every 3rd day label)
+        const days = eachDayOfInterval({
+          start: subDays(new Date(), 29),
+          end: new Date(),
+        });
+        
+        activityByDay = days.map((day, index) => {
+          const dayStart = startOfDay(day);
+          const dayEnd = new Date(dayStart);
+          dayEnd.setDate(dayEnd.getDate() + 1);
 
-        return {
-          date: format(day, 'dd/MM', { locale: fr }),
-          scans: scansCount,
-          entries: entriesCount,
-        };
-      });
+          const scansCount = (scansData || []).filter(s => {
+            const scanDate = new Date(s.scanned_at);
+            return scanDate >= dayStart && scanDate < dayEnd;
+          }).length;
+
+          const entriesCount = (entriesData || []).filter(e => {
+            const entryDate = new Date(e.created_at);
+            return entryDate >= dayStart && entryDate < dayEnd;
+          }).length;
+
+          return {
+            date: index % 5 === 0 ? format(day, 'dd/MM', { locale: fr }) : '',
+            scans: scansCount,
+            entries: entriesCount,
+          };
+        });
+      } else if (period === '90d') {
+        // Weekly for 90 days
+        const weeks = eachWeekOfInterval({
+          start: subDays(new Date(), 89),
+          end: new Date(),
+        }, { weekStartsOn: 1 });
+        
+        activityByDay = weeks.map(weekStart => {
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+
+          const scansCount = (scansData || []).filter(s => {
+            const scanDate = new Date(s.scanned_at);
+            return scanDate >= weekStart && scanDate < weekEnd;
+          }).length;
+
+          const entriesCount = (entriesData || []).filter(e => {
+            const entryDate = new Date(e.created_at);
+            return entryDate >= weekStart && entryDate < weekEnd;
+          }).length;
+
+          return {
+            date: format(weekStart, 'dd/MM', { locale: fr }),
+            scans: scansCount,
+            entries: entriesCount,
+          };
+        });
+      } else {
+        // Monthly for 1 year
+        const months = eachMonthOfInterval({
+          start: subDays(new Date(), 364),
+          end: new Date(),
+        });
+        
+        activityByDay = months.map(monthStart => {
+          const monthEnd = new Date(monthStart);
+          monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+          const scansCount = (scansData || []).filter(s => {
+            const scanDate = new Date(s.scanned_at);
+            return scanDate >= monthStart && scanDate < monthEnd;
+          }).length;
+
+          const entriesCount = (entriesData || []).filter(e => {
+            const entryDate = new Date(e.created_at);
+            return entryDate >= monthStart && entryDate < monthEnd;
+          }).length;
+
+          return {
+            date: format(monthStart, 'MMM', { locale: fr }),
+            scans: scansCount,
+            entries: entriesCount,
+          };
+        });
+      }
 
       setAnalytics({
         totalMachines: machinesData?.length || 0,
@@ -206,6 +313,13 @@ export default function Admin() {
       console.error('Error fetching analytics:', error);
     }
   };
+
+  // Refetch analytics when period changes
+  useEffect(() => {
+    if (isAppAdmin && !loading) {
+      fetchAnalytics(periodFilter);
+    }
+  }, [periodFilter]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -477,7 +591,7 @@ export default function Admin() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">
-                Scans (30j)
+                Scans
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -485,6 +599,9 @@ export default function Admin() {
                 <ScanLine className="w-6 h-6 text-purple-500" />
                 <span className="text-2xl font-bold">{analytics.totalScans}</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {PERIOD_OPTIONS.find(p => p.value === periodFilter)?.label}
+              </p>
             </CardContent>
           </Card>
 
@@ -517,16 +634,41 @@ export default function Admin() {
           </Card>
         </div>
 
+        {/* Period Filter */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-medium">Période d'analyse</span>
+          </div>
+          <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Activity Chart */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Activité (14 derniers jours)</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-lg">Activité</CardTitle>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {PERIOD_OPTIONS.find(p => p.value === periodFilter)?.label}
+                </Badge>
               </div>
-              <CardDescription>Scans et diagnostics par jour</CardDescription>
+              <CardDescription>Scans et diagnostics sur la période</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
