@@ -117,6 +117,57 @@ export type Database = {
           },
         ]
       }
+      scan_history: {
+        Row: {
+          device_info: string | null
+          found: boolean
+          id: string
+          machine_id: string | null
+          scan_type: string
+          scanned_at: string
+          scanned_by: string | null
+          scanned_code: string
+          workspace_id: string
+        }
+        Insert: {
+          device_info?: string | null
+          found?: boolean
+          id?: string
+          machine_id?: string | null
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          scanned_code: string
+          workspace_id: string
+        }
+        Update: {
+          device_info?: string | null
+          found?: boolean
+          id?: string
+          machine_id?: string | null
+          scan_type?: string
+          scanned_at?: string
+          scanned_by?: string | null
+          scanned_code?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_history_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_history_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string
@@ -176,6 +227,53 @@ export type Database = {
             foreignKeyName: "workspace_members_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_settings: {
+        Row: {
+          created_at: string
+          enable_barcode_print: boolean
+          enable_barcode_scan: boolean
+          enable_qrcode_print: boolean
+          enable_qrcode_scan: boolean
+          id: string
+          require_scan_notes: boolean
+          scan_history_retention_days: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          enable_barcode_print?: boolean
+          enable_barcode_scan?: boolean
+          enable_qrcode_print?: boolean
+          enable_qrcode_scan?: boolean
+          id?: string
+          require_scan_notes?: boolean
+          scan_history_retention_days?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          enable_barcode_print?: boolean
+          enable_barcode_scan?: boolean
+          enable_qrcode_print?: boolean
+          enable_qrcode_scan?: boolean
+          id?: string
+          require_scan_notes?: boolean
+          scan_history_retention_days?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_settings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },

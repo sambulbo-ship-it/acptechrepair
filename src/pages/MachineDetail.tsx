@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCloudData } from '@/hooks/useCloudData';
+import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
 import { PhotoCapture } from '@/components/PhotoCapture';
-import { BarcodeDisplay } from '@/components/BarcodeDisplay';
+import { CodeDisplay } from '@/components/QRCodeDisplay';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel } from '@/data/equipmentData';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ const MachineDetail = () => {
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
   const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, team } = useCloudData();
-  
+  const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [entryForm, setEntryForm] = useState({
@@ -164,12 +165,14 @@ const MachineDetail = () => {
             )}
           </div>
 
-          {/* Barcode Section */}
+          {/* Code Display Section */}
           {machine.serialNumber && (
             <div className="pt-4 border-t border-border mt-4">
-              <BarcodeDisplay 
+              <CodeDisplay 
                 serialNumber={machine.serialNumber} 
                 machineName={machine.name}
+                showBarcode={settings?.enable_barcode_print ?? true}
+                showQRCode={settings?.enable_qrcode_print ?? true}
               />
             </div>
           )}
