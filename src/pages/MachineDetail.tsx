@@ -5,6 +5,7 @@ import { useMachines } from '@/hooks/useMachines';
 import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
+import { PhotoCapture } from '@/components/PhotoCapture';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel } from '@/data/equipmentData';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { EntryType } from '@/types/machine';
+import { EntryType, EntryPhoto } from '@/types/machine';
 import { Plus, Trash2, MapPin, Hash, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,6 +25,7 @@ const MachineDetail = () => {
   const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, team, currentUser } = useMachines();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [entryForm, setEntryForm] = useState({
     type: 'diagnostic' as EntryType,
     description: '',
@@ -69,9 +71,11 @@ const MachineDetail = () => {
       partsReplaced: entryForm.partsReplaced,
       technicianId: technician.id,
       technicianName: technician.name,
+      photos: photos,
       date: new Date(entryForm.date),
     });
 
+    // Reset form
     setEntryForm({
       type: 'diagnostic',
       description: '',
@@ -80,6 +84,7 @@ const MachineDetail = () => {
       technicianId: currentUser?.id || '',
       date: new Date().toISOString().split('T')[0],
     });
+    setPhotos([]);
     setIsSheetOpen(false);
     toast.success(language === 'fr' ? 'Entrée ajoutée' : 'Entry added');
   };
@@ -89,6 +94,14 @@ const MachineDetail = () => {
       deleteMachine(machine.id);
       navigate('/');
       toast.success(language === 'fr' ? 'Équipement supprimé' : 'Equipment deleted');
+    }
+  };
+
+  const handleSheetOpen = (open: boolean) => {
+    setIsSheetOpen(open);
+    if (!open) {
+      // Reset photos when closing
+      setPhotos([]);
     }
   };
 
@@ -162,7 +175,7 @@ const MachineDetail = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('history')}</h3>
           
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <Sheet open={isSheetOpen} onOpenChange={handleSheetOpen}>
             <SheetTrigger asChild>
               <Button 
                 size="sm" 
@@ -173,12 +186,12 @@ const MachineDetail = () => {
                 {t('addEntry')}
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl">
+            <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl overflow-hidden">
               <SheetHeader className="mb-4">
                 <SheetTitle>{t('addEntry')}</SheetTitle>
               </SheetHeader>
               
-              <div className="space-y-4 overflow-y-auto pb-8">
+              <div className="space-y-4 overflow-y-auto h-[calc(100%-4rem)] pb-8">
                 <div className="space-y-2">
                   <Label>{t('entryType')}</Label>
                   <Select
@@ -236,6 +249,13 @@ const MachineDetail = () => {
                     required
                   />
                 </div>
+
+                {/* Photo Capture */}
+                <PhotoCapture 
+                  photos={photos} 
+                  onPhotosChange={setPhotos}
+                  maxPhotos={5}
+                />
 
                 <div className="space-y-2">
                   <Label>{t('workPerformed')}</Label>

@@ -115,6 +115,7 @@ export const useMachines = () => {
     const newEntry: DiagnosticEntry = {
       ...entry,
       id: crypto.randomUUID(),
+      photos: entry.photos || [],
       createdAt: new Date(),
     };
     setEntries(prev => [...prev, newEntry]);

@@ -1,8 +1,9 @@
 import { DiagnosticEntry, EntryType } from '@/types/machine';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { PhotoGallery } from './PhotoGallery';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Stethoscope, Wrench, RefreshCw, Settings, Trash2 } from 'lucide-react';
+import { Stethoscope, Wrench, RefreshCw, Settings, Trash2, ImageIcon } from 'lucide-react';
 
 interface EntryCardProps {
   entry: DiagnosticEntry;
@@ -20,6 +21,7 @@ export const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
   const { t } = useLanguage();
   const config = entryTypeConfig[entry.type];
   const Icon = config.icon;
+  const hasPhotos = entry.photos && entry.photos.length > 0;
 
   return (
     <div className={cn('ios-card p-4', config.className)}>
@@ -30,13 +32,19 @@ export const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-xs font-medium uppercase text-primary">
                 {t(entry.type)}
               </span>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(entry.date), 'MMM d, yyyy')}
               </span>
+              {hasPhotos && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <ImageIcon className="w-3 h-3" />
+                  {entry.photos.length}
+                </span>
+              )}
             </div>
             
             <p className="text-sm text-foreground mb-2">
@@ -58,6 +66,9 @@ export const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
             <p className="text-xs text-muted-foreground">
               <span className="font-medium">{t('technician')}:</span> {entry.technicianName}
             </p>
+
+            {/* Photo thumbnails */}
+            {hasPhotos && <PhotoGallery photos={entry.photos} />}
           </div>
         </div>
         
