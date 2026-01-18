@@ -19,6 +19,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Workspaces = lazy(() => import("./pages/Workspaces"));
 const ScanHistory = lazy(() => import("./pages/ScanHistory"));
 const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
+const Install = lazy(() => import("./pages/Install"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Query client with retry and error handling
@@ -87,6 +88,7 @@ const AppRoutes = () => (
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+      <Route path="/install" element={<Install />} />
       
       {/* Semi-protected (need auth but not workspace) */}
       <Route path="/workspaces" element={<WorkspacesRoute><Workspaces /></WorkspacesRoute>} />
