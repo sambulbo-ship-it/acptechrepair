@@ -1,15 +1,17 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronLeft, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { NotificationToggle } from './NotificationToggle';
 
 interface HeaderProps {
   title: string;
   showBack?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
+  showNotifications?: boolean;
 }
 
-export const Header = ({ title, showBack, onBack, rightAction }: HeaderProps) => {
+export const Header = ({ title, showBack, onBack, rightAction, showNotifications = true }: HeaderProps) => {
   const navigate = useNavigate();
   const { language, setLanguage } = useLanguage();
 
@@ -43,6 +45,7 @@ export const Header = ({ title, showBack, onBack, rightAction }: HeaderProps) =>
         
         <div className="flex items-center gap-2">
           {rightAction}
+          {showNotifications && <NotificationToggle />}
           <button
             onClick={toggleLanguage}
             className="p-2 touch-target flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
