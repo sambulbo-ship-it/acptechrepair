@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
-import { Check, LogOut, Building2, Shield } from 'lucide-react';
+import { Check, LogOut, Building2, Shield, Bell, Palette, Settings as SettingsIcon, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -51,7 +51,46 @@ const Settings = () => {
               {isWorkspaceAdmin && (
                 <Shield className="w-4 h-4 text-primary" />
               )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </button>
+          )}
+        </div>
+
+        {/* Quick settings links */}
+        <div className="ios-card overflow-hidden">
+          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+            Paramètres rapides
+          </h3>
+          
+          <button
+            onClick={() => navigate('/notification-settings')}
+            className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors border-b border-border"
+          >
+            <Bell className="w-5 h-5 text-primary" />
+            <span className="flex-1 text-left text-foreground">Notifications</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          {isWorkspaceAdmin && (
+            <>
+              <button
+                onClick={() => navigate('/workspace-branding')}
+                className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors border-b border-border"
+              >
+                <Palette className="w-5 h-5 text-primary" />
+                <span className="flex-1 text-left text-foreground">Personnalisation</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              
+              <button
+                onClick={() => navigate('/workspace-settings')}
+                className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+              >
+                <SettingsIcon className="w-5 h-5 text-primary" />
+                <span className="flex-1 text-left text-foreground">Paramètres espace</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </>
           )}
         </div>
 

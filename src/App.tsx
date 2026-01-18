@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +8,8 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { OfflineIndicator } from "./components/OfflineIndicator";
+import { WorkspaceSplashScreen } from "./components/WorkspaceSplashScreen";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -19,6 +21,8 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Workspaces = lazy(() => import("./pages/Workspaces"));
 const ScanHistory = lazy(() => import("./pages/ScanHistory"));
 const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
+const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
+const WorkspaceBranding = lazy(() => import("./pages/WorkspaceBranding"));
 const Install = lazy(() => import("./pages/Install"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -34,8 +38,29 @@ const queryClient = new QueryClient({
 });
 
 // Protected route wrapper
+// Protected route wrapper with splash screen
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, currentWorkspace } = useAuth();
+  const [showSplash, setShowSplash] = useState(false);
+  const [splashShown, setSplashShown] = useState(false);
+
+  useEffect(() => {
+    // Show splash only once per session when workspace is selected
+    if (currentWorkspace && !splashShown) {
+      const lastShown = sessionStorage.getItem(`splash_shown_${currentWorkspace.id}`);
+      if (!lastShown) {
+        setShowSplash(true);
+      }
+    }
+  }, [currentWorkspace, splashShown]);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    setSplashShown(true);
+    if (currentWorkspace) {
+      sessionStorage.setItem(`splash_shown_${currentWorkspace.id}`, 'true');
+    }
+  };
 
   if (loading) {
     return <LoadingScreen message="Vérification de la session..." />;
@@ -50,7 +75,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/workspaces" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {showSplash && <WorkspaceSplashScreen onComplete={handleSplashComplete} duration={1500} />}
+      <OfflineIndicator />
+      {children}
+    </>
+  );
 };
 
 // Public route wrapper (redirect if already logged in)
@@ -101,6 +132,8 @@ const AppRoutes = () => (
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/scan-history" element={<ProtectedRoute><ScanHistory /></ProtectedRoute>} />
       <Route path="/workspace-settings" element={<ProtectedRoute><WorkspaceSettings /></ProtectedRoute>} />
+      <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
+      <Route path="/workspace-branding" element={<ProtectedRoute><WorkspaceBranding /></ProtectedRoute>} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
