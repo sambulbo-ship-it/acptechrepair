@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Machine, DiagnosticEntry, TeamMember, MachineStatus, EntryType } from '@/types/machine';
 import { EquipmentCategory } from '@/data/equipmentData';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 // Database row types
 interface DbMachine {
@@ -94,6 +95,77 @@ export const useCloudData = () => {
     role: row.role || undefined,
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
   }), []);
+
+  // Handle realtime machine changes
+  const handleMachineChange = useCallback((payload: RealtimePostgresChangesPayload<DbMachine>) => {
+    if (!isMountedRef.current) return;
+    
+    console.log('Realtime machine change:', payload.eventType);
+    
+    if (payload.eventType === 'INSERT' && payload.new) {
+      const newMachine = dbToMachine(payload.new as DbMachine);
+      setMachines(prev => {
+        // Avoid duplicates
+        if (prev.some(m => m.id === newMachine.id)) return prev;
+        return [newMachine, ...prev];
+      });
+    } else if (payload.eventType === 'UPDATE' && payload.new) {
+      const updatedMachine = dbToMachine(payload.new as DbMachine);
+      setMachines(prev => 
+        prev.map(m => m.id === updatedMachine.id ? updatedMachine : m)
+      );
+    } else if (payload.eventType === 'DELETE' && payload.old) {
+      const deletedId = (payload.old as DbMachine).id;
+      setMachines(prev => prev.filter(m => m.id !== deletedId));
+      setEntries(prev => prev.filter(e => e.machineId !== deletedId));
+    }
+  }, [dbToMachine]);
+
+  // Handle realtime entry changes
+  const handleEntryChange = useCallback((payload: RealtimePostgresChangesPayload<DbEntry>) => {
+    if (!isMountedRef.current) return;
+    
+    console.log('Realtime entry change:', payload.eventType);
+    
+    if (payload.eventType === 'INSERT' && payload.new) {
+      const newEntry = dbToEntry(payload.new as DbEntry);
+      setEntries(prev => {
+        if (prev.some(e => e.id === newEntry.id)) return prev;
+        return [newEntry, ...prev];
+      });
+    } else if (payload.eventType === 'UPDATE' && payload.new) {
+      const updatedEntry = dbToEntry(payload.new as DbEntry);
+      setEntries(prev => 
+        prev.map(e => e.id === updatedEntry.id ? updatedEntry : e)
+      );
+    } else if (payload.eventType === 'DELETE' && payload.old) {
+      const deletedId = (payload.old as DbEntry).id;
+      setEntries(prev => prev.filter(e => e.id !== deletedId));
+    }
+  }, [dbToEntry]);
+
+  // Handle realtime team member changes
+  const handleTeamChange = useCallback((payload: RealtimePostgresChangesPayload<DbTeamMember>) => {
+    if (!isMountedRef.current) return;
+    
+    console.log('Realtime team change:', payload.eventType);
+    
+    if (payload.eventType === 'INSERT' && payload.new) {
+      const newMember = dbToTeamMember(payload.new as DbTeamMember);
+      setTeam(prev => {
+        if (prev.some(m => m.id === newMember.id)) return prev;
+        return [newMember, ...prev];
+      });
+    } else if (payload.eventType === 'UPDATE' && payload.new) {
+      const updatedMember = dbToTeamMember(payload.new as DbTeamMember);
+      setTeam(prev => 
+        prev.map(m => m.id === updatedMember.id ? updatedMember : m)
+      );
+    } else if (payload.eventType === 'DELETE' && payload.old) {
+      const deletedId = (payload.old as DbTeamMember).id;
+      setTeam(prev => prev.filter(m => m.id !== deletedId));
+    }
+  }, [dbToTeamMember]);
 
   // Fetch all data for current workspace with error handling
   const fetchData = useCallback(async () => {
@@ -193,6 +265,57 @@ export const useCloudData = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Setup realtime subscriptions
+  useEffect(() => {
+    if (!currentWorkspace) return;
+
+    console.log('Setting up realtime subscriptions for workspace:', currentWorkspace.id);
+
+    const channel = supabase
+      .channel(`workspace-${currentWorkspace.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'machines',
+          filter: `workspace_id=eq.${currentWorkspace.id}`,
+        },
+        handleMachineChange
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'diagnostic_entries',
+        },
+        (payload) => {
+          // For entries, we need to check if the machine belongs to our workspace
+          // We'll let the RLS handle this and just process all events
+          handleEntryChange(payload as RealtimePostgresChangesPayload<DbEntry>);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team_members',
+          filter: `workspace_id=eq.${currentWorkspace.id}`,
+        },
+        handleTeamChange
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
+
+    return () => {
+      console.log('Cleaning up realtime subscriptions');
+      supabase.removeChannel(channel);
+    };
+  }, [currentWorkspace, handleMachineChange, handleEntryChange, handleTeamChange]);
 
   // Machine operations with optimistic updates and error handling
   const addMachine = async (machine: Omit<Machine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Machine | null> => {
