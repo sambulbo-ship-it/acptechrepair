@@ -152,3 +152,19 @@
     @apply bg-card/80 backdrop-blur-xl;
   }
 }
+
+/* Barcode scanner animation */
+@keyframes scan {
+  0% {
+    top: 10%;
+    opacity: 1;
+  }
+  50% {
+    top: 90%;
+    opacity: 0.5;
+  }
+  100% {
+    top: 10%;
+    opacity: 1;
+  }
+}

@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
 import { PhotoCapture } from '@/components/PhotoCapture';
+import { BarcodeDisplay } from '@/components/BarcodeDisplay';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel } from '@/data/equipmentData';
 import { Input } from '@/components/ui/input';
@@ -162,6 +163,16 @@ const MachineDetail = () => {
               </div>
             )}
           </div>
+
+          {/* Barcode Section */}
+          {machine.serialNumber && (
+            <div className="pt-4 border-t border-border mt-4">
+              <BarcodeDisplay 
+                serialNumber={machine.serialNumber} 
+                machineName={machine.name}
+              />
+            </div>
+          )}
 
           {machine.notes && (
             <p className="mt-4 text-sm text-muted-foreground border-t border-border pt-4">

@@ -8,10 +8,12 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
 import { Search, Wrench } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const MachineList = () => {
   const { t, language } = useLanguage();
@@ -36,6 +38,25 @@ const MachineList = () => {
   }, [permission, setNotificationCallbacks, notifyNewEntry, notifyStatusChange, notifyTeamMemberAdded]);
 
   const stats = getStats();
+
+  // Handle barcode scan - find machine by serial number
+  const handleBarcodeScan = (scannedCode: string) => {
+    const machine = machines.find(
+      m => m.serialNumber.toLowerCase() === scannedCode.toLowerCase()
+    );
+    
+    if (machine) {
+      navigate(`/machine/${machine.id}`);
+    } else {
+      toast.error(
+        language === 'fr' 
+          ? `Aucun équipement trouvé avec le numéro: ${scannedCode}`
+          : `No equipment found with serial: ${scannedCode}`
+      );
+      // Set the scanned code as search query to help user find it
+      setSearchQuery(scannedCode);
+    }
+  };
 
   const filteredMachines = machines.filter((machine) => {
     const matchesSearch = 
@@ -76,16 +97,19 @@ const MachineList = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder={t('searchMachines')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 bg-secondary border-0 rounded-xl"
-          />
+        {/* Search with Scanner */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t('searchMachines')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 bg-secondary border-0 rounded-xl"
+            />
+          </div>
+          <BarcodeScanner onScan={handleBarcodeScan} />
         </div>
 
         {/* Category Filter */}
