@@ -93,7 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           workspaces (
             id,
             name,
-            invite_code,
             created_at
           )
         `)
@@ -106,15 +105,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const fetchedWorkspaces: Workspace[] = (data || [])
-        .filter(item => item.workspaces)
-        .map(item => ({
-          id: item.workspaces.id,
-          name: item.workspaces.name,
-          invite_code: item.workspaces.invite_code,
-          created_at: item.workspaces.created_at,
-          role: item.role as 'admin' | 'member',
-        }));
+      // Build workspaces list and fetch invite codes only for admins
+      const fetchedWorkspaces: Workspace[] = await Promise.all(
+        (data || [])
+          .filter(item => item.workspaces)
+          .map(async (item) => {
+            let inviteCode = '';
+            
+            // Only fetch invite code for admins using the secure RPC function
+            if (item.role === 'admin') {
+              const { data: codeData } = await supabase
+                .rpc('get_workspace_invite_code', { _workspace_id: item.workspaces.id });
+              inviteCode = codeData || '';
+            }
+            
+            return {
+              id: item.workspaces.id,
+              name: item.workspaces.name,
+              invite_code: inviteCode,
+              created_at: item.workspaces.created_at,
+              role: item.role as 'admin' | 'member',
+            };
+          })
+      );
 
       setWorkspaces(fetchedWorkspaces);
 
