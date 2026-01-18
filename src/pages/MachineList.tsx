@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useMachines } from '@/hooks/useMachines';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCloudData } from '@/hooks/useCloudData';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
-import { equipmentCategories, EquipmentCategory, getCategoryLabel } from '@/data/equipmentData';
-import { Search, Wrench, User } from 'lucide-react';
+import { WorkspaceSelector } from '@/components/WorkspaceSelector';
+import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
+import { Search, Wrench } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const MachineList = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const { machines, loading, currentUser, getStats } = useMachines();
+  const { currentWorkspace } = useAuth();
+  const { machines, loading, getStats } = useCloudData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<EquipmentCategory | 'all'>('all');
 
@@ -37,13 +40,9 @@ const MachineList = () => {
       <Header title={t('equipment')} />
       
       <div className="p-4 space-y-4">
-        {/* Current User Banner */}
-        {currentUser && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-xl text-sm">
-            <User className="w-4 h-4 text-primary" />
-            <span className="text-muted-foreground">{t('currentUser')}:</span>
-            <span className="font-medium text-foreground">{currentUser.name}</span>
-          </div>
+        {/* Workspace Selector */}
+        {currentWorkspace && (
+          <WorkspaceSelector />
         )}
 
         {/* Quick Stats */}

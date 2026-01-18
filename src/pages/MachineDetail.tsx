@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useMachines } from '@/hooks/useMachines';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCloudData } from '@/hooks/useCloudData';
 import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
@@ -22,7 +23,8 @@ const MachineDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, team, currentUser } = useMachines();
+  const { isWorkspaceAdmin } = useAuth();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, team } = useCloudData();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
@@ -31,7 +33,7 @@ const MachineDetail = () => {
     description: '',
     workPerformed: '',
     partsReplaced: '',
-    technicianId: currentUser?.id || '',
+    technicianId: '',
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -50,20 +52,20 @@ const MachineDetail = () => {
 
   const CategoryIcon = getCategoryIconComponent(machine.category);
 
-  const handleAddEntry = () => {
+  const handleAddEntry = async () => {
     if (!entryForm.description) {
       toast.error(language === 'fr' ? 'Veuillez ajouter une description' : 'Please add a description');
       return;
     }
 
-    const technician = team.find(m => m.id === entryForm.technicianId) || currentUser;
+    const technician = team.find(m => m.id === entryForm.technicianId);
     
     if (!technician) {
       toast.error(language === 'fr' ? 'Sélectionnez un technicien' : 'Select a technician');
       return;
     }
 
-    addEntry({
+    const result = await addEntry({
       machineId: machine.id,
       type: entryForm.type,
       description: entryForm.description,
@@ -75,25 +77,34 @@ const MachineDetail = () => {
       date: new Date(entryForm.date),
     });
 
-    // Reset form
-    setEntryForm({
-      type: 'diagnostic',
-      description: '',
-      workPerformed: '',
-      partsReplaced: '',
-      technicianId: currentUser?.id || '',
-      date: new Date().toISOString().split('T')[0],
-    });
-    setPhotos([]);
-    setIsSheetOpen(false);
-    toast.success(language === 'fr' ? 'Entrée ajoutée' : 'Entry added');
+    if (result) {
+      setEntryForm({
+        type: 'diagnostic',
+        description: '',
+        workPerformed: '',
+        partsReplaced: '',
+        technicianId: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      setPhotos([]);
+      setIsSheetOpen(false);
+      toast.success(language === 'fr' ? 'Entrée ajoutée' : 'Entry added');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+    }
   };
 
-  const handleDeleteMachine = () => {
+  const handleDeleteMachine = async () => {
+    if (!isWorkspaceAdmin) {
+      toast.error(language === 'fr' ? 'Seuls les admins peuvent supprimer' : 'Only admins can delete');
+      return;
+    }
     if (confirm(language === 'fr' ? 'Supprimer cet équipement?' : 'Delete this equipment?')) {
-      deleteMachine(machine.id);
-      navigate('/');
-      toast.success(language === 'fr' ? 'Équipement supprimé' : 'Equipment deleted');
+      const success = await deleteMachine(machine.id);
+      if (success) {
+        navigate('/');
+        toast.success(language === 'fr' ? 'Équipement supprimé' : 'Equipment deleted');
+      }
     }
   };
 
@@ -159,8 +170,8 @@ const MachineDetail = () => {
           )}
         </div>
 
-        {/* No Current User Warning */}
-        {!currentUser && team.length === 0 && (
+        {/* No Team Members Warning */}
+        {team.length === 0 && (
           <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-xl border border-warning/30">
             <AlertCircle className="w-5 h-5 text-warning flex-shrink-0" />
             <p className="text-sm text-warning">
@@ -180,7 +191,7 @@ const MachineDetail = () => {
               <Button 
                 size="sm" 
                 className="rounded-full gap-1"
-                disabled={team.length === 0 && !currentUser}
+                disabled={team.length === 0}
               >
                 <Plus className="w-4 h-4" />
                 {t('addEntry')}
