@@ -4,14 +4,17 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCloudData } from '@/hooks/useCloudData';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
+import { useScanHistory } from '@/hooks/useScanHistory';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
-import { Search, Wrench } from 'lucide-react';
+import { Search, Wrench, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -21,6 +24,8 @@ const MachineList = () => {
   const { currentWorkspace } = useAuth();
   const { machines, loading, getStats, setNotificationCallbacks } = useCloudData();
   const { notifyNewEntry, notifyStatusChange, notifyTeamMemberAdded, permission } = useNotifications();
+  const { settings } = useWorkspaceSettings();
+  const { recordScan } = useScanHistory();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<EquipmentCategory | 'all'>('all');
 
@@ -39,11 +44,14 @@ const MachineList = () => {
 
   const stats = getStats();
 
-  // Handle barcode scan - find machine by serial number
-  const handleBarcodeScan = (scannedCode: string) => {
+  // Handle barcode/QR scan - find machine by serial number
+  const handleScan = async (scannedCode: string, scanType: 'barcode' | 'qrcode') => {
     const machine = machines.find(
       m => m.serialNumber.toLowerCase() === scannedCode.toLowerCase()
     );
+    
+    // Record the scan in history
+    await recordScan(scannedCode, scanType, machine?.id || null, !!machine);
     
     if (machine) {
       navigate(`/machine/${machine.id}`);
@@ -97,7 +105,7 @@ const MachineList = () => {
           </div>
         </div>
 
-        {/* Search with Scanner */}
+        {/* Search with Scanner and History */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -109,7 +117,20 @@ const MachineList = () => {
               className="pl-10 h-12 bg-secondary border-0 rounded-xl"
             />
           </div>
-          <BarcodeScanner onScan={handleBarcodeScan} />
+          <BarcodeScanner 
+            onScan={handleScan}
+            enableBarcode={settings?.enable_barcode_scan ?? true}
+            enableQRCode={settings?.enable_qrcode_scan ?? true}
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            onClick={() => navigate('/scan-history')}
+            aria-label={language === 'fr' ? 'Historique des scans' : 'Scan history'}
+          >
+            <History className="w-5 h-5" />
+          </Button>
         </div>
 
         {/* Category Filter */}

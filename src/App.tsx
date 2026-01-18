@@ -17,6 +17,8 @@ const Team = lazy(() => import("./pages/Team"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Workspaces = lazy(() => import("./pages/Workspaces"));
+const ScanHistory = lazy(() => import("./pages/ScanHistory"));
+const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Query client with retry and error handling
@@ -95,6 +97,8 @@ const AppRoutes = () => (
       <Route path="/machine/:id" element={<ProtectedRoute><MachineDetail /></ProtectedRoute>} />
       <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/scan-history" element={<ProtectedRoute><ScanHistory /></ProtectedRoute>} />
+      <Route path="/workspace-settings" element={<ProtectedRoute><WorkspaceSettings /></ProtectedRoute>} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

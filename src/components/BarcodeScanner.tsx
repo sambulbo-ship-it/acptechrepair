@@ -2,21 +2,30 @@ import { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ScanLine, X, Camera, AlertCircle } from 'lucide-react';
+import { ScanLine, Camera, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 
 interface BarcodeScannerProps {
-  onScan: (code: string) => void;
+  onScan: (code: string, type: 'barcode' | 'qrcode') => void;
+  enableBarcode?: boolean;
+  enableQRCode?: boolean;
 }
 
-export const BarcodeScanner = ({ onScan }: BarcodeScannerProps) => {
+export const BarcodeScanner = ({ 
+  onScan, 
+  enableBarcode = true, 
+  enableQRCode = true 
+}: BarcodeScannerProps) => {
   const { language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = 'barcode-scanner-container';
+
+  // If both disabled, don't render
+  if (!enableBarcode && !enableQRCode) return null;
 
   const startScanner = async () => {
     setError(null);
@@ -40,9 +49,13 @@ export const BarcodeScanner = ({ onScan }: BarcodeScannerProps) => {
         { facingMode: 'environment' },
         config,
         (decodedText) => {
-          // Success callback
-          console.log('Scanned:', decodedText);
-          onScan(decodedText);
+          // Determine scan type - QR codes are typically alphanumeric, barcodes are usually numeric
+          // This is a simplified detection
+          const isQRCode = decodedText.length > 20 || /[a-zA-Z]/.test(decodedText);
+          const scanType = isQRCode ? 'qrcode' : 'barcode';
+          
+          console.log('Scanned:', decodedText, 'Type:', scanType);
+          onScan(decodedText, scanType);
           stopScanner();
           setIsOpen(false);
           toast.success(language === 'fr' ? `Code scanné: ${decodedText}` : `Scanned: ${decodedText}`);
@@ -110,10 +123,19 @@ export const BarcodeScanner = ({ onScan }: BarcodeScannerProps) => {
     }
   };
 
+  const getScannerLabel = () => {
+    if (enableBarcode && enableQRCode) {
+      return language === 'fr' ? 'Scanner un code' : 'Scan code';
+    } else if (enableQRCode) {
+      return language === 'fr' ? 'Scanner QR code' : 'Scan QR code';
+    }
+    return language === 'fr' ? 'Scanner code-barres' : 'Scan barcode';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon" className="shrink-0" aria-label={language === 'fr' ? 'Scanner un code-barres' : 'Scan barcode'}>
+        <Button variant="outline" size="icon" className="shrink-0" aria-label={getScannerLabel()}>
           <ScanLine className="w-5 h-5" />
         </Button>
       </DialogTrigger>
@@ -121,7 +143,7 @@ export const BarcodeScanner = ({ onScan }: BarcodeScannerProps) => {
         <DialogHeader className="p-4 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <Camera className="w-5 h-5" />
-            {language === 'fr' ? 'Scanner un code-barres' : 'Scan Barcode'}
+            {getScannerLabel()}
           </DialogTitle>
         </DialogHeader>
         
@@ -172,8 +194,15 @@ export const BarcodeScanner = ({ onScan }: BarcodeScannerProps) => {
         <div className="p-4 text-center">
           <p className="text-sm text-muted-foreground">
             {language === 'fr' 
-              ? 'Placez le code-barres dans le cadre pour le scanner'
-              : 'Position the barcode within the frame to scan'}
+              ? 'Placez le code dans le cadre pour le scanner'
+              : 'Position the code within the frame to scan'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {enableBarcode && enableQRCode 
+              ? (language === 'fr' ? 'Supporte code-barres et QR codes' : 'Supports barcodes and QR codes')
+              : enableQRCode 
+                ? (language === 'fr' ? 'QR codes uniquement' : 'QR codes only')
+                : (language === 'fr' ? 'Code-barres uniquement' : 'Barcodes only')}
           </p>
         </div>
       </DialogContent>
