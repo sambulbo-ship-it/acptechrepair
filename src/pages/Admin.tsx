@@ -37,11 +37,18 @@ import {
   Search,
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Wrench,
+  ScanLine,
+  TrendingUp,
+  Activity,
+  Calendar,
+  BarChart3
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 
 interface WorkspaceWithStats {
   id: string;
@@ -52,6 +59,8 @@ interface WorkspaceWithStats {
   logo_url: string | null;
   member_count: number;
   machine_count: number;
+  scan_count: number;
+  entry_count: number;
 }
 
 interface UserWithWorkspaces {
@@ -73,6 +82,17 @@ interface AppAdmin {
   email?: string;
 }
 
+interface AnalyticsData {
+  totalMachines: number;
+  totalScans: number;
+  totalEntries: number;
+  machinesByStatus: { name: string; value: number; color: string }[];
+  activityByDay: { date: string; scans: number; entries: number }[];
+  topWorkspaces: { name: string; machines: number; scans: number }[];
+}
+
+const CHART_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6'];
+
 export default function Admin() {
   const navigate = useNavigate();
   const { isAppAdmin, user } = useAuth();
@@ -84,6 +104,14 @@ export default function Admin() {
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [addingAdmin, setAddingAdmin] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData>({
+    totalMachines: 0,
+    totalScans: 0,
+    totalEntries: 0,
+    machinesByStatus: [],
+    activityByDay: [],
+    topWorkspaces: [],
+  });
 
   // Redirect if not app admin
   useEffect(() => {
@@ -93,40 +121,135 @@ export default function Admin() {
     }
   }, [isAppAdmin, navigate]);
 
+  const fetchAnalytics = async () => {
+    try {
+      // Fetch all machines with status
+      const { data: machinesData } = await supabase
+        .from('machines')
+        .select('id, status, workspace_id');
+
+      // Fetch all scans from last 30 days
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const { data: scansData } = await supabase
+        .from('scan_history')
+        .select('id, scanned_at, workspace_id')
+        .gte('scanned_at', thirtyDaysAgo);
+
+      // Fetch all diagnostic entries from last 30 days
+      const { data: entriesData } = await supabase
+        .from('diagnostic_entries')
+        .select('id, created_at, machine_id');
+
+      // Calculate machines by status
+      const statusCounts = (machinesData || []).reduce((acc, m) => {
+        acc[m.status] = (acc[m.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const statusLabels: Record<string, string> = {
+        operational: 'Opérationnel',
+        maintenance: 'Maintenance',
+        repair: 'En réparation',
+        broken: 'Hors service',
+      };
+
+      const statusColors: Record<string, string> = {
+        operational: '#22c55e',
+        maintenance: '#eab308',
+        repair: '#f97316',
+        broken: '#ef4444',
+      };
+
+      const machinesByStatus = Object.entries(statusCounts).map(([status, count]) => ({
+        name: statusLabels[status] || status,
+        value: count,
+        color: statusColors[status] || '#8b5cf6',
+      }));
+
+      // Calculate activity by day (last 14 days)
+      const last14Days = eachDayOfInterval({
+        start: subDays(new Date(), 13),
+        end: new Date(),
+      });
+
+      const activityByDay = last14Days.map(day => {
+        const dayStart = startOfDay(day);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+
+        const scansCount = (scansData || []).filter(s => {
+          const scanDate = new Date(s.scanned_at);
+          return scanDate >= dayStart && scanDate < dayEnd;
+        }).length;
+
+        const entriesCount = (entriesData || []).filter(e => {
+          const entryDate = new Date(e.created_at);
+          return entryDate >= dayStart && entryDate < dayEnd;
+        }).length;
+
+        return {
+          date: format(day, 'dd/MM', { locale: fr }),
+          scans: scansCount,
+          entries: entriesCount,
+        };
+      });
+
+      setAnalytics({
+        totalMachines: machinesData?.length || 0,
+        totalScans: scansData?.length || 0,
+        totalEntries: entriesData?.length || 0,
+        machinesByStatus,
+        activityByDay,
+        topWorkspaces: [],
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch all workspaces with member and machine counts
+      // Fetch all workspaces
       const { data: workspacesData, error: workspacesError } = await supabase
         .from('workspaces')
         .select('*');
 
       if (workspacesError) throw workspacesError;
 
-      // Get member counts for each workspace
+      // Get stats for each workspace
       const workspacesWithStats: WorkspaceWithStats[] = await Promise.all(
         (workspacesData || []).map(async (ws) => {
-          const { count: memberCount } = await supabase
-            .from('workspace_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('workspace_id', ws.id);
-
-          const { count: machineCount } = await supabase
-            .from('machines')
-            .select('*', { count: 'exact', head: true })
-            .eq('workspace_id', ws.id);
+          const [memberResult, machineResult, scanResult, entryResult] = await Promise.all([
+            supabase.from('workspace_members').select('*', { count: 'exact', head: true }).eq('workspace_id', ws.id),
+            supabase.from('machines').select('*', { count: 'exact', head: true }).eq('workspace_id', ws.id),
+            supabase.from('scan_history').select('*', { count: 'exact', head: true }).eq('workspace_id', ws.id),
+            supabase.from('machines').select('id').eq('workspace_id', ws.id).then(async ({ data }) => {
+              if (!data?.length) return { count: 0 };
+              const machineIds = data.map(m => m.id);
+              const { count } = await supabase
+                .from('diagnostic_entries')
+                .select('*', { count: 'exact', head: true })
+                .in('machine_id', machineIds);
+              return { count };
+            }),
+          ]);
 
           return {
             ...ws,
-            member_count: memberCount || 0,
-            machine_count: machineCount || 0,
+            member_count: memberResult.count || 0,
+            machine_count: machineResult.count || 0,
+            scan_count: scanResult.count || 0,
+            entry_count: entryResult.count || 0,
           };
         })
       );
 
+      // Sort by activity (machines + scans)
+      workspacesWithStats.sort((a, b) => (b.machine_count + b.scan_count) - (a.machine_count + a.scan_count));
       setWorkspaces(workspacesWithStats);
 
-      // Fetch all workspace members with their workspace info
+      // Fetch all workspace members
       const { data: membersData, error: membersError } = await supabase
         .from('workspace_members')
         .select(`
@@ -134,10 +257,7 @@ export default function Admin() {
           role,
           joined_at,
           workspace_id,
-          workspaces (
-            id,
-            name
-          )
+          workspaces (id, name)
         `);
 
       if (membersError) throw membersError;
@@ -169,7 +289,7 @@ export default function Admin() {
         } else {
           usersMap.set(member.user_id, {
             user_id: member.user_id,
-            email: member.user_id, // Will be replaced with actual email if available
+            email: member.user_id,
             workspaces: [workspaceInfo],
             is_app_admin: adminsData?.some(a => a.user_id === member.user_id) || false,
             joined_at: member.joined_at,
@@ -178,6 +298,9 @@ export default function Admin() {
       }
 
       setUsers(Array.from(usersMap.values()));
+
+      // Fetch analytics data
+      await fetchAnalytics();
 
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -208,18 +331,12 @@ export default function Admin() {
 
     setAddingAdmin(true);
     try {
-      // First, find the user by checking if they exist in workspace_members
-      // Since we can't query auth.users directly, we'll need to add by user_id
-      // For now, we'll show an error since we need the user_id
-      
-      // Check if already an admin
       const existingAdmin = appAdmins.find(a => a.user_id === newAdminEmail.trim());
       if (existingAdmin) {
         toast.error('Cet utilisateur est déjà un Super Admin');
         return;
       }
 
-      // Add as app admin (user needs to provide user_id)
       const { error } = await supabase
         .from('app_admins')
         .insert({ user_id: newAdminEmail.trim() });
@@ -313,50 +430,266 @@ export default function Admin() {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Main Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Workspaces
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Building2 className="w-8 h-8 text-primary" />
-                <span className="text-3xl font-bold">{workspaces.length}</span>
+                <Building2 className="w-6 h-6 text-primary" />
+                <span className="text-2xl font-bold">{workspaces.length}</span>
               </div>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Utilisateurs
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Users className="w-8 h-8 text-blue-500" />
-                <span className="text-3xl font-bold">{users.length}</span>
+                <Users className="w-6 h-6 text-blue-500" />
+                <span className="text-2xl font-bold">{users.length}</span>
               </div>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                Machines
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Wrench className="w-6 h-6 text-green-500" />
+                <span className="text-2xl font-bold">{analytics.totalMachines}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                Scans (30j)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <ScanLine className="w-6 h-6 text-purple-500" />
+                <span className="text-2xl font-bold">{analytics.totalScans}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                Diagnostics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Activity className="w-6 h-6 text-orange-500" />
+                <span className="text-2xl font-bold">{analytics.totalEntries}</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Super Admins
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Crown className="w-8 h-8 text-amber-500" />
-                <span className="text-3xl font-bold">{appAdmins.length}</span>
+                <Crown className="w-6 h-6 text-amber-500" />
+                <span className="text-2xl font-bold">{appAdmins.length}</span>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Activity Chart */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Activité (14 derniers jours)</CardTitle>
+              </div>
+              <CardDescription>Scans et diagnostics par jour</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={analytics.activityByDay}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="scans" 
+                      name="Scans"
+                      stroke="#8b5cf6" 
+                      strokeWidth={2}
+                      dot={{ fill: '#8b5cf6' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="entries" 
+                      name="Diagnostics"
+                      stroke="#f97316" 
+                      strokeWidth={2}
+                      dot={{ fill: '#f97316' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Status Distribution */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">État des Machines</CardTitle>
+              </div>
+              <CardDescription>Répartition par statut</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : analytics.machinesByStatus.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <ResponsiveContainer width="50%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={analytics.machinesByStatus}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        innerRadius={40}
+                      >
+                        {analytics.machinesByStatus.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-2">
+                    {analytics.machinesByStatus.map((status, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: status.color }}
+                          />
+                          <span className="text-sm">{status.name}</span>
+                        </div>
+                        <span className="font-medium">{status.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                  Aucune donnée disponible
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Top Workspaces Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              <CardTitle className="text-lg">Workspaces les plus actifs</CardTitle>
+            </div>
+            <CardDescription>Classement par nombre de machines et scans</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart 
+                  data={workspaces.slice(0, 10).map(ws => ({
+                    name: ws.name.length > 15 ? ws.name.substring(0, 15) + '...' : ws.name,
+                    machines: ws.machine_count,
+                    scans: ws.scan_count,
+                    entries: ws.entry_count,
+                  }))}
+                  layout="vertical"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12}
+                    width={120}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="machines" name="Machines" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="scans" name="Scans" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="entries" name="Diagnostics" fill="#f97316" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Search */}
         <div className="relative">
@@ -392,7 +725,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>Tous les Workspaces</CardTitle>
                 <CardDescription>
-                  Liste complète des espaces de travail de l'application
+                  Liste complète des espaces de travail ({workspaces.length} au total)
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -406,9 +739,11 @@ export default function Admin() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Nom</TableHead>
-                          <TableHead>Code d'invitation</TableHead>
+                          <TableHead>Code</TableHead>
                           <TableHead className="text-center">Membres</TableHead>
                           <TableHead className="text-center">Machines</TableHead>
+                          <TableHead className="text-center">Scans</TableHead>
+                          <TableHead className="text-center">Diagnostics</TableHead>
                           <TableHead>Créé le</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -435,14 +770,14 @@ export default function Admin() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <code className="px-2 py-1 bg-muted rounded text-sm">
+                              <div className="flex items-center gap-1">
+                                <code className="px-1.5 py-0.5 bg-muted rounded text-xs">
                                   {ws.invite_code}
                                 </code>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-5 w-5"
                                   onClick={() => copyInviteCode(ws.invite_code)}
                                 >
                                   {copiedCode === ws.invite_code ? (
@@ -457,16 +792,28 @@ export default function Admin() {
                               <Badge variant="secondary">{ws.member_count}</Badge>
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge variant="outline">{ws.machine_count}</Badge>
+                              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                                {ws.machine_count}
+                              </Badge>
                             </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/30">
+                                {ws.scan_count}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/30">
+                                {ws.entry_count}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-xs">
                               {format(new Date(ws.created_at), 'dd MMM yyyy', { locale: fr })}
                             </TableCell>
                           </TableRow>
                         ))}
                         {filteredWorkspaces.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                               Aucun workspace trouvé
                             </TableCell>
                           </TableRow>
@@ -485,7 +832,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>Tous les Utilisateurs</CardTitle>
                 <CardDescription>
-                  Liste des utilisateurs et leurs appartenances aux workspaces
+                  Liste des utilisateurs et leurs appartenances ({users.length} au total)
                 </CardDescription>
               </CardHeader>
               <CardContent>
