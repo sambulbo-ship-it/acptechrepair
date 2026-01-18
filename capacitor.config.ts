@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.8369cce7c2e94f93bf6ee4f5dd0e8aff',
+  appId: 'app.lovable.techrepair',
   appName: 'Tech Repair',
   webDir: 'dist',
   server: {
@@ -10,12 +10,22 @@ const config: CapacitorConfig = {
   },
   // iOS configuration
   ios: {
-    scheme: 'Tech Repair',
+    scheme: 'TechRepair',
+    contentInset: 'automatic',
   },
-  // Electron (macOS) configuration  
+  // Android configuration
+  android: {
+    allowMixedContent: true,
+  },
   plugins: {
     Keyboard: {
       resize: 'body',
+      resizeOnFullScreen: true,
+    },
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#0f1419',
+      showSpinner: false,
     },
   },
 };
