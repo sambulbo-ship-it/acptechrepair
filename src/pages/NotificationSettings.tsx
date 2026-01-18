@@ -23,7 +23,8 @@ import {
   UserPlus,
   TestTube,
   Smartphone,
-  Info
+  Info,
+  CalendarClock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -74,6 +75,15 @@ const notificationTypes = [
     example: '🚨 Machine X est maintenant hors service',
   },
   {
+    key: 'notify_maintenance_reminder' as const,
+    label: 'Rappels maintenance',
+    description: 'Rappels de maintenance préventive programmée',
+    icon: CalendarClock,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    example: '📅 Maintenance prévue pour Machine X dans 3 jours',
+  },
+  {
     key: 'notify_new_team_member' as const,
     label: 'Nouveau membre',
     description: "Quand quelqu'un rejoint l'équipe",
@@ -120,6 +130,7 @@ const NotificationSettings = () => {
       notify_stock_in: true,
       notify_status_critical: true,
       notify_new_team_member: true,
+      notify_maintenance_reminder: true,
     };
     await updateAllPreferences(allEnabled);
   };
@@ -132,6 +143,7 @@ const NotificationSettings = () => {
       notify_stock_in: false,
       notify_status_critical: false,
       notify_new_team_member: false,
+      notify_maintenance_reminder: false,
     };
     await updateAllPreferences(allDisabled);
   };
