@@ -25,6 +25,7 @@ interface AuthContextType {
   refreshWorkspaces: () => Promise<void>;
   isWorkspaceAdmin: boolean;
   canCreateWorkspace: boolean;
+  isAppAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null);
+  const [isAppAdmin, setIsAppAdmin] = useState(false);
   
   // Refs to prevent memory leaks and race conditions
   const isMountedRef = useRef(true);
@@ -45,8 +47,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check if current user is admin of current workspace
   const isWorkspaceAdmin = currentWorkspace?.role === 'admin';
 
-  // Check if user can create workspace (is admin of any workspace OR no workspaces exist yet)
-  const canCreateWorkspace = workspaces.some(w => w.role === 'admin') || workspaces.length === 0;
+  // Check if user can create workspace (app admins can always create, or users without workspaces)
+  const canCreateWorkspace = isAppAdmin || workspaces.some(w => w.role === 'admin') || workspaces.length === 0;
+
+  const checkAppAdmin = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('app_admins')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (!isMountedRef.current) return;
+      
+      if (error) {
+        console.error('Error checking app admin:', error);
+        setIsAppAdmin(false);
+        return;
+      }
+      
+      setIsAppAdmin(!!data);
+    } catch (err) {
+      console.error('checkAppAdmin error:', err);
+      setIsAppAdmin(false);
+    }
+  };
 
   const refreshWorkspaces = async () => {
     if (!user || fetchingWorkspacesRef.current) {
@@ -57,6 +82,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchingWorkspacesRef.current = true;
 
     try {
+      // Check if user is app admin
+      await checkAppAdmin(user.id);
+
       const { data, error } = await supabase
         .from('workspace_members')
         .select(`
@@ -360,6 +388,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       refreshWorkspaces,
       isWorkspaceAdmin,
       canCreateWorkspace,
+      isAppAdmin,
     }}>
       {children}
     </AuthContext.Provider>

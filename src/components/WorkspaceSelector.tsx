@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, ChevronDown, Shield } from 'lucide-react';
+import { Building2, ChevronDown, Shield, Crown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export const WorkspaceSelector = () => {
   const navigate = useNavigate();
-  const { workspaces, currentWorkspace, setCurrentWorkspace } = useAuth();
+  const { workspaces, currentWorkspace, setCurrentWorkspace, isAppAdmin } = useAuth();
 
   if (!currentWorkspace) return null;
 
@@ -23,7 +23,10 @@ export const WorkspaceSelector = () => {
         <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
           {currentWorkspace.name}
         </span>
-        {currentWorkspace.role === 'admin' && (
+        {isAppAdmin && (
+          <Crown className="w-3 h-3 text-amber-500" />
+        )}
+        {!isAppAdmin && currentWorkspace.role === 'admin' && (
           <Shield className="w-3 h-3 text-primary" />
         )}
         <ChevronDown className="w-4 h-4 text-muted-foreground" />
