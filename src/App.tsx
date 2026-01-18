@@ -25,6 +25,7 @@ const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const WorkspaceBranding = lazy(() => import("./pages/WorkspaceBranding"));
 const Install = lazy(() => import("./pages/Install"));
+const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Query client with retry and error handling
@@ -124,6 +125,7 @@ const AppRoutes = () => (
       
       {/* Semi-protected (need auth but not workspace) */}
       <Route path="/workspaces" element={<WorkspacesRoute><Workspaces /></WorkspacesRoute>} />
+      <Route path="/admin" element={<WorkspacesRoute><Admin /></WorkspacesRoute>} />
       
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
