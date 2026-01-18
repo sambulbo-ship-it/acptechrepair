@@ -135,16 +135,31 @@ const Workspaces = () => {
       <div className="p-4 space-y-6">
         {/* User Info */}
         <div className="ios-card p-4">
-          <div className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">Connecté en tant que</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">Connecté en tant que</p>
+                {isAppAdmin && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
+                    <Crown className="w-3 h-3" />
+                    Super Admin
+                  </span>
+                )}
+              </div>
+              <p className="font-medium text-foreground truncate">{user?.email}</p>
+            </div>
             {isAppAdmin && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
-                <Crown className="w-3 h-3" />
-                Super Admin
-              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/admin')}
+                className="gap-2"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Button>
             )}
           </div>
-          <p className="font-medium text-foreground truncate">{user?.email}</p>
         </div>
 
         {/* Action Buttons */}
