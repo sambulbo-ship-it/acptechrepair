@@ -11,6 +11,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
+import { RecentRepairsSuggestions } from '@/components/RecentRepairsSuggestions';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
 import { Search, Wrench, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,7 @@ const MachineList = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { currentWorkspace } = useAuth();
-  const { machines, loading, getStats, setNotificationCallbacks } = useCloudData();
+  const { machines, entries, loading, getStats, setNotificationCallbacks } = useCloudData();
   const { notifyNewEntry, notifyStatusChange, notifyTeamMemberAdded, permission } = useNotifications();
   const { settings } = useWorkspaceSettings();
   const { recordScan } = useScanHistory();
@@ -132,6 +133,9 @@ const MachineList = () => {
             <History className="w-5 h-5" />
           </Button>
         </div>
+
+        {/* Recent Repairs Suggestions */}
+        <RecentRepairsSuggestions machines={machines} entries={entries} />
 
         {/* Category Filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
