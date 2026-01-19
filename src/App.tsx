@@ -26,6 +26,7 @@ const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const WorkspaceBranding = lazy(() => import("./pages/WorkspaceBranding"));
 const Install = lazy(() => import("./pages/Install"));
 const Admin = lazy(() => import("./pages/Admin"));
+const RepairResources = lazy(() => import("./pages/RepairResources"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Query client with retry and error handling
@@ -143,6 +144,7 @@ const AppRoutes = () => (
       <Route path="/workspace-settings" element={<ProtectedRoute><WorkspaceSettings /></ProtectedRoute>} />
       <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
       <Route path="/workspace-branding" element={<ProtectedRoute><WorkspaceBranding /></ProtectedRoute>} />
+      <Route path="/repair-resources" element={<ProtectedRoute><RepairResources /></ProtectedRoute>} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
