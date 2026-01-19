@@ -1,6 +1,6 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Wrench, PlusCircle, Users, Settings } from 'lucide-react';
+import { Wrench, PlusCircle, Users, Settings, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const BottomNav = () => {
@@ -11,6 +11,7 @@ export const BottomNav = () => {
   const navItems = [
     { path: '/', icon: Wrench, label: t('equipment') },
     { path: '/add', icon: PlusCircle, label: t('addMachine') },
+    { path: '/repair-resources', icon: Package, label: t('resources') },
     { path: '/team', icon: Users, label: t('team') },
     { path: '/settings', icon: Settings, label: t('settings') },
   ];

@@ -76,6 +76,95 @@ export type Database = {
           },
         ]
       }
+      external_repairs: {
+        Row: {
+          actual_return_date: string | null
+          cost: number | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          expected_return_date: string | null
+          id: string
+          issue_description: string
+          machine_id: string
+          notes: string | null
+          repair_description: string | null
+          repair_location_id: string | null
+          sent_date: string
+          status: string
+          tracking_number: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          actual_return_date?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_return_date?: string | null
+          id?: string
+          issue_description: string
+          machine_id: string
+          notes?: string | null
+          repair_description?: string | null
+          repair_location_id?: string | null
+          sent_date: string
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          actual_return_date?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_return_date?: string | null
+          id?: string
+          issue_description?: string
+          machine_id?: string
+          notes?: string | null
+          repair_description?: string | null
+          repair_location_id?: string | null
+          sent_date?: string
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_repairs_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_repairs_repair_location_id_fkey"
+            columns: ["repair_location_id"]
+            isOneToOne: false
+            referencedRelation: "repair_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_repairs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_repairs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       machines: {
         Row: {
           brand: string | null
@@ -320,6 +409,69 @@ export type Database = {
           },
         ]
       }
+      repair_locations: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          specialties: string[] | null
+          updated_at: string
+          website: string | null
+          workspace_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          website?: string | null
+          workspace_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          website?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_locations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_locations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_history: {
         Row: {
           device_info: string | null
@@ -371,6 +523,81 @@ export type Database = {
           },
           {
             foreignKeyName: "scan_history_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spare_parts: {
+        Row: {
+          category: string | null
+          compatible_models: string[] | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          id: string
+          location: string | null
+          min_quantity: number | null
+          name: string
+          notes: string | null
+          part_number: string | null
+          quantity: number
+          supplier: string | null
+          supplier_part_number: string | null
+          unit_price: number | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          category?: string | null
+          compatible_models?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          location?: string | null
+          min_quantity?: number | null
+          name: string
+          notes?: string | null
+          part_number?: string | null
+          quantity?: number
+          supplier?: string | null
+          supplier_part_number?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          category?: string | null
+          compatible_models?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          location?: string | null
+          min_quantity?: number | null
+          name?: string
+          notes?: string | null
+          part_number?: string | null
+          quantity?: number
+          supplier?: string | null
+          supplier_part_number?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_parts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_parts_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces_public"
