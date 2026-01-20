@@ -40,10 +40,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected route wrapper
 // Protected route wrapper with splash screen
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, currentWorkspace } = useAuth();
+  const { user, loading, currentWorkspace, workspacesLoading } = useAuth();
   const [showSplash, setShowSplash] = useState(false);
   const [splashShown, setSplashShown] = useState(false);
 
@@ -71,6 +70,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Wait for workspaces to be loaded before deciding on redirect
+  if (workspacesLoading && !currentWorkspace) {
+    return <LoadingScreen message="Chargement des espaces..." />;
   }
 
   // If logged in but no workspace selected, redirect to workspaces
