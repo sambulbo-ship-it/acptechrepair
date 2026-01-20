@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  workspacesLoading: boolean;
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   setCurrentWorkspace: (workspace: Workspace | null) => void;
@@ -39,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
+  const [workspacesLoading, setWorkspacesLoading] = useState(true);
   
   // Refs to prevent memory leaks and race conditions
   const isMountedRef = useRef(true);
@@ -75,11 +77,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshWorkspaces = async () => {
     if (!user || fetchingWorkspacesRef.current) {
-      if (!user) setWorkspaces([]);
+      if (!user) {
+        setWorkspaces([]);
+        setWorkspacesLoading(false);
+      }
       return;
     }
 
     fetchingWorkspacesRef.current = true;
+    setWorkspacesLoading(true);
 
     try {
       // Check if user is app admin
@@ -153,6 +159,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('refreshWorkspaces error:', err);
     } finally {
       fetchingWorkspacesRef.current = false;
+      setWorkspacesLoading(false);
     }
   };
 
@@ -390,6 +397,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user,
       session,
       loading,
+      workspacesLoading,
       workspaces,
       currentWorkspace,
       setCurrentWorkspace,
