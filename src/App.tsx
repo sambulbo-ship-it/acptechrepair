@@ -27,6 +27,10 @@ const WorkspaceBranding = lazy(() => import("./pages/WorkspaceBranding"));
 const Install = lazy(() => import("./pages/Install"));
 const Admin = lazy(() => import("./pages/Admin"));
 const RepairResources = lazy(() => import("./pages/RepairResources"));
+const AIAssistant = lazy(() => import("./pages/AIAssistant"));
+const FindRepairService = lazy(() => import("./pages/FindRepairService"));
+const RepairServiceSettings = lazy(() => import("./pages/RepairServiceSettings"));
+const RepairRequestsReceived = lazy(() => import("./pages/RepairRequestsReceived"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Query client with retry and error handling
@@ -42,7 +46,7 @@ const queryClient = new QueryClient({
 
 // Protected route wrapper with splash screen
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, currentWorkspace, workspacesLoading } = useAuth();
+  const { user, loading, currentWorkspace, workspacesLoading, workspaces } = useAuth();
   const [showSplash, setShowSplash] = useState(false);
   const [splashShown, setSplashShown] = useState(false);
 
@@ -73,12 +77,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Wait for workspaces to be loaded before deciding on redirect
-  if (workspacesLoading && !currentWorkspace) {
+  if (workspacesLoading) {
     return <LoadingScreen message="Chargement des espaces..." />;
   }
 
-  // If logged in but no workspace selected, redirect to workspaces
-  if (!currentWorkspace) {
+  // If logged in but no workspaces at all, redirect to workspaces page to join/create
+  if (workspaces.length === 0) {
+    return <Navigate to="/workspaces" replace />;
+  }
+
+  // If logged in with workspaces but none selected, select the first one
+  if (!currentWorkspace && workspaces.length > 0) {
     return <Navigate to="/workspaces" replace />;
   }
 
@@ -149,6 +158,12 @@ const AppRoutes = () => (
       <Route path="/notification-settings" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
       <Route path="/workspace-branding" element={<ProtectedRoute><WorkspaceBranding /></ProtectedRoute>} />
       <Route path="/repair-resources" element={<ProtectedRoute><RepairResources /></ProtectedRoute>} />
+      <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+      <Route path="/repair-service-settings" element={<ProtectedRoute><RepairServiceSettings /></ProtectedRoute>} />
+      <Route path="/repair-requests-received" element={<ProtectedRoute><RepairRequestsReceived /></ProtectedRoute>} />
+      
+      {/* Public route for finding repair services */}
+      <Route path="/find-repair" element={<FindRepairService />} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
