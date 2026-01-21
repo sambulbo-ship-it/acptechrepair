@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          machine_id: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          machine_id?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          machine_id?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          web_search_enabled: boolean
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          web_search_enabled?: boolean
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          web_search_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_admins: {
         Row: {
           created_at: string
@@ -471,6 +536,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      repair_requests: {
+        Row: {
+          brand: string
+          client_email: string
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          description: string
+          id: string
+          model: string | null
+          provider_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          client_email: string
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          model?: string | null
+          provider_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          client_email?: string
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          model?: string | null
+          provider_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_requests_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "repair_service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_service_providers: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string
+          contact_email: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_visible: boolean
+          phone: string | null
+          supported_brands: string[] | null
+          supported_categories: string[] | null
+          updated_at: string
+          website: string | null
+          workspace_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name: string
+          contact_email: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          phone?: string | null
+          supported_brands?: string[] | null
+          supported_categories?: string[] | null
+          updated_at?: string
+          website?: string | null
+          workspace_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string
+          contact_email?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          phone?: string | null
+          supported_brands?: string[] | null
+          supported_categories?: string[] | null
+          updated_at?: string
+          website?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
       }
       scan_history: {
         Row: {
