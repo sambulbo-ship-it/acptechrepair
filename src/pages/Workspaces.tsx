@@ -42,6 +42,8 @@ const Workspaces = () => {
     canCreateWorkspace,
     signOut,
     loading,
+    workspacesLoading,
+    workspacesLoaded,
     isAppAdmin
   } = useAuth();
 
@@ -260,8 +262,15 @@ const Workspaces = () => {
           </p>
         )}
 
+        {/* Loading state (prevents showing empty state while workspaces are still being fetched) */}
+        {workspacesLoading && !workspacesLoaded && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        )}
+
         {/* Workspaces List */}
-        {workspaces.length > 0 && (
+        {workspacesLoaded && workspaces.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-sm font-medium text-muted-foreground px-1">Vos espaces</h2>
             <div className="space-y-2">
@@ -315,7 +324,7 @@ const Workspaces = () => {
         )}
 
         {/* Empty State */}
-        {workspaces.length === 0 && (
+        {workspacesLoaded && workspaces.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
               <Users className="w-8 h-8 text-muted-foreground" />

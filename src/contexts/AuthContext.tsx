@@ -15,6 +15,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   workspacesLoading: boolean;
+  workspacesLoaded: boolean;
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   setCurrentWorkspace: (workspace: Workspace | null) => void;
@@ -76,8 +77,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const refreshWorkspaces = async () => {
-    if (!user) {
+  const refreshWorkspaces = async (userOverride?: User | null) => {
+    const targetUser = userOverride ?? user;
+
+    if (!targetUser) {
       setWorkspaces([]);
       setWorkspacesLoading(false);
       setWorkspacesLoaded(true);
@@ -90,10 +93,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     fetchingWorkspacesRef.current = true;
     setWorkspacesLoading(true);
+    setWorkspacesLoaded(false);
 
     try {
       // Check if user is app admin
-      await checkAppAdmin(user.id);
+      await checkAppAdmin(targetUser.id);
 
       const { data, error } = await supabase
         .from('workspace_members')
@@ -106,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             created_at
           )
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', targetUser.id);
 
       if (!isMountedRef.current) return;
 
@@ -204,12 +208,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             if (isMountedRef.current) {
-              refreshWorkspaces();
+              refreshWorkspaces(session.user);
             }
           }, 0);
         } else {
           setWorkspaces([]);
           setCurrentWorkspaceState(null);
+          setWorkspacesLoading(false);
+          setWorkspacesLoaded(true);
         }
       }
     );
@@ -225,9 +231,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         setTimeout(() => {
           if (isMountedRef.current) {
-            refreshWorkspaces();
+            refreshWorkspaces(session.user);
           }
         }, 0);
+      } else {
+        setWorkspaces([]);
+        setCurrentWorkspaceState(null);
+        setWorkspacesLoading(false);
+        setWorkspacesLoaded(true);
       }
     });
 
@@ -409,6 +420,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       session,
       loading,
       workspacesLoading,
+      workspacesLoaded,
       workspaces,
       currentWorkspace,
       setCurrentWorkspace,
@@ -417,7 +429,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signOut,
       joinWorkspace,
       createWorkspace,
-      refreshWorkspaces,
+      refreshWorkspaces: () => refreshWorkspaces(),
       isWorkspaceAdmin,
       canCreateWorkspace,
       isAppAdmin,

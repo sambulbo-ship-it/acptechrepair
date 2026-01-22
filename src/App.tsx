@@ -46,7 +46,7 @@ const queryClient = new QueryClient({
 
 // Protected route wrapper with splash screen
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, currentWorkspace, workspacesLoading, workspaces } = useAuth();
+  const { user, loading, currentWorkspace, workspacesLoading, workspacesLoaded, workspaces } = useAuth();
   const [showSplash, setShowSplash] = useState(false);
   const [splashShown, setSplashShown] = useState(false);
 
@@ -78,8 +78,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Actively loading workspaces (show loading only if we're actually fetching)
-  if (workspacesLoading) {
+  // Wait until workspace list is actually loaded (prevents false "no workspace" state)
+  if (workspacesLoading || !workspacesLoaded) {
     return <LoadingScreen message="Chargement des espaces..." />;
   }
 
