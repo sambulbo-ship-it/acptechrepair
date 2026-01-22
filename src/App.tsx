@@ -68,15 +68,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Still checking auth state
   if (loading) {
     return <LoadingScreen message="Vérification de la session..." />;
   }
 
+  // Not logged in
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
-  // Wait for workspaces to be loaded before deciding on redirect
+  // Actively loading workspaces (show loading only if we're actually fetching)
   if (workspacesLoading) {
     return <LoadingScreen message="Chargement des espaces..." />;
   }
@@ -86,8 +88,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/workspaces" replace />;
   }
 
-  // If logged in with workspaces but none selected, select the first one
+  // If logged in with workspaces but none selected, select the first one automatically
   if (!currentWorkspace && workspaces.length > 0) {
+    // The AuthContext should handle selecting the first workspace,
+    // but if for some reason it hasn't, redirect to workspaces
     return <Navigate to="/workspaces" replace />;
   }
 

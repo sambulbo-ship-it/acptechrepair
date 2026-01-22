@@ -40,7 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
-  const [workspacesLoading, setWorkspacesLoading] = useState(true);
+  const [workspacesLoading, setWorkspacesLoading] = useState(false);
+  const [workspacesLoaded, setWorkspacesLoaded] = useState(false);
   
   // Refs to prevent memory leaks and race conditions
   const isMountedRef = useRef(true);
@@ -76,11 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshWorkspaces = async () => {
-    if (!user || fetchingWorkspacesRef.current) {
-      if (!user) {
-        setWorkspaces([]);
-        setWorkspacesLoading(false);
-      }
+    if (!user) {
+      setWorkspaces([]);
+      setWorkspacesLoading(false);
+      setWorkspacesLoaded(true);
+      return;
+    }
+    
+    if (fetchingWorkspacesRef.current) {
       return;
     }
 
@@ -108,6 +112,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Error fetching workspaces:', error);
+        setWorkspacesLoading(false);
+        setWorkspacesLoaded(true);
+        fetchingWorkspacesRef.current = false;
         return;
       }
 
@@ -135,6 +142,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           })
       );
 
+      if (!isMountedRef.current) return;
+      
       setWorkspaces(fetchedWorkspaces);
 
       // Restore current workspace from localStorage or pick first
@@ -160,6 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       fetchingWorkspacesRef.current = false;
       setWorkspacesLoading(false);
+      setWorkspacesLoaded(true);
     }
   };
 
