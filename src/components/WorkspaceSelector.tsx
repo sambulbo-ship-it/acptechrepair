@@ -9,35 +9,51 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export const WorkspaceSelector = () => {
   const navigate = useNavigate();
   const { workspaces, currentWorkspace, setCurrentWorkspace, isAppAdmin } = useAuth();
 
+  const handleWorkspaceSelect = (workspace: typeof workspaces[0]) => {
+    setCurrentWorkspace(workspace);
+    // Force a page reload to ensure all data is refreshed for the new workspace
+    window.location.reload();
+  };
+
+  const handleManageWorkspaces = () => {
+    navigate('/workspaces');
+  };
+
   if (!currentWorkspace) return null;
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-        <Building2 className="w-4 h-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
-          {currentWorkspace.name}
-        </span>
-        {isAppAdmin && (
-          <Crown className="w-3 h-3 text-amber-500" />
-        )}
-        {!isAppAdmin && currentWorkspace.role === 'admin' && (
-          <Shield className="w-3 h-3 text-primary" />
-        )}
-        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          className="flex items-center gap-2 px-3 py-2 h-auto rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+        >
+          <Building2 className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
+            {currentWorkspace.name}
+          </span>
+          {isAppAdmin && (
+            <Crown className="w-3 h-3 text-amber-500" />
+          )}
+          {!isAppAdmin && currentWorkspace.role === 'admin' && (
+            <Shield className="w-3 h-3 text-primary" />
+          )}
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
+      <DropdownMenuContent align="start" className="w-56 z-50">
         {workspaces.map((workspace) => (
           <DropdownMenuItem
             key={workspace.id}
-            onClick={() => setCurrentWorkspace(workspace)}
+            onClick={() => handleWorkspaceSelect(workspace)}
             className={cn(
-              "flex items-center gap-2",
+              "flex items-center gap-2 cursor-pointer",
               currentWorkspace.id === workspace.id && "bg-primary/10"
             )}
           >
@@ -49,7 +65,7 @@ export const WorkspaceSelector = () => {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate('/workspaces')}>
+        <DropdownMenuItem onClick={handleManageWorkspaces} className="cursor-pointer">
           Gérer les espaces
         </DropdownMenuItem>
       </DropdownMenuContent>
