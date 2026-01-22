@@ -104,28 +104,58 @@ const FindRepairService = () => {
       return;
     }
 
+    // Client-side validation
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(clientEmail)) {
+      toast.error('Adresse email invalide');
+      return;
+    }
+
+    if (description.trim().length < 10) {
+      toast.error('La description doit contenir au moins 10 caractères');
+      return;
+    }
+
+    if (description.trim().length > 2000) {
+      toast.error('La description ne peut pas dépasser 2000 caractères');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('repair_requests')
-        .insert({
-          provider_id: selectedProvider.id,
-          client_email: clientEmail,
-          client_name: clientName || null,
-          client_phone: clientPhone || null,
-          brand: selectedBrand,
-          model: model || null,
-          description,
-        });
+      // Use edge function for server-side validation
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-repair-request`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            provider_id: selectedProvider.id,
+            client_email: clientEmail.trim(),
+            client_name: clientName?.trim() || undefined,
+            client_phone: clientPhone?.trim() || undefined,
+            brand: selectedBrand.trim(),
+            model: model?.trim() || undefined,
+            description: description.trim(),
+          }),
+        }
+      );
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      }
 
       setSubmitted(true);
       toast.success('Demande envoyée avec succès !');
     } catch (error) {
       console.error('Error submitting request:', error);
-      toast.error('Erreur lors de l\'envoi de la demande');
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'envoi de la demande');
     } finally {
       setSubmitting(false);
     }
