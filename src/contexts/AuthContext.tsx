@@ -281,17 +281,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Find workspace by invite code (case insensitive)
-      const { data: workspaceData, error: findError } = await supabase
-        .from('workspaces')
-        .select('id, name, invite_code, created_at')
-        .ilike('invite_code', inviteCode.trim())
-        .maybeSingle();
+      // Find workspace by invite code using secure RPC function
+      // This bypasses RLS since users aren't members yet
+      const { data: workspaceResult, error: findError } = await supabase
+        .rpc('find_workspace_by_invite_code', { _invite_code: inviteCode.trim() });
 
       if (findError) {
         console.error('Find workspace error:', findError);
         return { error: new Error('Erreur lors de la recherche') };
       }
+
+      // RPC returns an array, get first result
+      const workspaceData = Array.isArray(workspaceResult) ? workspaceResult[0] : workspaceResult;
 
       if (!workspaceData) {
         return { error: new Error('Code d\'invitation invalide') };
@@ -328,7 +329,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const workspace: Workspace = {
         id: workspaceData.id,
         name: workspaceData.name,
-        invite_code: workspaceData.invite_code,
+        invite_code: '', // Members don't get access to invite code
         created_at: workspaceData.created_at,
         role: 'member',
       };

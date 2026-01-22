@@ -976,6 +976,14 @@ export type Database = {
       }
     }
     Functions: {
+      find_workspace_by_invite_code: {
+        Args: { _invite_code: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+        }[]
+      }
       get_workspace_invite_code: {
         Args: { _workspace_id: string }
         Returns: string
