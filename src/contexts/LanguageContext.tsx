@@ -16,6 +16,7 @@ export const translations: Translations = {
   // Navigation
   equipment: { en: 'Equipment', fr: 'Équipements' },
   machines: { en: 'Equipment', fr: 'Équipements' },
+  workspaces: { en: 'Workspaces', fr: 'Espaces' },
   addMachine: { en: 'Add', fr: 'Ajouter' },
   addEquipment: { en: 'Add Equipment', fr: 'Ajouter équipement' },
   settings: { en: 'Settings', fr: 'Paramètres' },
