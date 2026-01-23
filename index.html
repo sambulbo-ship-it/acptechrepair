@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TechRepair" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#0f1419" />
+    <meta name="theme-color" content="#0a0c0f" />
     <meta name="format-detection" content="telephone=no" />
     <title>Tech Repair</title>
     <meta name="description" content="Track equipment diagnostics, repairs, and maintenance for your AV team" />
@@ -27,6 +27,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <!-- Prevent iOS overscroll white flash -->
+    <style>
+      html, body {
+        background-color: #0a0c0f;
+        overscroll-behavior: none;
+      }
+    </style>
   </head>
 
   <body>
