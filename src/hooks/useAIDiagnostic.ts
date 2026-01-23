@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -20,25 +21,42 @@ export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
     message: string, 
     enableWebSearch: boolean = false
   ) => {
-    const userMsg: Message = { role: 'user', content: message };
+    // Client-side validation
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage) {
+      setError('Le message ne peut pas être vide');
+      return;
+    }
+    if (trimmedMessage.length > 2000) {
+      setError('Le message doit faire moins de 2000 caractères');
+      return;
+    }
+
+    const userMsg: Message = { role: 'user', content: trimmedMessage };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setError(null);
 
     try {
+      // Get auth session for the request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Vous devez être connecté pour utiliser cette fonctionnalité');
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-diagnostic`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            message,
-            machineCategory: options.machineCategory,
-            machineBrand: options.machineBrand,
-            machineModel: options.machineModel,
+            message: trimmedMessage,
+            machineCategory: options.machineCategory?.trim().slice(0, 100),
+            machineBrand: options.machineBrand?.trim().slice(0, 100),
+            machineModel: options.machineModel?.trim().slice(0, 100),
             enableWebSearch,
           }),
         }
