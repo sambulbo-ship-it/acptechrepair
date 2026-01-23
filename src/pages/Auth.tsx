@@ -106,45 +106,45 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center">
-            <Wrench className="w-7 h-7 text-primary-foreground" />
+    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col">
+      {/* Content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        {/* Logo - Minimal */}
+        <div className="flex flex-col items-center mb-12">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Wrench className="w-8 h-8 text-primary" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Tech Repair</h1>
-            <p className="text-sm text-muted-foreground">Diagnostic d'équipements</p>
-          </div>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">Tech Repair</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gestion d'équipements</p>
         </div>
 
-        {/* Form Card */}
-        <div className="w-full max-w-sm ios-card p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
-            {isSignUp ? 'Créer un compte' : 'Connexion'}
-          </h2>
+        {/* Form - Clean & Minimal */}
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center mb-8">
+            <h2 className="text-lg font-medium text-foreground">
+              {isSignUp ? 'Créer un compte' : 'Connexion'}
+            </h2>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 bg-secondary border-0"
+                  className="pl-10 h-12"
                   disabled={loading}
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.email}
                 </p>
               )}
@@ -152,22 +152,22 @@ const Auth = () => {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mot de passe</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-12 bg-secondary border-0"
+                  className="pl-10 h-12"
                   disabled={loading}
                 />
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.password}
                 </p>
               )}
@@ -176,22 +176,22 @@ const Auth = () => {
             {/* Confirm Password (Sign Up only) */}
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="confirm">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirm" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Confirmer</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="confirm"
                     type="password"
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 h-12 bg-secondary border-0"
+                    className="pl-10 h-12"
                     disabled={loading}
                   />
                 </div>
                 {errors.confirm && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
                     {errors.confirm}
                   </p>
                 )}
@@ -200,11 +200,11 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-medium"
+              className="w-full h-12 text-sm font-medium"
               disabled={loading}
             >
               {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : isSignUp ? (
                 "S'inscrire"
               ) : (
@@ -214,7 +214,7 @@ const Auth = () => {
           </form>
 
           {/* Toggle */}
-          <div className="mt-6 text-center">
+          <div className="text-center pt-4">
             <button
               type="button"
               onClick={() => {
@@ -232,12 +232,14 @@ const Auth = () => {
             </button>
           </div>
         </div>
-
-        {/* Info */}
-        <p className="mt-6 text-xs text-muted-foreground text-center max-w-xs">
-          Connectez-vous pour accéder aux espaces de travail de votre équipe
-        </p>
       </div>
+
+      {/* Footer */}
+      <footer className="py-6 text-center pb-[env(safe-area-inset-bottom)]">
+        <p className="text-xs text-muted-foreground">
+          Gérez vos équipements en toute simplicité
+        </p>
+      </footer>
     </div>
   );
 };

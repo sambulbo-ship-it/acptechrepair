@@ -16,7 +16,11 @@ import {
   Users,
   Loader2,
   LogOut,
-  Crown
+  Crown,
+  Trash2,
+  UserMinus,
+  MoreVertical,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -26,7 +30,25 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 const Workspaces = () => {
@@ -39,6 +61,8 @@ const Workspaces = () => {
     setCurrentWorkspace, 
     joinWorkspace, 
     createWorkspace,
+    leaveWorkspace,
+    deleteWorkspace,
     canCreateWorkspace,
     signOut,
     loading,
@@ -51,9 +75,12 @@ const Workspaces = () => {
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [joinLoading, setJoinLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState<string | null>(null);
 
   const handleJoinWorkspace = async () => {
     if (!inviteCode.trim()) {
@@ -89,11 +116,37 @@ const Workspaces = () => {
     if (error) {
       toast.error(error.message);
     } else if (workspace) {
-      toast.success(`Espace "${workspace.name}" créé !`);
+      toast.success(`Espace "${workspace.name}" créé`);
       setNewWorkspaceName('');
       setCreateDialogOpen(false);
       setCurrentWorkspace(workspace);
       navigate('/');
+    }
+  };
+
+  const handleLeaveWorkspace = async (workspaceId: string) => {
+    setActionLoading(workspaceId);
+    const { error } = await leaveWorkspace(workspaceId);
+    setActionLoading(null);
+    setLeaveDialogOpen(null);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Vous avez quitté l\'espace');
+    }
+  };
+
+  const handleDeleteWorkspace = async (workspaceId: string) => {
+    setActionLoading(workspaceId);
+    const { error } = await deleteWorkspace(workspaceId);
+    setActionLoading(null);
+    setDeleteDialogOpen(null);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Espace supprimé');
     }
   };
 
@@ -102,10 +155,11 @@ const Workspaces = () => {
     navigate('/');
   };
 
-  const copyInviteCode = async (code: string) => {
+  const copyInviteCode = async (code: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     await navigator.clipboard.writeText(code.toUpperCase());
     setCopiedCode(code);
-    toast.success('Code copié !');
+    toast.success('Code copié');
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
@@ -116,95 +170,102 @@ const Workspaces = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="min-h-screen min-h-[100dvh] bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 glass-effect border-b border-border/50 pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center justify-between px-4 h-14">
-          <h1 className="text-lg font-semibold text-foreground">Espaces de travail</h1>
-          <Button variant="ghost" size="icon" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5" />
+    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col">
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center justify-between px-5 h-14">
+          <h1 className="text-base font-medium text-foreground tracking-tight">Espaces</h1>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleSignOut}
+            className="text-muted-foreground hover:text-foreground -mr-2"
+          >
+            <LogOut className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="p-4 space-y-6">
-        {/* User Info */}
-        <div className="ios-card p-4">
+      <main className="flex-1 px-5 py-6 space-y-8 pb-[env(safe-area-inset-bottom)]">
+        {/* User Section */}
+        <section className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Compte</span>
+            {isAppAdmin && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/10 text-amber-500 rounded text-[10px] font-medium uppercase tracking-wide">
+                <Crown className="w-2.5 h-2.5" />
+                Admin
+              </span>
+            )}
+          </div>
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">Connecté en tant que</p>
-                {isAppAdmin && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
-                    <Crown className="w-3 h-3" />
-                    Super Admin
-                  </span>
-                )}
-              </div>
-              <p className="font-medium text-foreground truncate">{user?.email}</p>
-            </div>
+            <p className="text-sm text-foreground">{user?.email}</p>
             {isAppAdmin && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
                 onClick={() => navigate('/admin')}
-                className="gap-2"
+                className="text-xs text-muted-foreground hover:text-foreground h-7"
               >
-                <Shield className="w-4 h-4" />
-                Admin
+                <Shield className="w-3.5 h-3.5 mr-1.5" />
+                Dashboard
               </Button>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Quick Actions */}
+        <section className="grid grid-cols-2 gap-3">
           {/* Join Workspace */}
           <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
             <DialogTrigger asChild>
-              <button className="ios-card p-4 flex flex-col items-center gap-2 hover:bg-secondary/50 transition-colors">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <KeyRound className="w-6 h-6 text-primary" />
+              <button className="group flex flex-col items-start gap-3 p-4 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border/30 transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <KeyRound className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-sm font-medium text-foreground">Rejoindre</span>
-                <span className="text-xs text-muted-foreground">avec un code</span>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-foreground">Rejoindre</p>
+                  <p className="text-xs text-muted-foreground">Avec un code</p>
+                </div>
               </button>
             </DialogTrigger>
-            <DialogContent className="mx-4">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Rejoindre un espace</DialogTitle>
-                <DialogDescription>
-                  Entrez le code d'invitation fourni par l'administrateur
+                <DialogTitle className="text-lg font-medium">Rejoindre un espace</DialogTitle>
+                <DialogDescription className="text-sm">
+                  Entrez le code fourni par l'administrateur
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="invite-code">Code d'invitation</Label>
+                  <Label htmlFor="invite-code" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Code d'invitation</Label>
                   <Input
                     id="invite-code"
-                    placeholder="ex: AB12CD34"
+                    placeholder="AB12CD34"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                    className="h-12 bg-secondary border-0 text-center text-lg tracking-widest uppercase"
+                    className="h-12 text-center text-lg tracking-[0.3em] uppercase font-mono"
                     maxLength={8}
                     disabled={joinLoading}
                   />
                 </div>
+              </div>
+              <DialogFooter>
                 <Button 
                   onClick={handleJoinWorkspace} 
-                  className="w-full h-12"
-                  disabled={joinLoading}
+                  className="w-full h-11"
+                  disabled={joinLoading || !inviteCode.trim()}
                 >
-                  {joinLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Rejoindre'}
+                  {joinLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Rejoindre'}
                 </Button>
-              </div>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
 
@@ -213,91 +274,91 @@ const Workspaces = () => {
             <DialogTrigger asChild>
               <button 
                 className={cn(
-                  "ios-card p-4 flex flex-col items-center gap-2 transition-colors",
-                  canCreateWorkspace ? "hover:bg-secondary/50" : "opacity-50 cursor-not-allowed"
+                  "group flex flex-col items-start gap-3 p-4 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border/30 transition-all duration-200",
+                  !canCreateWorkspace && "opacity-40 cursor-not-allowed"
                 )}
                 disabled={!canCreateWorkspace}
               >
-                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-success" />
+                <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-success" />
                 </div>
-                <span className="text-sm font-medium text-foreground">Créer</span>
-                <span className="text-xs text-muted-foreground">nouvel espace</span>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-foreground">Créer</p>
+                  <p className="text-xs text-muted-foreground">Nouvel espace</p>
+                </div>
               </button>
             </DialogTrigger>
-            <DialogContent className="mx-4">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Créer un espace</DialogTitle>
-                <DialogDescription>
-                  Un code d'invitation sera généré pour inviter votre équipe
+                <DialogTitle className="text-lg font-medium">Créer un espace</DialogTitle>
+                <DialogDescription className="text-sm">
+                  Un code sera généré pour inviter votre équipe
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="workspace-name">Nom de l'espace</Label>
+                  <Label htmlFor="workspace-name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nom de l'espace</Label>
                   <Input
                     id="workspace-name"
-                    placeholder="ex: Mon Entreprise"
+                    placeholder="Mon Entreprise"
                     value={newWorkspaceName}
                     onChange={(e) => setNewWorkspaceName(e.target.value)}
-                    className="h-12 bg-secondary border-0"
+                    className="h-12"
                     disabled={createLoading}
                   />
                 </div>
+              </div>
+              <DialogFooter>
                 <Button 
                   onClick={handleCreateWorkspace} 
-                  className="w-full h-12"
-                  disabled={createLoading}
+                  className="w-full h-11"
+                  disabled={createLoading || !newWorkspaceName.trim()}
                 >
-                  {createLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Créer l\'espace'}
+                  {createLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Créer'}
                 </Button>
-              </div>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
+        </section>
 
-        {!canCreateWorkspace && (
-          <p className="text-xs text-muted-foreground text-center">
-            Seuls les administrateurs peuvent créer de nouveaux espaces
-          </p>
-        )}
-
-        {/* Loading state (prevents showing empty state while workspaces are still being fetched) */}
+        {/* Loading State */}
         {workspacesLoading && !workspacesLoaded && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
           </div>
         )}
 
         {/* Workspaces List */}
         {workspacesLoaded && workspaces.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-medium text-muted-foreground px-1">Vos espaces</h2>
+          <section className="space-y-3">
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vos espaces</h2>
             <div className="space-y-2">
               {workspaces.map((workspace) => (
                 <div
                   key={workspace.id}
                   className={cn(
-                    "ios-card p-4 flex items-center gap-3",
-                    currentWorkspace?.id === workspace.id && "ring-2 ring-primary"
+                    "group flex items-center gap-3 p-3 rounded-xl bg-card border border-border/30 transition-all duration-200 hover:border-border/50",
+                    currentWorkspace?.id === workspace.id && "border-primary/30 bg-primary/5"
                   )}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-6 h-6 text-foreground" />
+                  {/* Icon */}
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-muted-foreground" />
                   </div>
                   
-                  <div className="flex-1 min-w-0">
+                  {/* Content */}
+                  <div className="flex-1 min-w-0" onClick={() => handleSelectWorkspace(workspace)}>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-foreground truncate">{workspace.name}</h3>
+                      <h3 className="text-sm font-medium text-foreground truncate">{workspace.name}</h3>
                       {workspace.role === 'admin' && (
-                        <Shield className="w-4 h-4 text-primary flex-shrink-0" />
+                        <Shield className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                       )}
                     </div>
                     
-                    {workspace.role === 'admin' && (
+                    {workspace.role === 'admin' && workspace.invite_code && (
                       <button
-                        onClick={() => copyInviteCode(workspace.invite_code)}
-                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-1"
+                        onClick={(e) => copyInviteCode(workspace.invite_code, e)}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-0.5 transition-colors"
                       >
                         <span className="font-mono tracking-wider">{workspace.invite_code.toUpperCase()}</span>
                         {copiedCode === workspace.invite_code ? (
@@ -309,35 +370,117 @@ const Workspaces = () => {
                     )}
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleSelectWorkspace(workspace)}
-                    className="flex-shrink-0"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
+                  {/* Actions */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleSelectWorkspace(workspace)}>
+                        <ChevronRight className="w-4 h-4 mr-2" />
+                        Ouvrir
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLeaveDialogOpen(workspace.id);
+                        }}
+                        className="text-warning focus:text-warning"
+                      >
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        Quitter
+                      </DropdownMenuItem>
+                      {workspace.role === 'admin' && (
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteDialogOpen(workspace.id);
+                          }}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Empty State */}
         {workspacesLoaded && workspaces.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-muted-foreground" />
+          <section className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              Aucun espace
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Créez un espace pour votre entreprise ou rejoignez-en un avec un code d'invitation
+            <h3 className="text-base font-medium text-foreground mb-1">Aucun espace</h3>
+            <p className="text-sm text-muted-foreground max-w-[240px]">
+              Créez ou rejoignez un espace pour commencer
             </p>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
+
+      {/* Leave Workspace Dialog */}
+      <AlertDialog open={!!leaveDialogOpen} onOpenChange={() => setLeaveDialogOpen(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Quitter l'espace ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous ne pourrez plus accéder aux données de cet espace. Vous pourrez le rejoindre à nouveau avec un code d'invitation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => leaveDialogOpen && handleLeaveWorkspace(leaveDialogOpen)}
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
+              disabled={!!actionLoading}
+            >
+              {actionLoading === leaveDialogOpen ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Quitter'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Workspace Dialog */}
+      <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Supprimer l'espace ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les données, machines et historiques seront définitivement supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteDialogOpen && handleDeleteWorkspace(deleteDialogOpen)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!!actionLoading}
+            >
+              {actionLoading === deleteDialogOpen ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

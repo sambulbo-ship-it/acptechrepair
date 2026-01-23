@@ -24,6 +24,10 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   joinWorkspace: (inviteCode: string) => Promise<{ error: Error | null; workspace?: Workspace }>;
   createWorkspace: (name: string) => Promise<{ error: Error | null; workspace?: Workspace }>;
+  leaveWorkspace: (workspaceId: string) => Promise<{ error: Error | null }>;
+  deleteWorkspace: (workspaceId: string) => Promise<{ error: Error | null }>;
+  transferAdminRole: (workspaceId: string, newAdminUserId: string) => Promise<{ error: Error | null }>;
+  getWorkspaceMembers: (workspaceId: string) => Promise<{ data: Array<{ user_id: string; email: string; role: string }> | null; error: Error | null }>;
   refreshWorkspaces: () => Promise<void>;
   isWorkspaceAdmin: boolean;
   canCreateWorkspace: boolean;
@@ -414,6 +418,173 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const getWorkspaceMembers = async (workspaceId: string): Promise<{ data: Array<{ user_id: string; email: string; role: string }> | null; error: Error | null }> => {
+    if (!user) {
+      return { data: null, error: new Error('Non connecté') };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('workspace_members')
+        .select('user_id, role')
+        .eq('workspace_id', workspaceId);
+
+      if (error) {
+        return { data: null, error: new Error('Erreur lors de la récupération des membres') };
+      }
+
+      // Get user emails from auth (we'll use the user_id for now since we can't access auth.users)
+      // In a real app, you'd have a profiles table
+      const members = (data || []).map(member => ({
+        user_id: member.user_id,
+        email: member.user_id, // Would be replaced with actual email from profiles
+        role: member.role,
+      }));
+
+      return { data: members, error: null };
+    } catch (err) {
+      return { data: null, error: err as Error };
+    }
+  };
+
+  const leaveWorkspace = async (workspaceId: string): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error('Non connecté') };
+    }
+
+    const workspace = workspaces.find(w => w.id === workspaceId);
+    if (!workspace) {
+      return { error: new Error('Espace non trouvé') };
+    }
+
+    try {
+      // Check if user is the only admin
+      if (workspace.role === 'admin') {
+        const { data: admins, error: adminError } = await supabase
+          .from('workspace_members')
+          .select('user_id')
+          .eq('workspace_id', workspaceId)
+          .eq('role', 'admin');
+
+        if (adminError) {
+          return { error: new Error('Erreur lors de la vérification') };
+        }
+
+        if (admins && admins.length === 1) {
+          // Check if there are other members
+          const { data: members } = await supabase
+            .from('workspace_members')
+            .select('user_id')
+            .eq('workspace_id', workspaceId)
+            .neq('user_id', user.id);
+
+          if (members && members.length > 0) {
+            return { error: new Error('Vous devez nommer un autre admin avant de quitter') };
+          }
+        }
+      }
+
+      // Leave workspace
+      const { error } = await supabase
+        .from('workspace_members')
+        .delete()
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        return { error: new Error('Erreur lors du départ') };
+      }
+
+      // If this was the current workspace, clear it
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspace(null);
+      }
+
+      await refreshWorkspaces();
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const deleteWorkspace = async (workspaceId: string): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error('Non connecté') };
+    }
+
+    const workspace = workspaces.find(w => w.id === workspaceId);
+    if (!workspace) {
+      return { error: new Error('Espace non trouvé') };
+    }
+
+    if (workspace.role !== 'admin') {
+      return { error: new Error('Seul un admin peut supprimer cet espace') };
+    }
+
+    try {
+      // Delete all workspace members first (due to foreign key constraints)
+      const { error: membersError } = await supabase
+        .from('workspace_members')
+        .delete()
+        .eq('workspace_id', workspaceId);
+
+      if (membersError) {
+        console.error('Delete members error:', membersError);
+        return { error: new Error('Erreur lors de la suppression des membres') };
+      }
+
+      // Delete the workspace
+      const { error } = await supabase
+        .from('workspaces')
+        .delete()
+        .eq('id', workspaceId);
+
+      if (error) {
+        console.error('Delete workspace error:', error);
+        return { error: new Error('Erreur lors de la suppression') };
+      }
+
+      // If this was the current workspace, clear it
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspace(null);
+      }
+
+      await refreshWorkspaces();
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const transferAdminRole = async (workspaceId: string, newAdminUserId: string): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error('Non connecté') };
+    }
+
+    const workspace = workspaces.find(w => w.id === workspaceId);
+    if (!workspace || workspace.role !== 'admin') {
+      return { error: new Error('Vous n\'êtes pas admin de cet espace') };
+    }
+
+    try {
+      // Update the new admin's role
+      const { error: promoteError } = await supabase
+        .from('workspace_members')
+        .update({ role: 'admin' })
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', newAdminUserId);
+
+      if (promoteError) {
+        return { error: new Error('Erreur lors de la promotion') };
+      }
+
+      await refreshWorkspaces();
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -429,6 +600,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signOut,
       joinWorkspace,
       createWorkspace,
+      leaveWorkspace,
+      deleteWorkspace,
+      transferAdminRole,
+      getWorkspaceMembers,
       refreshWorkspaces: () => refreshWorkspaces(),
       isWorkspaceAdmin,
       canCreateWorkspace,
