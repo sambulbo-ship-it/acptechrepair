@@ -813,6 +813,48 @@ export type Database = {
           },
         ]
       }
+      workspace_brands: {
+        Row: {
+          brand_name: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          brand_name: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          brand_name?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_brands_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_brands_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           id: string
