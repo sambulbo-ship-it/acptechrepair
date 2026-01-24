@@ -68,6 +68,11 @@ const categoryCommonIssues: Record<EquipmentCategory, { fr: string; en: string }
     { fr: 'Nettoyage écran tactile', en: 'Touchscreen cleaning' },
     { fr: 'Sauvegarde/restauration shows', en: 'Show backup/restore' },
   ],
+  'peripheral': [
+    { fr: 'Calibration entrées/sorties', en: 'I/O calibration' },
+    { fr: 'Remplacement tubes/lampes', en: 'Tube/lamp replacement' },
+    { fr: 'Mise à jour firmware', en: 'Firmware update' },
+  ],
   'other': [
     { fr: 'Maintenance générale', en: 'General maintenance' },
     { fr: 'Inspection visuelle', en: 'Visual inspection' },

@@ -8,6 +8,7 @@ import {
   Video, 
   Mic,
   Box,
+  Sliders,
   LucideIcon
 } from 'lucide-react';
 import { EquipmentCategory } from '@/data/equipmentData';
@@ -22,6 +23,7 @@ const iconMap: Record<string, LucideIcon> = {
   Video,
   Mic,
   Box,
+  Sliders,
 };
 
 interface CategoryIconProps {
@@ -45,6 +47,7 @@ export const getCategoryIconComponent = (category: EquipmentCategory): LucideIco
     'computer': Monitor,
     'video': Video,
     'microphone': Mic,
+    'peripheral': Sliders,
     'other': Box,
   };
   return categoryIcons[category] || Box;
