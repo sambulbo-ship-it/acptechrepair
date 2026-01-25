@@ -98,6 +98,7 @@ export const translations: Translations = {
   inService: { en: 'In Service', fr: 'En service' },
   needsWork: { en: 'Needs Work', fr: 'À réparer' },
   resources: { en: 'Resources', fr: 'Ressources' },
+  rentalSale: { en: 'Rental', fr: 'Location' },
 };
 
 interface LanguageContextType {
