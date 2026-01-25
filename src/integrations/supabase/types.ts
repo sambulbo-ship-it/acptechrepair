@@ -474,6 +474,173 @@ export type Database = {
           },
         ]
       }
+      rental_sale_config: {
+        Row: {
+          available_for_rental: boolean
+          available_for_sale: boolean
+          created_at: string
+          created_by: string | null
+          currency: string
+          daily_rental_price: number | null
+          id: string
+          machine_id: string
+          monthly_rental_price: number | null
+          rental_notes: string | null
+          sale_notes: string | null
+          sale_price: number | null
+          updated_at: string
+          weekly_rental_price: number | null
+          workspace_id: string
+        }
+        Insert: {
+          available_for_rental?: boolean
+          available_for_sale?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          daily_rental_price?: number | null
+          id?: string
+          machine_id: string
+          monthly_rental_price?: number | null
+          rental_notes?: string | null
+          sale_notes?: string | null
+          sale_price?: number | null
+          updated_at?: string
+          weekly_rental_price?: number | null
+          workspace_id: string
+        }
+        Update: {
+          available_for_rental?: boolean
+          available_for_sale?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          daily_rental_price?: number | null
+          id?: string
+          machine_id?: string
+          monthly_rental_price?: number | null
+          rental_notes?: string | null
+          sale_notes?: string | null
+          sale_price?: number | null
+          updated_at?: string
+          weekly_rental_price?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_sale_config_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: true
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_sale_config_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_sale_config_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rental_transactions: {
+        Row: {
+          actual_end_date: string | null
+          agreed_price: number
+          client_company: string | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deposit_amount: number | null
+          expected_end_date: string | null
+          id: string
+          machine_id: string
+          notes: string | null
+          start_date: string
+          status: string
+          transaction_type: string
+          updated_at: string
+          warranty_end_date: string | null
+          workspace_id: string
+        }
+        Insert: {
+          actual_end_date?: string | null
+          agreed_price: number
+          client_company?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deposit_amount?: number | null
+          expected_end_date?: string | null
+          id?: string
+          machine_id: string
+          notes?: string | null
+          start_date: string
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          warranty_end_date?: string | null
+          workspace_id: string
+        }
+        Update: {
+          actual_end_date?: string | null
+          agreed_price?: number
+          client_company?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deposit_amount?: number | null
+          expected_end_date?: string | null
+          id?: string
+          machine_id?: string
+          notes?: string | null
+          start_date?: string
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+          warranty_end_date?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_transactions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_transactions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_transactions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repair_locations: {
         Row: {
           address: string | null

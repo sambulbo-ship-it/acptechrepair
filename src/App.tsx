@@ -31,6 +31,7 @@ const AIAssistant = lazy(() => import("./pages/AIAssistant"));
 const FindRepairService = lazy(() => import("./pages/FindRepairService"));
 const RepairServiceSettings = lazy(() => import("./pages/RepairServiceSettings"));
 const RepairRequestsReceived = lazy(() => import("./pages/RepairRequestsReceived"));
+const RentalSale = lazy(() => import("./pages/RentalSale"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Query client with retry and error handling
@@ -165,6 +166,7 @@ const AppRoutes = () => (
       <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
       <Route path="/repair-service-settings" element={<ProtectedRoute><RepairServiceSettings /></ProtectedRoute>} />
       <Route path="/repair-requests-received" element={<ProtectedRoute><RepairRequestsReceived /></ProtectedRoute>} />
+      <Route path="/rental-sale" element={<ProtectedRoute><RentalSale /></ProtectedRoute>} />
       
       {/* Public route for finding repair services */}
       <Route path="/find-repair" element={<FindRepairService />} />
