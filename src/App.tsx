@@ -33,6 +33,7 @@ const RepairServiceSettings = lazy(() => import("./pages/RepairServiceSettings")
 const RepairRequestsReceived = lazy(() => import("./pages/RepairRequestsReceived"));
 const RentalSale = lazy(() => import("./pages/RentalSale"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ClientCatalog = lazy(() => import("./pages/ClientCatalog"));
 
 // Query client with retry and error handling
 const queryClient = new QueryClient({
@@ -170,6 +171,7 @@ const AppRoutes = () => (
       
       {/* Public route for finding repair services */}
       <Route path="/find-repair" element={<FindRepairService />} />
+      <Route path="/catalog" element={<ClientCatalog />} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

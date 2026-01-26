@@ -1,1 +1,10 @@
 project_id = "pnzovyrlqkxeajzuylgq"
+
+[functions.ai-diagnostic]
+verify_jwt = false
+
+[functions.submit-repair-request]
+verify_jwt = false
+
+[functions.public-catalog]
+verify_jwt = false

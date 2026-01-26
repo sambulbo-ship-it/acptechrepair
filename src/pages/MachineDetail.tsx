@@ -138,10 +138,10 @@ const MachineDetail = () => {
       />
 
       <div className="p-4 space-y-4">
-        {/* Machine Info Card */}
-        <div className="ios-card p-4">
+        {/* Machine Info Card - Glass Effect */}
+        <div className="glass-card p-4">
           <div className="flex items-start gap-4 mb-4">
-            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-14 h-14 rounded-xl glass-button flex items-center justify-center flex-shrink-0">
               <CategoryIcon className="w-7 h-7 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -171,7 +171,7 @@ const MachineDetail = () => {
 
           {/* Code Display Section */}
           {machine.serialNumber && (
-            <div className="pt-4 border-t border-border mt-4">
+            <div className="pt-4 border-t border-border/50 mt-4">
               <CodeDisplay 
                 serialNumber={machine.serialNumber} 
                 machineName={machine.name}
@@ -182,7 +182,7 @@ const MachineDetail = () => {
           )}
 
           {machine.notes && (
-            <p className="mt-4 text-sm text-muted-foreground border-t border-border pt-4">
+            <p className="mt-4 text-sm text-muted-foreground border-t border-border/50 pt-4">
               {machine.notes}
             </p>
           )}
@@ -199,7 +199,7 @@ const MachineDetail = () => {
           <CollapsibleTrigger asChild>
             <Button 
               variant="outline" 
-              className="w-full justify-between h-14 rounded-xl bg-primary/5 border-primary/20 hover:bg-primary/10"
+              className="w-full justify-between h-14 rounded-xl glass-card border-primary/20 hover:bg-primary/10"
             >
               <div className="flex items-center gap-3">
                 <Bot className="w-5 h-5 text-primary" />
@@ -222,7 +222,7 @@ const MachineDetail = () => {
 
         {/* No Team Members Warning */}
         {team.length === 0 && (
-          <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-xl border border-warning/30">
+          <div className="flex items-center gap-3 p-3 glass-card border-warning/30">
             <AlertCircle className="w-5 h-5 text-warning flex-shrink-0" />
             <p className="text-sm text-warning">
               {language === 'fr' 
@@ -247,7 +247,7 @@ const MachineDetail = () => {
                 {t('addEntry')}
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl overflow-hidden">
+            <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl overflow-hidden glass-dialog border-t-0">
               <SheetHeader className="mb-4">
                 <SheetTitle>{t('addEntry')}</SheetTitle>
               </SheetHeader>
@@ -259,7 +259,7 @@ const MachineDetail = () => {
                     value={entryForm.type}
                     onValueChange={(value) => setEntryForm(prev => ({ ...prev, type: value as EntryType }))}
                   >
-                    <SelectTrigger className="h-12 bg-secondary border-0 rounded-xl">
+                    <SelectTrigger className="h-12 glass-input">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,7 +277,7 @@ const MachineDetail = () => {
                     type="date"
                     value={entryForm.date}
                     onChange={(e) => setEntryForm(prev => ({ ...prev, date: e.target.value }))}
-                    className="h-12 bg-secondary border-0 rounded-xl"
+                    className="h-12 glass-input"
                   />
                 </div>
 
@@ -287,7 +287,7 @@ const MachineDetail = () => {
                     value={entryForm.technicianId}
                     onValueChange={(value) => setEntryForm(prev => ({ ...prev, technicianId: value }))}
                   >
-                    <SelectTrigger className="h-12 bg-secondary border-0 rounded-xl">
+                    <SelectTrigger className="h-12 glass-input">
                       <SelectValue placeholder={t('selectTechnician')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -305,7 +305,7 @@ const MachineDetail = () => {
                   <Textarea
                     value={entryForm.description}
                     onChange={(e) => setEntryForm(prev => ({ ...prev, description: e.target.value }))}
-                    className="bg-secondary border-0 rounded-xl min-h-[80px]"
+                    className="glass-input min-h-[80px]"
                     placeholder={language === 'fr' ? 'Décrivez le problème ou l\'intervention...' : 'Describe the issue or work done...'}
                     required
                   />
@@ -323,7 +323,7 @@ const MachineDetail = () => {
                   <Textarea
                     value={entryForm.workPerformed}
                     onChange={(e) => setEntryForm(prev => ({ ...prev, workPerformed: e.target.value }))}
-                    className="bg-secondary border-0 rounded-xl min-h-[80px]"
+                    className="glass-input min-h-[80px]"
                     placeholder={language === 'fr' ? 'Travaux effectués...' : 'Work performed...'}
                   />
                 </div>
@@ -334,7 +334,7 @@ const MachineDetail = () => {
                     <Input
                       value={entryForm.partsReplaced}
                       onChange={(e) => setEntryForm(prev => ({ ...prev, partsReplaced: e.target.value }))}
-                      className="h-12 bg-secondary border-0 rounded-xl"
+                      className="h-12 glass-input"
                       placeholder={language === 'fr' ? 'Ex: Fader, alimentation...' : 'Ex: Fader, power supply...'}
                     />
                   </div>
@@ -349,7 +349,7 @@ const MachineDetail = () => {
         </div>
 
         {entries.length === 0 ? (
-          <div className="ios-card p-8 text-center">
+          <div className="glass-card p-8 text-center">
             <p className="text-muted-foreground">{t('noHistory')}</p>
           </div>
         ) : (

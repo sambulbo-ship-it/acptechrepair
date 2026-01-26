@@ -88,7 +88,7 @@ const Team = () => {
       <div className="p-4 space-y-6">
         {/* Error State */}
         {error && (
-          <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-xl border border-destructive/30">
+          <div className="flex items-center gap-3 p-3 glass-card border-destructive/30">
             <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{error}</p>
           </div>
@@ -102,7 +102,7 @@ const Team = () => {
               {t('addMember')}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-3xl">
+          <SheetContent side="bottom" className="rounded-t-3xl glass-dialog border-t-0">
             <SheetHeader>
               <SheetTitle>{t('addMember')}</SheetTitle>
             </SheetHeader>
@@ -114,7 +114,7 @@ const Team = () => {
                   placeholder={language === 'fr' ? 'Jean Dupont' : 'John Doe'}
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
-                  className="h-12 bg-secondary border-0"
+                  className="h-12 glass-input"
                   disabled={isSubmitting}
                   autoComplete="off"
                 />
@@ -126,7 +126,7 @@ const Team = () => {
                   placeholder={language === 'fr' ? 'Technicien' : 'Technician'}
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
-                  className="h-12 bg-secondary border-0"
+                  className="h-12 glass-input"
                   disabled={isSubmitting}
                   autoComplete="off"
                 />
@@ -173,9 +173,9 @@ const Team = () => {
             {team.map((member) => (
               <div
                 key={member.id}
-                className="ios-card p-4 flex items-center gap-3"
+                className="glass-card p-4 flex items-center gap-3"
               >
-                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full glass-button flex items-center justify-center flex-shrink-0">
                   <User className="w-6 h-6 text-foreground" />
                 </div>
                 

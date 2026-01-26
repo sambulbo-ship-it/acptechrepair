@@ -28,12 +28,12 @@ const Settings = () => {
       
       <div className="p-4 space-y-4">
         {/* Current User & Workspace */}
-        <div className="ios-card overflow-hidden">
-          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+        <div className="glass-section overflow-hidden">
+          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border/50">
             Compte
           </h3>
           
-          <div className="px-4 py-4 border-b border-border">
+          <div className="glass-list-item px-4 py-4">
             <p className="text-xs text-muted-foreground">Email</p>
             <p className="text-sm font-medium text-foreground truncate">{user?.email || '-'}</p>
           </div>
@@ -41,7 +41,7 @@ const Settings = () => {
           {currentWorkspace && (
             <button
               onClick={() => navigate('/workspaces')}
-              className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+              className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
             >
               <Building2 className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1 text-left min-w-0">
@@ -57,14 +57,14 @@ const Settings = () => {
         </div>
 
         {/* Quick settings links */}
-        <div className="ios-card overflow-hidden">
-          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+        <div className="glass-section overflow-hidden">
+          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border/50">
             Paramètres rapides
           </h3>
           
           <button
             onClick={() => navigate('/notification-settings')}
-            className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors border-b border-border"
+            className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
           >
             <Bell className="w-5 h-5 text-primary" />
             <span className="flex-1 text-left text-foreground">Notifications</span>
@@ -75,7 +75,7 @@ const Settings = () => {
             <>
               <button
                 onClick={() => navigate('/workspace-branding')}
-                className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors border-b border-border"
+                className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
               >
                 <Palette className="w-5 h-5 text-primary" />
                 <span className="flex-1 text-left text-foreground">Personnalisation</span>
@@ -84,7 +84,7 @@ const Settings = () => {
               
               <button
                 onClick={() => navigate('/workspace-settings')}
-                className="w-full px-4 py-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+                className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
               >
                 <SettingsIcon className="w-5 h-5 text-primary" />
                 <span className="flex-1 text-left text-foreground">Paramètres espace</span>
@@ -95,16 +95,16 @@ const Settings = () => {
         </div>
 
         {/* Language */}
-        <div className="ios-card overflow-hidden">
-          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border">
+        <div className="glass-section overflow-hidden">
+          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border/50">
             {t('language')}
           </h3>
           
           <button
             onClick={() => setLanguage('en')}
             className={cn(
-              'w-full flex items-center justify-between px-4 py-4 touch-target border-b border-border transition-colors',
-              language === 'en' && 'bg-primary/5'
+              'w-full glass-list-item flex items-center justify-between px-4 py-4 touch-target transition-colors',
+              language === 'en' && 'bg-primary/10'
             )}
           >
             <span className="text-foreground">{t('english')}</span>
@@ -114,8 +114,8 @@ const Settings = () => {
           <button
             onClick={() => setLanguage('fr')}
             className={cn(
-              'w-full flex items-center justify-between px-4 py-4 touch-target transition-colors',
-              language === 'fr' && 'bg-primary/5'
+              'w-full glass-list-item flex items-center justify-between px-4 py-4 touch-target transition-colors',
+              language === 'fr' && 'bg-primary/10'
             )}
           >
             <span className="text-foreground">{t('french')}</span>
@@ -134,7 +134,7 @@ const Settings = () => {
         </Button>
 
         {/* App Info */}
-        <div className="ios-card p-4">
+        <div className="glass-card p-4">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">
             Tech Repair
           </h3>
