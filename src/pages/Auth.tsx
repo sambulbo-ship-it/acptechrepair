@@ -109,127 +109,129 @@ const Auth = () => {
     <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col">
       {/* Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        {/* Logo - Minimal */}
+        {/* Logo - Glass Effect */}
         <div className="flex flex-col items-center mb-12">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <Wrench className="w-8 h-8 text-primary" />
+          <div className="w-20 h-20 rounded-3xl glass-card flex items-center justify-center mb-4">
+            <Wrench className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-xl font-semibold text-foreground tracking-tight">Tech Repair</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestion d'équipements</p>
         </div>
 
-        {/* Form - Clean & Minimal */}
-        <div className="w-full max-w-sm space-y-6">
-          <div className="text-center mb-8">
-            <h2 className="text-lg font-medium text-foreground">
-              {isSignUp ? 'Créer un compte' : 'Connexion'}
-            </h2>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="votre@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12"
-                  disabled={loading}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.email}
-                </p>
-              )}
+        {/* Form - Glass Style */}
+        <div className="w-full max-w-sm">
+          <div className="glass-dialog p-6 space-y-6">
+            <div className="text-center">
+              <h2 className="text-lg font-medium text-foreground">
+                {isSignUp ? 'Créer un compte' : 'Connexion'}
+              </h2>
             </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mot de passe</Label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-12"
-                  disabled={loading}
-                />
-              </div>
-              {errors.password && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            {/* Confirm Password (Sign Up only) */}
-            {isSignUp && (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="confirm" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Confirmer</Label>
+                <Label htmlFor="email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 h-12"
+                    id="email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12 glass-input"
                     disabled={loading}
                   />
                 </div>
-                {errors.confirm && (
+                {errors.email && (
                   <p className="text-xs text-destructive flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    {errors.confirm}
+                    {errors.email}
                   </p>
                 )}
               </div>
-            )}
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-sm font-medium"
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isSignUp ? (
-                "S'inscrire"
-              ) : (
-                'Se connecter'
-              )}
-            </Button>
-          </form>
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mot de passe</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 h-12 glass-input"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.password}
+                  </p>
+                )}
+              </div>
 
-          {/* Toggle */}
-          <div className="text-center pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrors({});
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              disabled={loading}
-            >
-              {isSignUp ? (
-                <>Déjà un compte ? <span className="text-primary font-medium">Se connecter</span></>
-              ) : (
-                <>Pas de compte ? <span className="text-primary font-medium">S'inscrire</span></>
+              {/* Confirm Password (Sign Up only) */}
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirm" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Confirmer</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="confirm"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10 h-12 glass-input"
+                      disabled={loading}
+                    />
+                  </div>
+                  {errors.confirm && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.confirm}
+                    </p>
+                  )}
+                </div>
               )}
-            </button>
+
+              <Button
+                type="submit"
+                className="w-full h-12 text-sm font-medium"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isSignUp ? (
+                  "S'inscrire"
+                ) : (
+                  'Se connecter'
+                )}
+              </Button>
+            </form>
+
+            {/* Toggle */}
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setErrors({});
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                disabled={loading}
+              >
+                {isSignUp ? (
+                  <>Déjà un compte ? <span className="text-primary font-medium">Se connecter</span></>
+                ) : (
+                  <>Pas de compte ? <span className="text-primary font-medium">S'inscrire</span></>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
