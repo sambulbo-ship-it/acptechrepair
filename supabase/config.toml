@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.public-catalog]
 verify_jwt = false
+
+[functions.ai-product-scanner]
+verify_jwt = false

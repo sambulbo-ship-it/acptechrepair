@@ -332,6 +332,75 @@
     pointer-events: none;
   }
 
+  /* TRUE Liquid Glass Bubble - iOS 26 / macOS 26 Style */
+  .liquid-glass-bubble {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      hsla(0 0% 100% / 0.18) 0%,
+      hsla(0 0% 100% / 0.08) 30%,
+      hsla(222 25% 12% / 0.85) 100%
+    );
+    backdrop-filter: blur(60px) saturate(220%) brightness(1.1) contrast(1.05);
+    -webkit-backdrop-filter: blur(60px) saturate(220%) brightness(1.1) contrast(1.05);
+    border-radius: 28px;
+    border: 1px solid hsla(0 0% 100% / 0.25);
+    box-shadow: 
+      /* Inner top glow - refraction effect */
+      0 0 0 0.5px hsla(0 0% 100% / 0.3) inset,
+      0 2px 0 0 hsla(0 0% 100% / 0.2) inset,
+      0 0 40px 0 hsla(0 0% 100% / 0.08) inset,
+      /* Outer shadow for depth */
+      0 8px 32px -4px hsla(0 0% 0% / 0.6),
+      0 4px 16px -2px hsla(0 0% 0% / 0.4),
+      0 20px 60px -10px hsla(0 0% 0% / 0.5),
+      /* Subtle glow */
+      0 0 80px -20px hsla(25 95% 53% / 0.15);
+    overflow: hidden;
+  }
+
+  .liquid-glass-bubble::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      hsla(0 0% 100% / 0.25) 0%,
+      hsla(0 0% 100% / 0.1) 20%,
+      hsla(0 0% 100% / 0) 40%,
+      hsla(0 0% 100% / 0.03) 70%,
+      hsla(0 0% 100% / 0.1) 100%
+    );
+    pointer-events: none;
+  }
+
+  .liquid-glass-bubble::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    border-radius: 28px 28px 100px 100px;
+    background: linear-gradient(
+      180deg,
+      hsla(0 0% 100% / 0.2) 0%,
+      hsla(0 0% 100% / 0.08) 40%,
+      hsla(0 0% 100% / 0) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Active nav item with glow */
+  .nav-item-active {
+    color: hsl(25 95% 53%);
+    background: hsla(25 95% 53% / 0.15);
+    box-shadow: 
+      0 0 20px -5px hsla(25 95% 53% / 0.4),
+      0 0 0 1px hsla(25 95% 53% / 0.2) inset;
+  }
+
   .glass-header {
     position: relative;
     background: hsla(222 25% 8% / 0.9);
