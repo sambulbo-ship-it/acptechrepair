@@ -11,11 +11,14 @@ import { BottomNav } from '@/components/BottomNav';
 import { MachineCard } from '@/components/MachineCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
+import { AIProductScanner } from '@/components/AIProductScanner';
 import { RecentRepairsSuggestions } from '@/components/RecentRepairsSuggestions';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
+import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { Search, Wrench, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -106,7 +109,7 @@ const MachineList = () => {
           </div>
         </div>
 
-        {/* Search with Scanner and History */}
+        {/* Search with Scanner, AI Scanner and History */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -123,6 +126,9 @@ const MachineList = () => {
             enableBarcode={settings?.enable_barcode_scan ?? true}
             enableQRCode={settings?.enable_qrcode_scan ?? true}
           />
+          <AIProductScanner 
+            onExistingProductFound={(machineId) => navigate(`/machine/${machineId}`)}
+          />
           <Button
             variant="outline"
             size="icon"
@@ -137,34 +143,41 @@ const MachineList = () => {
         {/* Recent Repairs Suggestions */}
         <RecentRepairsSuggestions machines={machines} entries={entries} />
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200',
-              selectedCategory === 'all'
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                : 'glass-button text-foreground'
-            )}
-          >
-            {t('allCategories')}
-          </button>
-          {equipmentCategories.filter(c => c.id !== 'other').map((cat) => (
+        {/* Category Filter - Larger readable bubbles */}
+        <ScrollArea className="w-full">
+          <div className="flex gap-3 pb-3">
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => setSelectedCategory('all')}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200',
-                selectedCategory === cat.id
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                  : 'glass-button text-foreground'
+                'px-6 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 min-w-fit',
+                selectedCategory === 'all'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                  : 'glass-card hover:bg-secondary/50 text-foreground border border-border/50'
               )}
             >
-              {language === 'fr' ? cat.labelFr : cat.labelEn}
+              {t('allCategories')}
             </button>
-          ))}
-        </div>
+            {equipmentCategories.filter(c => c.id !== 'other').map((cat) => {
+              const CategoryIcon = getCategoryIconComponent(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={cn(
+                    'px-6 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center gap-2 min-w-fit',
+                    selectedCategory === cat.id
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                      : 'glass-card hover:bg-secondary/50 text-foreground border border-border/50'
+                  )}
+                >
+                  <CategoryIcon className="w-4 h-4" />
+                  {language === 'fr' ? cat.labelFr : cat.labelEn}
+                </button>
+              );
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
