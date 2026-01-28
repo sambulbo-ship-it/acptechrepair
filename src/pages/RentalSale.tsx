@@ -6,6 +6,8 @@ import { useRentalSale, RentalTransaction } from '@/hooks/useRentalSale';
 import { useCloudData } from '@/hooks/useCloudData';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplePlatform } from '@/hooks/useApplePlatform';
+import { useAuth } from '@/contexts/AuthContext';
+import { downloadRentalContract } from '@/lib/pdfGenerator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,6 +46,7 @@ import {
   Clock,
   ArrowLeft,
   Shield,
+  FileText,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -53,6 +56,7 @@ const RentalSale = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { supportsLiquidGlass } = useApplePlatform();
+  const { currentWorkspace } = useAuth();
   const { machines, loading: machinesLoading } = useCloudData();
   const {
     configs,
@@ -289,6 +293,37 @@ const RentalSale = () => {
     await completeRental(transaction.id, format(new Date(), 'yyyy-MM-dd'));
   };
 
+  const handleDownloadContract = (transaction: RentalTransaction) => {
+    const machine = getMachineById(transaction.machine_id);
+    if (!machine) return;
+
+    const config = getConfigForMachine(machine.id);
+    
+    downloadRentalContract({
+      companyName: currentWorkspace?.name || 'Company',
+      clientName: transaction.client_name || '',
+      clientEmail: transaction.client_email || undefined,
+      clientPhone: transaction.client_phone || undefined,
+      clientCompany: transaction.client_company || undefined,
+      machineName: machine.name,
+      machineBrand: machine.brand || undefined,
+      machineModel: machine.model || undefined,
+      machineSerialNumber: machine.serialNumber || undefined,
+      machineCategory: machine.category,
+      startDate: transaction.start_date,
+      expectedEndDate: transaction.expected_end_date || undefined,
+      agreedPrice: transaction.agreed_price,
+      depositAmount: transaction.deposit_amount || undefined,
+      currency: transaction.currency,
+      notes: transaction.notes || undefined,
+      dailyPrice: config?.daily_rental_price || undefined,
+      weeklyPrice: config?.weekly_rental_price || undefined,
+      monthlyPrice: config?.monthly_rental_price || undefined,
+      contractNumber: transaction.id.slice(0, 8).toUpperCase(),
+      language: language as 'fr' | 'en',
+    });
+  };
+
   const getMachineById = (id: string) => machines.find(m => m.id === id);
 
   const getStatusBadge = (machine: typeof machines[0]) => {
@@ -494,15 +529,26 @@ const RentalSale = () => {
                             </span>
                           </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleReturn(transaction)}
-                          className="h-8"
-                        >
-                          <ArrowLeft className="w-4 h-4 mr-1" />
-                          {t.returnMachine}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadContract(transaction)}
+                            className="h-8"
+                            title={language === 'fr' ? 'Télécharger contrat PDF' : 'Download PDF contract'}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReturn(transaction)}
+                            className="h-8"
+                          >
+                            <ArrowLeft className="w-4 h-4 mr-1" />
+                            {t.returnMachine}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
