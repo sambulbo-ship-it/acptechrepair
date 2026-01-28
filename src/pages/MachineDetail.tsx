@@ -13,6 +13,8 @@ import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel } from '@/data/equipmentData';
 import { MaintenanceScheduleCard } from '@/components/MaintenanceScheduleCard';
 import AIDiagnosticChat from '@/components/AIDiagnosticChat';
+import { MachineStatusEditor } from '@/components/MachineStatusEditor';
+import { ManualRepairEntry, RepairEntryData } from '@/components/ManualRepairEntry';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,8 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { EntryType, EntryPhoto } from '@/types/machine';
-import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown } from 'lucide-react';
+import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
+import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 
 const MachineDetail = () => {
@@ -29,10 +31,12 @@ const MachineDetail = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, team } = useCloudData();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team } = useCloudData();
   const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [isStatusEditorOpen, setIsStatusEditorOpen] = useState(false);
+  const [isManualRepairOpen, setIsManualRepairOpen] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [entryForm, setEntryForm] = useState({
     type: 'diagnostic' as EntryType,
@@ -117,9 +121,30 @@ const MachineDetail = () => {
   const handleSheetOpen = (open: boolean) => {
     setIsSheetOpen(open);
     if (!open) {
-      // Reset photos when closing
       setPhotos([]);
     }
+    setIsSheetOpen(open);
+  };
+
+  const handleSaveStatus = async (status: MachineStatus, notes: string): Promise<boolean> => {
+    return await updateMachine(machine.id, { status, notes });
+  };
+
+  const handleSaveManualRepair = async (data: RepairEntryData): Promise<boolean> => {
+    const technician = team.find(m => m.id === data.technicianId);
+    const result = await addEntry({
+      machineId: machine.id,
+      type: data.type === 'external-repair' ? 'repair' : data.type,
+      description: data.externalProvider 
+        ? `[${language === 'fr' ? 'Réparation externe' : 'External repair'}: ${data.externalProvider}${data.cost ? ` - ${data.cost}${data.currency}` : ''}] ${data.description}`
+        : data.description,
+      workPerformed: data.workPerformed || '',
+      technicianId: technician?.id || '',
+      technicianName: technician?.name || data.externalProvider || '',
+      photos: [],
+      date: new Date(data.date),
+    });
+    return result !== null;
   };
 
   return (
@@ -128,13 +153,42 @@ const MachineDetail = () => {
         title={machine.name}
         showBack
         rightAction={
-          <button
-            onClick={handleDeleteMachine}
-            className="p-2 text-destructive touch-target"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsStatusEditorOpen(true)}
+              className="p-2 text-primary touch-target"
+              title={language === 'fr' ? 'Modifier l\'état' : 'Edit status'}
+            >
+              <Settings2 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleDeleteMachine}
+              className="p-2 text-destructive touch-target"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         }
+      />
+
+      {/* Status Editor Dialog */}
+      <MachineStatusEditor
+        open={isStatusEditorOpen}
+        onOpenChange={setIsStatusEditorOpen}
+        currentStatus={machine.status}
+        currentNotes={machine.notes}
+        machineName={machine.name}
+        onSave={handleSaveStatus}
+      />
+
+      {/* Manual Repair Entry Sheet */}
+      <ManualRepairEntry
+        open={isManualRepairOpen}
+        onOpenChange={setIsManualRepairOpen}
+        machineId={machine.id}
+        machineName={machine.name}
+        onSave={handleSaveManualRepair}
+        teamMembers={team}
       />
 
       <div className="p-4 space-y-4">
@@ -236,20 +290,32 @@ const MachineDetail = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('history')}</h3>
           
-          <Sheet open={isSheetOpen} onOpenChange={handleSheetOpen}>
-            <SheetTrigger asChild>
-              <Button 
-                size="sm" 
-                className="rounded-full gap-1"
-                disabled={team.length === 0}
-              >
-                <Plus className="w-4 h-4" />
-                {t('addEntry')}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl overflow-hidden glass-dialog border-t-0">
-              <SheetHeader className="mb-4">
-                <SheetTitle>{t('addEntry')}</SheetTitle>
+          <div className="flex items-center gap-2">
+            {/* Manual Repair Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1"
+              onClick={() => setIsManualRepairOpen(true)}
+            >
+              <Wrench className="w-4 h-4" />
+              {language === 'fr' ? 'Manuel' : 'Manual'}
+            </Button>
+            
+            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  size="sm" 
+                  className="rounded-full gap-1"
+                  disabled={team.length === 0}
+                >
+                  <Plus className="w-4 h-4" />
+                  {t('addEntry')}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl overflow-hidden glass-dialog border-t-0">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>{t('addEntry')}</SheetTitle>
               </SheetHeader>
               
               <div className="space-y-4 overflow-y-auto h-[calc(100%-4rem)] pb-8">
@@ -346,6 +412,7 @@ const MachineDetail = () => {
               </div>
             </SheetContent>
           </Sheet>
+          </div>
         </div>
 
         {entries.length === 0 ? (
