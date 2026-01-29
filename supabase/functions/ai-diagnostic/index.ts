@@ -269,9 +269,56 @@ serve(async (req) => {
       }
     }
 
+    // Fetch knowledge entries (shared expertise from technicians)
+    interface KnowledgeData {
+      category: string;
+      brand: string | null;
+      model: string | null;
+      problem: string;
+      solution: string;
+    }
+    let knowledgeEntries: KnowledgeData[] = [];
+
+    // Query knowledge_entries table for relevant expertise
+    const { data: knowledgeData } = await supabase
+      .from("knowledge_entries")
+      .select("category, brand, model, problem_description, solution_description")
+      .limit(100);
+
+    if (knowledgeData) {
+      // Filter by relevance: same model > same brand > same category
+      const relevant = knowledgeData.filter((k: any) => {
+        if (machineModel && machineBrand && 
+            k.model?.toLowerCase() === machineModel.toLowerCase() &&
+            k.brand?.toLowerCase() === machineBrand.toLowerCase()) {
+          return true;
+        }
+        if (machineBrand && k.brand?.toLowerCase() === machineBrand.toLowerCase()) {
+          return true;
+        }
+        if (machineCategory && k.category === machineCategory) {
+          return true;
+        }
+        return false;
+      });
+
+      knowledgeEntries = relevant.slice(0, 20).map((k: any) => ({
+        category: k.category,
+        brand: k.brand,
+        model: k.model,
+        problem: k.problem_description,
+        solution: k.solution_description,
+      }));
+    }
+
     // Build context for AI - ANONYMIZED (no workspace, no company info)
     const anonymizedRepairContext = repairs.map(r => 
       `[${r.type?.toUpperCase() || 'REPAIR'}] ${r.brand || 'Unknown'} ${r.model || ''}: ${r.description}`
+    ).join("\n");
+
+    // Build knowledge context from shared expertise
+    const knowledgeContext = knowledgeEntries.map(k =>
+      `[EXPERTISE] ${k.brand || 'Marque inconnue'} ${k.model || ''} - Problème: ${k.problem} → Solution: ${k.solution}`
     ).join("\n");
 
     // System prompt with STRICT privacy rules
@@ -293,13 +340,17 @@ RÈGLES DE SÉCURITÉ:
 CONTEXTE DES RÉPARATIONS ANONYMISÉES (historique sans info entreprise):
 ${anonymizedRepairContext || "Aucun historique de réparation disponible pour cet équipement."}
 
+EXPERTISE PARTAGÉE PAR LES TECHNICIENS (solutions connues):
+${knowledgeContext || "Aucune expertise partagée disponible pour ce type d'équipement."}
+
 INSTRUCTIONS:
-- Utilise les réparations passées pour donner des conseils pertinents
+- Utilise les réparations passées ET l'expertise partagée pour donner des conseils pertinents
+- Priorise les solutions déjà testées et validées par les techniciens
 - Suggère des solutions basées sur les interventions similaires
 - Sois précis et technique dans tes réponses
 - Si tu ne trouves pas d'info pertinente dans l'historique, donne des conseils généraux basés sur ton expertise
 
-${enableWebSearch ? "L'utilisateur a demandé une recherche web. Tu peux mentionner que des informations supplémentaires pourraient être trouvées en ligne." : "Tu dois te baser UNIQUEMENT sur l'historique des réparations et ton expertise technique. Ne suggère PAS de recherche web sauf si l'utilisateur le demande explicitement."}
+${enableWebSearch ? "L'utilisateur a demandé une recherche web. Tu peux mentionner que des informations supplémentaires pourraient être trouvées en ligne." : "Tu dois te baser UNIQUEMENT sur l'historique des réparations, l'expertise partagée et ton expertise technique. Ne suggère PAS de recherche web sauf si l'utilisateur le demande explicitement."}
 
 Équipement concerné: ${machineBrand || 'Non spécifié'} ${machineModel || ''} (Catégorie: ${machineCategory || 'Non spécifiée'})`;
 

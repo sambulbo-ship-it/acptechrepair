@@ -39,6 +39,7 @@ const ClientCatalog = () => {
   const { language } = useLanguage();
   const [searchParams] = useSearchParams();
   const workspaceId = searchParams.get('workspace');
+  const inviteCode = searchParams.get('invite_code');
   
   const [machines, setMachines] = useState<CatalogMachine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,26 +50,34 @@ const ClientCatalog = () => {
   const [workspaceName, setWorkspaceName] = useState<string>('');
 
   useEffect(() => {
-    if (workspaceId) {
+    if (workspaceId || inviteCode) {
       loadCatalog();
     } else {
       setError(language === 'fr' 
-        ? 'Paramètre workspace manquant. Utilisez ?workspace=ID' 
-        : 'Missing workspace parameter. Use ?workspace=ID');
+        ? 'Paramètre workspace ou invite_code manquant. Utilisez ?workspace=ID ou ?invite_code=CODE' 
+        : 'Missing workspace or invite_code parameter. Use ?workspace=ID or ?invite_code=CODE');
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, inviteCode]);
 
   const loadCatalog = async () => {
-    if (!workspaceId) return;
+    if (!workspaceId && !inviteCode) return;
     
     try {
       setLoading(true);
       setError(null);
       
-      // Call the public API endpoint with workspace filter
+      // Build query params - support both workspace_id and invite_code
+      const queryParams = new URLSearchParams();
+      if (workspaceId) {
+        queryParams.set('workspace_id', workspaceId);
+      } else if (inviteCode) {
+        queryParams.set('invite_code', inviteCode);
+      }
+      
+      // Call the public API endpoint
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-catalog?workspace_id=${workspaceId}`
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-catalog?${queryParams.toString()}`
       );
       
       if (!response.ok) {

@@ -20,19 +20,50 @@ Deno.serve(async (req) => {
     // Parse query parameters for filtering
     const url = new URL(req.url);
     const workspaceId = url.searchParams.get('workspace_id');
+    const inviteCode = url.searchParams.get('invite_code');
     const category = url.searchParams.get('category');
     const type = url.searchParams.get('type'); // 'rental', 'sale', or null for all
     const limit = parseInt(url.searchParams.get('limit') || '100');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    console.log('[public-catalog] Fetching catalog with params:', { workspaceId, category, type, limit, offset });
+    console.log('[public-catalog] Fetching catalog with params:', { workspaceId, inviteCode, category, type, limit, offset });
 
-    // Require workspace_id for privacy - clients can only see one company's items
-    if (!workspaceId) {
+    // Resolve workspace from invite_code if provided
+    let resolvedWorkspaceId = workspaceId;
+
+    if (!resolvedWorkspaceId && inviteCode) {
+      // Look up workspace by invite code (case-insensitive)
+      const { data: workspaceData, error: workspaceError } = await supabase
+        .rpc('find_workspace_by_invite_code', { _invite_code: inviteCode });
+
+      if (workspaceError || !workspaceData || workspaceData.length === 0) {
+        console.error('[public-catalog] Invalid invite code:', inviteCode);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Invalid invite code',
+            machines: [],
+          }),
+          {
+            status: 404,
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      resolvedWorkspaceId = workspaceData[0].id;
+      console.log('[public-catalog] Resolved workspace from invite code:', resolvedWorkspaceId);
+    }
+
+    // Require workspace_id or invite_code for privacy - clients can only see one company's items
+    if (!resolvedWorkspaceId) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'workspace_id is required',
+          error: 'workspace_id or invite_code is required',
           machines: [],
         }),
         {
@@ -78,7 +109,7 @@ Deno.serve(async (req) => {
           primary_color
         )
       `)
-      .eq('workspace_id', workspaceId)
+      .eq('workspace_id', resolvedWorkspaceId)
       .or('available_for_rental.eq.true,available_for_sale.eq.true');
 
     // Apply type filters
@@ -104,9 +135,16 @@ Deno.serve(async (req) => {
     const { data: providerData } = await supabase
       .from('repair_service_providers')
       .select('contact_email, phone, company_name')
-      .eq('workspace_id', workspaceId)
+      .eq('workspace_id', resolvedWorkspaceId)
       .eq('is_visible', true)
       .limit(1)
+      .single();
+
+    // Get workspace name for response
+    const { data: workspaceInfo } = await supabase
+      .from('workspaces')
+      .select('name, logo_url, primary_color')
+      .eq('id', resolvedWorkspaceId)
       .single();
 
     // Transform the data to a client-friendly format
@@ -172,6 +210,13 @@ Deno.serve(async (req) => {
         total: machines.length,
         limit,
         offset,
+        workspace: workspaceInfo ? {
+          name: workspaceInfo.name,
+          logo_url: workspaceInfo.logo_url,
+          primary_color: workspaceInfo.primary_color,
+          contact_email: providerData?.contact_email || null,
+          phone: providerData?.phone || null,
+        } : null,
       }),
       {
         headers: {

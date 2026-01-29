@@ -7,7 +7,9 @@ import { useCloudData } from '@/hooks/useCloudData';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplePlatform } from '@/hooks/useApplePlatform';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInvoiceStorage } from '@/hooks/useInvoiceStorage';
 import { downloadRentalContract } from '@/lib/pdfGenerator';
+import { InvoiceUpload } from '@/components/InvoiceUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,10 +49,13 @@ import {
   ArrowLeft,
   Shield,
   FileText,
+  Receipt,
+  Download,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const RentalSale = () => {
   const navigate = useNavigate();
@@ -58,6 +63,7 @@ const RentalSale = () => {
   const { supportsLiquidGlass } = useApplePlatform();
   const { currentWorkspace } = useAuth();
   const { machines, loading: machinesLoading } = useCloudData();
+  const { downloadInvoice } = useInvoiceStorage();
   const {
     configs,
     transactions,
@@ -68,6 +74,7 @@ const RentalSale = () => {
     createTransaction,
     updateTransaction,
     completeRental,
+    loadData,
   } = useRentalSale();
 
   const [activeTab, setActiveTab] = useState('available');
@@ -108,13 +115,16 @@ const RentalSale = () => {
     available: 'Disponible',
     rentals: 'Locations',
     sales: 'Ventes',
+    sold: 'Vendu',
     configure: 'Configurer',
     startRental: 'Démarrer location',
     startSale: 'Enregistrer vente',
     returnMachine: 'Retour',
+    finalizeSale: 'Finaliser vente',
     noMachines: 'Aucune machine configurée',
     noRentals: 'Aucune location active',
     noSales: 'Aucune vente active',
+    noSoldItems: 'Aucun article vendu',
     configTitle: 'Configuration prix',
     rentalPricing: 'Tarifs location',
     salePricing: 'Prix de vente',
@@ -138,23 +148,32 @@ const RentalSale = () => {
     cancel: 'Annuler',
     active: 'Actif',
     returned: 'Retourné',
+    completed: 'Finalisé',
     inStock: 'En stock',
     rented: 'En location',
-    sold: 'Vendu',
+    soldStatus: 'Vendu',
     notConfigured: 'Non configuré',
     excluded: 'Exclu',
+    warrantyActive: 'Garantie active',
+    warrantyExpired: 'Garantie expirée',
+    attachInvoice: 'Joindre facture',
+    downloadInvoice: 'Télécharger facture',
+    noInvoice: 'Pas de facture',
   } : {
     title: 'Rental / Sale',
     available: 'Available',
     rentals: 'Rentals',
     sales: 'Sales',
+    sold: 'Sold',
     configure: 'Configure',
     startRental: 'Start Rental',
     startSale: 'Record Sale',
     returnMachine: 'Return',
+    finalizeSale: 'Finalize Sale',
     noMachines: 'No machines configured',
     noRentals: 'No active rentals',
     noSales: 'No active sales',
+    noSoldItems: 'No sold items',
     configTitle: 'Price Configuration',
     rentalPricing: 'Rental Pricing',
     salePricing: 'Sale Price',
@@ -178,18 +197,25 @@ const RentalSale = () => {
     cancel: 'Cancel',
     active: 'Active',
     returned: 'Returned',
+    completed: 'Completed',
     inStock: 'In stock',
     rented: 'Rented',
-    sold: 'Sold',
+    soldStatus: 'Sold',
     notConfigured: 'Not configured',
     excluded: 'Excluded',
+    warrantyActive: 'Warranty active',
+    warrantyExpired: 'Warranty expired',
+    attachInvoice: 'Attach invoice',
+    downloadInvoice: 'Download invoice',
+    noInvoice: 'No invoice',
   };
 
   // Categorize machines
   const categorizedMachines = useMemo(() => {
     const available: typeof machines = [];
     const rented: typeof machines = [];
-    const sold: typeof machines = [];
+    const activeSales: typeof machines = [];
+    const completedSales: typeof machines = [];
 
     machines.forEach(machine => {
       const config = getConfigForMachine(machine.id);
@@ -198,16 +224,34 @@ const RentalSale = () => {
       if (activeTransaction) {
         if (activeTransaction.transaction_type === 'rental') {
           rented.push(machine);
+        } else if (activeTransaction.status === 'completed') {
+          completedSales.push(machine);
         } else {
-          sold.push(machine);
+          activeSales.push(machine);
         }
       } else if (config && (config.available_for_rental || config.available_for_sale)) {
         available.push(machine);
       }
     });
 
-    return { available, rented, sold };
-  }, [machines, getConfigForMachine, getActiveTransactionForMachine]);
+    // Also check for completed sales that are no longer "active"
+    const completedTransactions = transactions.filter(t => 
+      t.transaction_type === 'sale' && t.status === 'completed'
+    );
+    completedTransactions.forEach(t => {
+      const machine = machines.find(m => m.id === t.machine_id);
+      if (machine && !completedSales.find(m => m.id === machine.id)) {
+        completedSales.push(machine);
+      }
+    });
+
+    return { available, rented, activeSales, completedSales };
+  }, [machines, transactions, getConfigForMachine, getActiveTransactionForMachine]);
+
+  // Get completed sales transactions
+  const completedSalesTransactions = useMemo(() => {
+    return transactions.filter(t => t.transaction_type === 'sale' && t.status === 'completed');
+  }, [transactions]);
 
   const openConfigDialog = (machineId: string) => {
     const config = getConfigForMachine(machineId);
@@ -388,7 +432,7 @@ const RentalSale = () => {
       <main className="flex-1 px-4 py-4 space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className={cn(
-            "grid w-full grid-cols-3",
+            "grid w-full grid-cols-4",
             supportsLiquidGlass && "glass"
           )}>
             <TabsTrigger value="available" className="flex items-center gap-2">
@@ -404,7 +448,12 @@ const RentalSale = () => {
             <TabsTrigger value="sales" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">{t.sales}</span>
-              <Badge variant="secondary" className="ml-1">{categorizedMachines.sold.length}</Badge>
+              <Badge variant="secondary" className="ml-1">{categorizedMachines.activeSales.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="sold" className="flex items-center gap-2">
+              <Receipt className="w-4 h-4" />
+              <span className="hidden sm:inline">{t.sold}</span>
+              <Badge variant="secondary" className="ml-1">{completedSalesTransactions.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -556,9 +605,9 @@ const RentalSale = () => {
             )}
           </TabsContent>
 
-          {/* Sales Tab */}
+          {/* Sales Tab (Active) */}
           <TabsContent value="sales" className="space-y-3 mt-4">
-            {categorizedMachines.sold.length === 0 ? (
+            {categorizedMachines.activeSales.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 {t.noSales}
               </div>
@@ -616,6 +665,126 @@ const RentalSale = () => {
                     </div>
                   );
                 })
+            )}
+          </TabsContent>
+
+          {/* Sold Tab (Completed sales with client info and invoices) */}
+          <TabsContent value="sold" className="space-y-3 mt-4">
+            {completedSalesTransactions.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {t.noSoldItems}
+              </div>
+            ) : (
+              completedSalesTransactions.map(transaction => {
+                const machine = getMachineById(transaction.machine_id);
+                if (!machine) return null;
+
+                const warrantyExpired = transaction.warranty_end_date 
+                  ? isPast(new Date(transaction.warranty_end_date)) 
+                  : true;
+
+                return (
+                  <div key={transaction.id} className={cardClass}>
+                    <div className="space-y-3">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium text-foreground">{machine.name}</h3>
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              {t.completed}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{machine.brand} {machine.model}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-foreground">{transaction.agreed_price}€</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(transaction.start_date), 'dd/MM/yyyy')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Client info */}
+                      <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-muted/30">
+                        {transaction.client_name && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span>{transaction.client_name}</span>
+                          </div>
+                        )}
+                        {transaction.client_company && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 className="w-4 h-4 text-muted-foreground" />
+                            <span>{transaction.client_company}</span>
+                          </div>
+                        )}
+                        {transaction.client_email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                            <a href={`mailto:${transaction.client_email}`} className="text-primary hover:underline">
+                              {transaction.client_email}
+                            </a>
+                          </div>
+                        )}
+                        {transaction.client_phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                            <a href={`tel:${transaction.client_phone}`} className="text-primary hover:underline">
+                              {transaction.client_phone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Warranty status */}
+                      {transaction.warranty_end_date && (
+                        <div className={cn(
+                          "flex items-center gap-2 p-2 rounded-lg text-sm",
+                          warrantyExpired 
+                            ? "bg-muted/50 text-muted-foreground" 
+                            : "bg-amber-500/10 text-amber-400"
+                        )}>
+                          <Shield className="w-4 h-4" />
+                          <span>
+                            {warrantyExpired ? t.warrantyExpired : t.warrantyActive} - {format(new Date(transaction.warranty_end_date), 'dd/MM/yyyy')}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Invoice section */}
+                      <div className="flex items-center gap-2">
+                        {(transaction as any).invoice_url ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => downloadInvoice((transaction as any).invoice_url, `facture_${transaction.id.slice(0,8)}.pdf`)}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            {t.downloadInvoice}
+                          </Button>
+                        ) : (
+                          <InvoiceUpload
+                            transactionId={transaction.id}
+                            type="sale"
+                            existingInvoiceUrl={(transaction as any).invoice_url}
+                            onUploadComplete={async (path) => {
+                              await supabase
+                                .from('rental_transactions')
+                                .update({ invoice_url: path })
+                                .eq('id', transaction.id);
+                              loadData();
+                            }}
+                            className="flex-1"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </TabsContent>
         </Tabs>

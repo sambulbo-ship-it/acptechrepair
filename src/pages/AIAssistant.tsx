@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
+import { KnowledgeEntryForm } from '@/components/KnowledgeEntryForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -19,7 +20,8 @@ import {
   Globe, 
   Database,
   ChevronRight,
-  History
+  History,
+  Lightbulb,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -70,6 +72,7 @@ const AIAssistant = () => {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [knowledgeFormOpen, setKnowledgeFormOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load conversations
@@ -283,6 +286,23 @@ const AIAssistant = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header title="Assistant IA" showBack />
+      
+      {/* Knowledge Entry Form */}
+      <KnowledgeEntryForm 
+        open={knowledgeFormOpen} 
+        onOpenChange={setKnowledgeFormOpen} 
+      />
+      
+      {/* Share Knowledge Button */}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="fixed top-3 right-16 z-20"
+        onClick={() => setKnowledgeFormOpen(true)}
+        title="Partager une expertise"
+      >
+        <Lightbulb className="w-5 h-5" />
+      </Button>
       
       {/* History Sheet */}
       <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
