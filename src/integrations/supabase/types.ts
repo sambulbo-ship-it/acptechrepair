@@ -150,6 +150,7 @@ export type Database = {
           currency: string | null
           expected_return_date: string | null
           id: string
+          invoice_url: string | null
           issue_description: string
           machine_id: string
           notes: string | null
@@ -169,6 +170,7 @@ export type Database = {
           currency?: string | null
           expected_return_date?: string | null
           id?: string
+          invoice_url?: string | null
           issue_description: string
           machine_id: string
           notes?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           currency?: string | null
           expected_return_date?: string | null
           id?: string
+          invoice_url?: string | null
           issue_description?: string
           machine_id?: string
           notes?: string | null
@@ -223,6 +226,60 @@ export type Database = {
           },
           {
             foreignKeyName: "external_repairs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_entries: {
+        Row: {
+          brand: string | null
+          category: string
+          created_at: string
+          id: string
+          model: string | null
+          problem_description: string
+          solution_description: string
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          brand?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          problem_description: string
+          solution_description: string
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          problem_description?: string
+          solution_description?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_entries_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_entries_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces_public"
@@ -564,6 +621,7 @@ export type Database = {
           deposit_amount: number | null
           expected_end_date: string | null
           id: string
+          invoice_url: string | null
           machine_id: string
           notes: string | null
           start_date: string
@@ -586,6 +644,7 @@ export type Database = {
           deposit_amount?: number | null
           expected_end_date?: string | null
           id?: string
+          invoice_url?: string | null
           machine_id: string
           notes?: string | null
           start_date: string
@@ -608,6 +667,7 @@ export type Database = {
           deposit_amount?: number | null
           expected_end_date?: string | null
           id?: string
+          invoice_url?: string | null
           machine_id?: string
           notes?: string | null
           start_date?: string
