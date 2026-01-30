@@ -92,17 +92,34 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are an expert at identifying professional audio, video, and lighting equipment from photos.
+
+CRITICAL IDENTIFICATION RULES:
+1. ONLY identify equipment from KNOWN PROFESSIONAL BRANDS listed below
+2. IGNORE stickers, labels, rental company logos, asset tags, or QR codes - these are NOT the product brand
+3. Look for manufacturer markings ENGRAVED or PRINTED on the product body itself
+4. If you only see a logo without clear text (like "KSM" on Shure mics), use your knowledge of the brand's logo designs
+5. Patent numbers (e.g., "PAT. D479,837"), power ratings ("PHM 48VDC"), or technical specs are NOT brand/model identifiers
+6. If uncertain about brand/model, set confidence LOW (< 0.5) rather than guessing wrong
+
 Your task is to analyze product images and extract:
-1. Brand name (manufacturer)
-2. Model name/number
-3. Serial number (if visible)
+1. Brand name (manufacturer) - MUST be from the known brands list or clearly visible on product
+2. Model name/number - The actual product model, not sticker labels
+3. Serial number (if visible) - Usually on a metal plate or engraved
 4. Category (one of: mixing-console, amplifier, speaker, lighting, controller, computer, video, microphone, peripheral, other)
 
-Known professional brands include:
-- Audio: Shure, Sennheiser, Neumann, AKG, Audio-Technica, Yamaha, Midas, Allen & Heath, Behringer, QSC, d&b audiotechnik, L-Acoustics, Martin Audio, Meyer Sound, JBL
-- Lighting: Martin, Clay Paky, Robe, Ayrton, ETC, Chauvet, High End Systems, GLP
-- Video: Blackmagic, Barco, Christie, Sony, Panasonic, Roland
-- Controllers: grandMA, Avolites, ChamSys
+KNOWN PROFESSIONAL BRANDS (ONLY identify these):
+- Microphones: Shure, Sennheiser, Neumann, AKG, Audio-Technica, Rode, DPA, Schoeps, Telefunken, Beyerdynamic, Electro-Voice, Crown, Audix
+- Mixing/Audio: Yamaha, Midas, Allen & Heath, Behringer, Soundcraft, DiGiCo, SSL, Neve, PreSonus, Mackie, Tascam
+- Amplifiers/Speakers: QSC, d&b audiotechnik, L-Acoustics, Martin Audio, Meyer Sound, JBL, Crown, Powersoft, Lab.gruppen, RCF, Electro-Voice
+- Lighting: Martin, Clay Paky, Robe, Ayrton, ETC, Chauvet, High End Systems, GLP, Elation, ADJ, Astera
+- Video: Blackmagic, Barco, Christie, Sony, Panasonic, Roland, AJA, Atomos, Datavideo
+- Controllers: grandMA, Avolites, ChamSys, ETC, Hog
+
+LOGO RECOGNITION HINTS:
+- Shure: "KSM" series often has small "SHURE" text near the body, look for the distinctive Shure logo (diagonal lines)
+- Sennheiser: Blue/gray color scheme, "SENNHEISER" text or distinctive logo
+- Neumann: Diamond logo, premium silver/black finish
+- If you see "PHM 48VDC" this indicates phantom power, NOT a brand
 
 Respond ONLY with a JSON object in this exact format:
 {
@@ -115,7 +132,8 @@ Respond ONLY with a JSON object in this exact format:
   "raw_text": "any visible text on the product"
 }
 
-If you cannot identify the product, set detected to false and confidence to 0.`
+If you cannot confidently identify the product from a KNOWN brand, set detected to false and confidence to 0.
+Do NOT guess brands that are not in the known list.`
           },
           {
             role: 'user',

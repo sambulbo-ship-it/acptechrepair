@@ -4,7 +4,7 @@ import { useAIProductScanner } from '@/hooks/useAIProductScanner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Camera, Upload, Loader2, Sparkles, Check, AlertTriangle, X, RotateCcw } from 'lucide-react';
+import { Camera, Upload, Loader2, Sparkles, Check, AlertTriangle, X, RotateCcw, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -16,9 +16,11 @@ interface AIProductScannerProps {
     category?: string;
   }) => void;
   onExistingProductFound?: (machineId: string) => void;
+  /** If true, shows a "Create new product" button when product is detected */
+  showCreateButton?: boolean;
 }
 
-export const AIProductScanner = ({ onProductDetected, onExistingProductFound }: AIProductScannerProps) => {
+export const AIProductScanner = ({ onProductDetected, onExistingProductFound, showCreateButton = true }: AIProductScannerProps) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { scanProduct, scanning, result, error, reset } = useAIProductScanner();
@@ -129,6 +131,20 @@ export const AIProductScanner = ({ onProductDetected, onExistingProductFound }: 
       });
       handleClose();
     }
+  };
+
+  const handleCreateNewProduct = () => {
+    if (!result?.detected) return;
+    
+    // Build query params with detected data
+    const params = new URLSearchParams();
+    if (result.brand) params.set('brand', result.brand);
+    if (result.model) params.set('model', result.model);
+    if (result.serial_number) params.set('serial', result.serial_number);
+    if (result.category) params.set('category', result.category);
+    
+    handleClose();
+    navigate(`/add?${params.toString()}`);
   };
 
   const handleViewExisting = () => {
@@ -313,10 +329,24 @@ export const AIProductScanner = ({ onProductDetected, onExistingProductFound }: 
                       {result.serial_number && <p><strong>{language === 'fr' ? 'N° série' : 'Serial'}:</strong> {result.serial_number}</p>}
                       {result.category && <p><strong>{language === 'fr' ? 'Catégorie' : 'Category'}:</strong> {result.category}</p>}
                     </div>
-                    <Button className="w-full" onClick={handleApplyResult}>
-                      <Check className="w-4 h-4 mr-2" />
-                      {language === 'fr' ? 'Utiliser ces informations' : 'Use this information'}
-                    </Button>
+                    <div className="flex gap-2">
+                      {onProductDetected && (
+                        <Button className="flex-1" onClick={handleApplyResult}>
+                          <Check className="w-4 h-4 mr-2" />
+                          {language === 'fr' ? 'Utiliser' : 'Use'}
+                        </Button>
+                      )}
+                      {showCreateButton && (
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 glass-button"
+                          onClick={handleCreateNewProduct}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {language === 'fr' ? 'Créer fiche' : 'Create'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
