@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCloudData } from '@/hooks/useCloudData';
 import { useWorkspaceBrands } from '@/hooks/useWorkspaceBrands';
@@ -14,26 +14,49 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { equipmentCategories, EquipmentCategory, getCategoryById } from '@/data/equipmentData';
 import { MachineStatus } from '@/types/machine';
 import { toast } from 'sonner';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const AddMachine = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { addMachine } = useCloudData();
   const { getBrandsForCategory, addCustomBrand, getCustomBrandsForCategory, removeCustomBrand } = useWorkspaceBrands();
 
+  // Pre-fill from URL params (from AI scanner)
+  const prefillBrand = searchParams.get('brand') || '';
+  const prefillModel = searchParams.get('model') || '';
+  const prefillSerial = searchParams.get('serial') || '';
+  const prefillCategory = searchParams.get('category') as EquipmentCategory || '';
+
   const [formData, setFormData] = useState({
-    name: '',
-    category: '' as EquipmentCategory | '',
-    brand: '',
+    name: prefillBrand && prefillModel ? `${prefillBrand} ${prefillModel}` : '',
+    category: prefillCategory as EquipmentCategory | '',
+    brand: '',  // Will be set after category is selected
     customBrand: '',
-    model: '',
-    serialNumber: '',
+    model: prefillModel,
+    serialNumber: prefillSerial,
     location: '',
     status: 'operational' as MachineStatus,
     notes: '',
   });
+
+  // Set brand once category is loaded and brands are available
+  useEffect(() => {
+    if (prefillBrand && formData.category) {
+      const availableBrands = getBrandsForCategory(formData.category);
+      const matchedBrand = availableBrands.find(b => 
+        b.toLowerCase() === prefillBrand.toLowerCase()
+      );
+      if (matchedBrand) {
+        setFormData(prev => ({ ...prev, brand: matchedBrand }));
+      } else {
+        // Brand not in list - set as custom
+        setFormData(prev => ({ ...prev, brand: 'Other', customBrand: prefillBrand }));
+      }
+    }
+  }, [prefillBrand, formData.category, getBrandsForCategory]);
 
   const [showAddBrandDialog, setShowAddBrandDialog] = useState(false);
   const [newBrandName, setNewBrandName] = useState('');
