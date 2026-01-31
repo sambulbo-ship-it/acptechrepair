@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Simple email validation regex
@@ -11,6 +11,40 @@ const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 // UUID validation regex
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Rate limiting - max 5 requests per email per 10 minutes
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+function checkRateLimit(email: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const key = email.toLowerCase();
+  const existing = rateLimitMap.get(key);
+  
+  if (!existing || now > existing.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (existing.count >= MAX_REQUESTS_PER_WINDOW) {
+    const retryAfter = Math.ceil((existing.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  
+  existing.count++;
+  return { allowed: true };
+}
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 60000); // Clean every minute
 
 interface RepairRequestInput {
   provider_id: string;
@@ -147,6 +181,23 @@ serve(async (req) => {
     }
 
     const input = validation.data!;
+
+    // Check rate limit
+    const rateLimit = checkRateLimit(input.client_email);
+    if (!rateLimit.allowed) {
+      console.log(`[submit-repair-request] Rate limited: ${input.client_email}`);
+      return new Response(JSON.stringify({ 
+        error: "Trop de demandes. Veuillez réessayer plus tard.",
+        retry_after: rateLimit.retryAfter 
+      }), {
+        status: 429,
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimit.retryAfter) 
+        },
+      });
+    }
 
     // Create Supabase client with service role key
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
