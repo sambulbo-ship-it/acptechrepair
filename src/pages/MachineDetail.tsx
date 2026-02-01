@@ -8,6 +8,7 @@ import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
 import { PhotoCapture } from '@/components/PhotoCapture';
+import { PhotoGallery } from '@/components/PhotoGallery';
 import { CodeDisplay } from '@/components/QRCodeDisplay';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel } from '@/data/equipmentData';
@@ -23,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
-import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench } from 'lucide-react';
+import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images } from 'lucide-react';
 import { toast } from 'sonner';
 
 const MachineDetail = () => {
@@ -231,6 +232,26 @@ const MachineDetail = () => {
                 machineName={machine.name}
                 showBarcode={settings?.enable_barcode_print ?? true}
                 showQRCode={settings?.enable_qrcode_print ?? true}
+              />
+            </div>
+          )}
+
+          {/* Photo Gallery for presentation photos */}
+          {machine.photos && machine.photos.length > 0 && (
+            <div className="pt-4 border-t border-border/50 mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Images className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {language === 'fr' ? 'Photos de présentation' : 'Presentation photos'}
+                </span>
+              </div>
+              <PhotoGallery 
+                photos={machine.photos.map((url, index) => ({
+                  id: `photo-${index}`,
+                  dataUrl: url,
+                  createdAt: new Date(),
+                }))}
+                size="md"
               />
             </div>
           )}

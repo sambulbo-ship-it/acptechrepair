@@ -28,6 +28,7 @@ export interface Machine {
   location: string;
   status: MachineStatus;
   notes: string;
+  photos?: string[];
   assignedTo?: string;
   createdAt: Date;
   updatedAt: Date;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
 import { getCategoryLabel, equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Search, ShoppingCart, CalendarDays, Loader2, Package, Mail, Phone, Check, X, Sparkles } from 'lucide-react';
+import { Search, ShoppingCart, CalendarDays, Loader2, Package, Mail, Phone, Check, X, Sparkles, FileText, ArrowRight, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QuoteRequestForm } from '@/components/QuoteRequestForm';
 
 interface CatalogMachine {
   id: string;
@@ -18,6 +19,7 @@ interface CatalogMachine {
   model: string | null;
   category: string;
   photos: string[] | null;
+  workspace_id: string;
   workspace_name: string;
   workspace_logo: string | null;
   workspace_contact_email: string | null;
@@ -44,18 +46,22 @@ const ClientCatalog = () => {
   const [machines, setMachines] = useState<CatalogMachine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noCode, setNoCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'rental' | 'sale'>('all');
   const [selectedCategory, setSelectedCategory] = useState<EquipmentCategory | 'all'>('all');
   const [workspaceName, setWorkspaceName] = useState<string>('');
+  const [resolvedWorkspaceId, setResolvedWorkspaceId] = useState<string>('');
+  
+  // Quote form state
+  const [quoteFormOpen, setQuoteFormOpen] = useState(false);
+  const [selectedMachineForQuote, setSelectedMachineForQuote] = useState<CatalogMachine | null>(null);
 
   useEffect(() => {
     if (workspaceId || inviteCode) {
       loadCatalog();
     } else {
-      setError(language === 'fr' 
-        ? 'Paramètre workspace ou invite_code manquant. Utilisez ?workspace=ID ou ?invite_code=CODE' 
-        : 'Missing workspace or invite_code parameter. Use ?workspace=ID or ?invite_code=CODE');
+      setNoCode(true);
       setLoading(false);
     }
   }, [workspaceId, inviteCode]);
@@ -88,9 +94,17 @@ const ClientCatalog = () => {
       const data = await response.json();
       setMachines(data.machines || []);
       
-      // Get workspace name from first item
-      if (data.machines?.length > 0) {
+      // Get workspace info
+      if (data.workspace) {
+        setWorkspaceName(data.workspace.name);
+      } else if (data.machines?.length > 0) {
         setWorkspaceName(data.machines[0].workspace_name);
+        setResolvedWorkspaceId(data.machines[0].workspace_id);
+      }
+      
+      // Get resolved workspace ID
+      if (data.machines?.length > 0) {
+        setResolvedWorkspaceId(data.machines[0].workspace_id);
       }
     } catch (err) {
       console.error('Error loading catalog:', err);
@@ -98,6 +112,11 @@ const ClientCatalog = () => {
     } finally {
       setLoading(false);
     }
+  };
+  
+  const openQuoteForm = (machine: CatalogMachine) => {
+    setSelectedMachineForQuote(machine);
+    setQuoteFormOpen(true);
   };
 
   const filteredMachines = machines.filter((machine) => {
@@ -130,6 +149,35 @@ const ClientCatalog = () => {
           <p className="text-muted-foreground">
             {language === 'fr' ? 'Chargement du catalogue...' : 'Loading catalog...'}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show info page when no invite_code is provided
+  if (noCode) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="glass-card p-8 text-center max-w-md">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Info className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-4">
+            {language === 'fr' ? 'Catalogue d\'équipements' : 'Equipment Catalog'}
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {language === 'fr' 
+              ? 'Pour accéder au catalogue d\'une entreprise, vous avez besoin d\'un code d\'invitation. Contactez l\'entreprise pour obtenir un lien d\'accès direct.'
+              : 'To access a company\'s catalog, you need an invitation code. Contact the company to get a direct access link.'}
+          </p>
+          <div className="space-y-3">
+            <Link to="/find-repair">
+              <Button variant="outline" className="w-full gap-2">
+                {language === 'fr' ? 'Trouver un réparateur' : 'Find a repair service'}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -379,6 +427,18 @@ const ClientCatalog = () => {
                           )}
                         </div>
 
+                        {/* Quote Request Button */}
+                        <div className="pt-3 border-t border-border/50">
+                          <Button
+                            onClick={() => openQuoteForm(machine)}
+                            className="w-full gap-2"
+                            size="sm"
+                          >
+                            <FileText className="w-4 h-4" />
+                            {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
+                          </Button>
+                        </div>
+
                         {/* Contact */}
                         {(machine.workspace_contact_email || machine.workspace_phone) && (
                           <div className="pt-3 border-t border-border/50 space-y-2">
@@ -419,6 +479,24 @@ const ClientCatalog = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Quote Request Form */}
+      {selectedMachineForQuote && (
+        <QuoteRequestForm
+          open={quoteFormOpen}
+          onOpenChange={setQuoteFormOpen}
+          machine={{
+            id: selectedMachineForQuote.id,
+            name: selectedMachineForQuote.name,
+            brand: selectedMachineForQuote.brand,
+            model: selectedMachineForQuote.model,
+          }}
+          workspaceId={resolvedWorkspaceId}
+          workspaceName={workspaceName}
+          availableForRental={selectedMachineForQuote.available_for_rental}
+          availableForSale={selectedMachineForQuote.available_for_sale}
+        />
+      )}
 
       {/* Footer */}
       <footer className="py-8 text-center border-t border-border mt-12">
