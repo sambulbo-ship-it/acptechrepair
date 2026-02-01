@@ -531,6 +531,85 @@ export type Database = {
           },
         ]
       }
+      quote_requests: {
+        Row: {
+          client_company: string | null
+          client_email: string
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          id: string
+          internal_notes: string | null
+          machine_brand: string | null
+          machine_id: string | null
+          machine_model: string | null
+          machine_name: string
+          message: string
+          request_type: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          client_company?: string | null
+          client_email: string
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          machine_brand?: string | null
+          machine_id?: string | null
+          machine_model?: string | null
+          machine_name: string
+          message: string
+          request_type: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          client_company?: string | null
+          client_email?: string
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          machine_brand?: string | null
+          machine_id?: string | null
+          machine_model?: string | null
+          machine_name?: string
+          message?: string
+          request_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_requests_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rental_sale_config: {
         Row: {
           available_for_rental: boolean

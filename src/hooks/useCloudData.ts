@@ -66,6 +66,7 @@ export const useCloudData = () => {
     location: row.location || '',
     status: (row.status as MachineStatus) || 'operational',
     notes: row.notes || '',
+    photos: row.photos || undefined,
     createdAt: row.created_at ? new Date(row.created_at) : new Date(),
     updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
   }), []);
