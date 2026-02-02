@@ -382,6 +382,7 @@ export const useCloudData = () => {
           location: machine.location || null,
           status: machine.status || 'operational',
           notes: machine.notes || null,
+          photos: machine.photos && machine.photos.length > 0 ? machine.photos : [],
           created_by: user.id,
         })
         .select()
@@ -416,6 +417,7 @@ export const useCloudData = () => {
       if (updates.location !== undefined) dbUpdates.location = updates.location || null;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
       if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
+      if (updates.photos !== undefined) dbUpdates.photos = updates.photos && updates.photos.length > 0 ? updates.photos : [];
 
       const { error } = await supabase
         .from('machines')

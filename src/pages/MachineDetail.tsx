@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
 import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images } from 'lucide-react';
@@ -38,7 +39,9 @@ const MachineDetail = () => {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isStatusEditorOpen, setIsStatusEditorOpen] = useState(false);
   const [isManualRepairOpen, setIsManualRepairOpen] = useState(false);
+  const [isPhotosEditorOpen, setIsPhotosEditorOpen] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
+  const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
   const [entryForm, setEntryForm] = useState({
     type: 'diagnostic' as EntryType,
     description: '',
@@ -50,6 +53,18 @@ const MachineDetail = () => {
 
   const machine = getMachine(id || '');
   const entries = getEntriesForMachine(id || '');
+
+  useEffect(() => {
+    if (!isPhotosEditorOpen || !machine) return;
+
+    setPresentationPhotos(
+      (machine.photos || []).map((url, index) => ({
+        id: `presentation-${index}`,
+        dataUrl: url,
+        createdAt: new Date(),
+      }))
+    );
+  }, [isPhotosEditorOpen, machine]);
 
   if (!machine) {
     return (
@@ -148,6 +163,17 @@ const MachineDetail = () => {
     return result !== null;
   };
 
+  const handleSavePresentationPhotos = async () => {
+    const urls = presentationPhotos.map(p => p.dataUrl).filter(Boolean);
+    const ok = await updateMachine(machine.id, { photos: urls });
+    if (ok) {
+      toast.success(language === 'fr' ? 'Photos enregistrées' : 'Photos saved');
+      setIsPhotosEditorOpen(false);
+    } else {
+      toast.error(language === 'fr' ? 'Impossible d\'enregistrer les photos' : 'Failed to save photos');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-8">
       <Header
@@ -181,6 +207,28 @@ const MachineDetail = () => {
         machineName={machine.name}
         onSave={handleSaveStatus}
       />
+
+      {/* Presentation Photos Editor */}
+      <Dialog open={isPhotosEditorOpen} onOpenChange={setIsPhotosEditorOpen}>
+        <DialogContent className="sm:max-w-lg glass-dialog max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'fr' ? 'Photos de présentation' : 'Presentation photos'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <PhotoCapture photos={presentationPhotos} onPhotosChange={setPresentationPhotos} maxPhotos={8} />
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsPhotosEditorOpen(false)}>
+              {language === 'fr' ? 'Annuler' : 'Cancel'}
+            </Button>
+            <Button onClick={handleSavePresentationPhotos}>
+              {language === 'fr' ? 'Enregistrer' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Manual Repair Entry Sheet */}
       <ManualRepairEntry
@@ -236,16 +284,22 @@ const MachineDetail = () => {
             </div>
           )}
 
-          {/* Photo Gallery for presentation photos */}
-          {machine.photos && machine.photos.length > 0 && (
-            <div className="pt-4 border-t border-border/50 mt-4">
-              <div className="flex items-center gap-2 mb-3">
+          {/* Presentation photos */}
+          <div className="pt-4 border-t border-border/50 mt-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2 min-w-0">
                 <Images className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">
+                <span className="text-sm font-medium text-foreground truncate">
                   {language === 'fr' ? 'Photos de présentation' : 'Presentation photos'}
                 </span>
               </div>
-              <PhotoGallery 
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => setIsPhotosEditorOpen(true)}>
+                {language === 'fr' ? 'Modifier' : 'Edit'}
+              </Button>
+            </div>
+
+            {machine.photos && machine.photos.length > 0 ? (
+              <PhotoGallery
                 photos={machine.photos.map((url, index) => ({
                   id: `photo-${index}`,
                   dataUrl: url,
@@ -253,8 +307,12 @@ const MachineDetail = () => {
                 }))}
                 size="md"
               />
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {language === 'fr' ? 'Aucune photo pour le moment.' : 'No photos yet.'}
+              </p>
+            )}
+          </div>
 
           {machine.notes && (
             <p className="mt-4 text-sm text-muted-foreground border-t border-border/50 pt-4">
