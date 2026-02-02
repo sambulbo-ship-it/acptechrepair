@@ -405,7 +405,12 @@ export const useCloudData = () => {
   };
 
   const updateMachine = async (id: string, updates: Partial<Machine>): Promise<boolean> => {
-    if (!id) return false;
+    if (!id) {
+      console.error('updateMachine: no id provided');
+      return false;
+    }
+
+    console.log('updateMachine called:', { id, updates });
 
     try {
       const dbUpdates: Record<string, unknown> = {};
@@ -418,20 +423,39 @@ export const useCloudData = () => {
       if (updates.status !== undefined) dbUpdates.status = updates.status;
       if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
       if (updates.photos !== undefined) dbUpdates.photos = updates.photos && updates.photos.length > 0 ? updates.photos : [];
+      
+      // Always update updated_at
+      dbUpdates.updated_at = new Date().toISOString();
 
-      const { error } = await supabase
+      console.log('Sending to Supabase:', dbUpdates);
+
+      const { data, error } = await supabase
         .from('machines')
         .update(dbUpdates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Error updating machine:', error);
+        console.error('Error updating machine:', error.message, error.details, error.hint);
         return false;
       }
 
-      setMachines(prev =>
-        prev.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date() } : m)
-      );
+      console.log('Supabase update response:', data);
+
+      // Update local state with the returned data
+      if (data) {
+        const updatedMachine = dbToMachine(data);
+        setMachines(prev =>
+          prev.map(m => m.id === id ? updatedMachine : m)
+        );
+      } else {
+        // Fallback to manual update if no data returned
+        setMachines(prev =>
+          prev.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date() } : m)
+        );
+      }
+      
       return true;
     } catch (err) {
       console.error('updateMachine error:', err);
