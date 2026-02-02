@@ -143,7 +143,13 @@ const MachineDetail = () => {
   };
 
   const handleSaveStatus = async (status: MachineStatus, notes: string): Promise<boolean> => {
-    return await updateMachine(machine.id, { status, notes });
+    console.log('Saving status:', { status, notes, machineId: machine.id });
+    const result = await updateMachine(machine.id, { status, notes });
+    console.log('Status save result:', result);
+    if (result) {
+      toast.success(language === 'fr' ? 'Statut mis à jour' : 'Status updated');
+    }
+    return result;
   };
 
   const handleSaveManualRepair = async (data: RepairEntryData): Promise<boolean> => {
@@ -165,7 +171,21 @@ const MachineDetail = () => {
 
   const handleSavePresentationPhotos = async () => {
     const urls = presentationPhotos.map(p => p.dataUrl).filter(Boolean);
+    console.log('Saving presentation photos:', { count: urls.length, machineId: machine.id });
+    
+    // Check if photos are too large (base64 can be very large)
+    const totalSize = urls.reduce((acc, url) => acc + url.length, 0);
+    console.log('Total photo data size (chars):', totalSize);
+    
+    if (totalSize > 5000000) { // 5MB limit warning
+      toast.warning(language === 'fr' 
+        ? 'Les photos sont très volumineuses, cela peut prendre du temps...' 
+        : 'Photos are very large, this may take a while...');
+    }
+    
     const ok = await updateMachine(machine.id, { photos: urls });
+    console.log('Photo save result:', ok);
+    
     if (ok) {
       toast.success(language === 'fr' ? 'Photos enregistrées' : 'Photos saved');
       setIsPhotosEditorOpen(false);
