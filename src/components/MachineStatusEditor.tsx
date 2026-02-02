@@ -21,6 +21,7 @@ import {
 import { MachineStatus } from '@/types/machine';
 import { Loader2, CheckCircle2, AlertTriangle, XCircle, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface MachineStatusEditorProps {
   open: boolean;
@@ -93,6 +94,8 @@ export const MachineStatusEditor = ({
     setSaving(false);
     if (success) {
       onOpenChange(false);
+    } else {
+      toast.error(language === 'fr' ? 'Impossible d\'enregistrer le statut' : 'Failed to save status');
     }
   };
 

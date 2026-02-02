@@ -2,13 +2,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const APP_PUBLIC_BASE_URL = 'https://acptechrepair.lovable.app';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -25,6 +28,26 @@ Deno.serve(async (req) => {
     const type = url.searchParams.get('type'); // 'rental', 'sale', or null for all
     const limit = parseInt(url.searchParams.get('limit') || '100');
     const offset = parseInt(url.searchParams.get('offset') || '0');
+
+    // If user opens the API URL in a browser, redirect them to the public catalog UI.
+    // (This makes the previously shared “API link” land on the catalog page.)
+    const accept = req.headers.get('accept') || '';
+    const wantsRedirect = url.searchParams.get('redirect') === '1' || accept.includes('text/html');
+    if (wantsRedirect) {
+      const target = inviteCode
+        ? `${APP_PUBLIC_BASE_URL}/catalog?invite_code=${encodeURIComponent(inviteCode)}`
+        : workspaceId
+          ? `${APP_PUBLIC_BASE_URL}/catalog?workspace=${encodeURIComponent(workspaceId)}`
+          : `${APP_PUBLIC_BASE_URL}/catalog`;
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          Location: target,
+        },
+      });
+    }
 
     console.log('[public-catalog] Fetching catalog with params:', { workspaceId, inviteCode, category, type, limit, offset });
 
