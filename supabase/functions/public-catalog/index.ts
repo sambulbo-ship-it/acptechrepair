@@ -28,17 +28,35 @@ Deno.serve(async (req) => {
     const type = url.searchParams.get('type'); // 'rental', 'sale', or null for all
     const limit = parseInt(url.searchParams.get('limit') || '100');
     const offset = parseInt(url.searchParams.get('offset') || '0');
+    const format = url.searchParams.get('format'); // 'json' for API, 'ui' for redirect
 
-    // If user opens the API URL in a browser, redirect them to the public catalog UI.
-    // (This makes the previously shared “API link” land on the catalog page.)
+    // Redirect browsers to the public catalog UI by default.
+    // Only return JSON if explicitly requested via format=json parameter
+    // or if the request comes from an API client (Accept: application/json only)
     const accept = req.headers.get('accept') || '';
-    const wantsRedirect = url.searchParams.get('redirect') === '1' || accept.includes('text/html');
-    if (wantsRedirect) {
+    
+    // Check if this is an explicit API request that wants JSON
+    const isApiRequest = format === 'json' || 
+                         accept === 'application/json' ||
+                         accept.startsWith('application/json,');
+    
+    // Redirect to UI if not an explicit API request
+    // Browsers send Accept headers that include text/html
+    // Mobile apps opening links also typically accept text/html
+    const shouldRedirect = !isApiRequest && (
+      format === 'ui' || 
+      accept.includes('text/html') ||
+      accept === '' // Empty accept = likely direct browser navigation
+    );
+    
+    if (shouldRedirect) {
       const target = inviteCode
         ? `${APP_PUBLIC_BASE_URL}/catalog?invite_code=${encodeURIComponent(inviteCode)}`
         : workspaceId
           ? `${APP_PUBLIC_BASE_URL}/catalog?workspace=${encodeURIComponent(workspaceId)}`
           : `${APP_PUBLIC_BASE_URL}/catalog`;
+
+      console.log('[public-catalog] Redirecting browser to:', target);
 
       return new Response(null, {
         status: 302,
