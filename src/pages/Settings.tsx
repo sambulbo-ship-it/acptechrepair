@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
-import { Check, LogOut, Building2, Shield, Bell, Palette, Settings as SettingsIcon, ChevronRight } from 'lucide-react';
+import { Check, LogOut, Building2, Shield, Bell, Palette, Settings as SettingsIcon, ChevronRight, FileText, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -92,6 +92,31 @@ const Settings = () => {
               </button>
             </>
           )}
+        </div>
+
+        {/* Business Management */}
+        <div className="glass-section overflow-hidden">
+          <h3 className="px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wide border-b border-border/50">
+            Gestion commerciale
+          </h3>
+          
+          <button
+            onClick={() => navigate('/quote-requests-received')}
+            className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
+          >
+            <FileText className="w-5 h-5 text-primary" />
+            <span className="flex-1 text-left text-foreground">Demandes de devis</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          <button
+            onClick={() => navigate('/repair-requests-received')}
+            className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
+          >
+            <Wrench className="w-5 h-5 text-primary" />
+            <span className="flex-1 text-left text-foreground">Demandes de réparation</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
 
         {/* Language */}
