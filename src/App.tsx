@@ -31,6 +31,7 @@ const AIAssistant = lazy(() => import("./pages/AIAssistant"));
 const FindRepairService = lazy(() => import("./pages/FindRepairService"));
 const RepairServiceSettings = lazy(() => import("./pages/RepairServiceSettings"));
 const RepairRequestsReceived = lazy(() => import("./pages/RepairRequestsReceived"));
+const QuoteRequestsReceived = lazy(() => import("./pages/QuoteRequestsReceived"));
 const RentalSale = lazy(() => import("./pages/RentalSale"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -168,6 +169,7 @@ const AppRoutes = () => (
       <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
       <Route path="/repair-service-settings" element={<ProtectedRoute><RepairServiceSettings /></ProtectedRoute>} />
       <Route path="/repair-requests-received" element={<ProtectedRoute><RepairRequestsReceived /></ProtectedRoute>} />
+      <Route path="/quote-requests-received" element={<ProtectedRoute><QuoteRequestsReceived /></ProtectedRoute>} />
       <Route path="/rental-sale" element={<ProtectedRoute><RentalSale /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
       
