@@ -147,9 +147,13 @@ const WorkspacesRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => (
   <Suspense fallback={<LoadingScreen />}>
     <Routes>
-      {/* Public routes */}
-      <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+      {/* Truly public routes - no auth wrapper at all */}
       <Route path="/install" element={<Install />} />
+      <Route path="/find-repair" element={<FindRepairService />} />
+      <Route path="/catalog" element={<ClientCatalog />} />
+      
+      {/* Public routes (redirect if already logged in) */}
+      <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
       
       {/* Semi-protected (need auth but not workspace) */}
       <Route path="/workspaces" element={<WorkspacesRoute><Workspaces /></WorkspacesRoute>} />
@@ -172,10 +176,6 @@ const AppRoutes = () => (
       <Route path="/quote-requests-received" element={<ProtectedRoute><QuoteRequestsReceived /></ProtectedRoute>} />
       <Route path="/rental-sale" element={<ProtectedRoute><RentalSale /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-      
-      {/* Public route for finding repair services */}
-      <Route path="/find-repair" element={<FindRepairService />} />
-      <Route path="/catalog" element={<ClientCatalog />} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
