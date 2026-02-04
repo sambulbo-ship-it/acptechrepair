@@ -3,11 +3,14 @@ project_id = "pnzovyrlqkxeajzuylgq"
 [functions.ai-diagnostic]
 verify_jwt = false
 
-[functions.submit-repair-request]
+[functions.ai-product-scanner]
 verify_jwt = false
 
 [functions.public-catalog]
 verify_jwt = false
 
-[functions.ai-product-scanner]
+[functions.submit-quote-request]
+verify_jwt = false
+
+[functions.submit-repair-request]
 verify_jwt = false
