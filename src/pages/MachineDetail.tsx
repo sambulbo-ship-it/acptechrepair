@@ -344,6 +344,30 @@ const MachineDetail = () => {
 
           <PhotoCapture photos={presentationPhotos} onPhotosChange={setPresentationPhotos} maxPhotos={8} />
 
+          {/* Apply to all same brand+model */}
+          {machine.brand && machine.model && (() => {
+            const sameCount = machines.filter(
+              m => m.id !== machine.id && 
+                   m.brand.toLowerCase() === machine.brand.toLowerCase() && 
+                   m.model.toLowerCase() === machine.model.toLowerCase()
+            ).length;
+            if (sameCount === 0) return null;
+            return (
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                <Checkbox 
+                  id="apply-all" 
+                  checked={applyPhotosToAll} 
+                  onCheckedChange={(checked) => setApplyPhotosToAll(!!checked)}
+                />
+                <label htmlFor="apply-all" className="text-sm text-foreground cursor-pointer leading-tight">
+                  {language === 'fr' 
+                    ? `Appliquer aussi à ${sameCount} autre(s) ${machine.brand} ${machine.model}`
+                    : `Also apply to ${sameCount} other ${machine.brand} ${machine.model}`}
+                </label>
+              </div>
+            );
+          })()}
+
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsPhotosEditorOpen(false)}>
               {language === 'fr' ? 'Annuler' : 'Cancel'}
