@@ -36,6 +36,7 @@ const RentalSale = lazy(() => import("./pages/RentalSale"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ClientCatalog = lazy(() => import("./pages/ClientCatalog"));
+const NotificationListenerLazy = lazy(() => import('./components/NotificationListener').then(m => ({ default: m.NotificationListener })));
 
 // Query client with retry and error handling
 const queryClient = new QueryClient({
