@@ -33,13 +33,16 @@ const MachineDetail = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team } = useCloudData();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addMachine } = useCloudData();
   const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isStatusEditorOpen, setIsStatusEditorOpen] = useState(false);
   const [isManualRepairOpen, setIsManualRepairOpen] = useState(false);
   const [isPhotosEditorOpen, setIsPhotosEditorOpen] = useState(false);
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
+  const [duplicateSerial, setDuplicateSerial] = useState('');
+  const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
   const [entryForm, setEntryForm] = useState({
