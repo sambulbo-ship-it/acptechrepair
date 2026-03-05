@@ -100,15 +100,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/workspaces" replace />;
   }
 
-  // Import notification listener dynamically to avoid SSR issues
-  const NotificationListener = lazy(() => import('./components/NotificationListener').then(m => ({ default: m.NotificationListener })));
-
   return (
     <>
       {showSplash && <WorkspaceSplashScreen onComplete={handleSplashComplete} duration={1500} />}
       <OfflineIndicator />
       <Suspense fallback={null}>
-        <NotificationListener />
+        <NotificationListenerLazy />
       </Suspense>
       {children}
     </>
