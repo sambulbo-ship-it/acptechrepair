@@ -82,6 +82,23 @@ const MachineList = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const sortedMachines = [...filteredMachines].sort((a, b) => {
+    switch (sortBy) {
+      case 'name-asc': return a.name.localeCompare(b.name);
+      case 'name-desc': return b.name.localeCompare(a.name);
+      case 'serial-asc': return a.serialNumber.localeCompare(b.serialNumber);
+      case 'serial-desc': return b.serialNumber.localeCompare(a.serialNumber);
+      case 'brand-asc': return a.brand.localeCompare(b.brand);
+      case 'brand-desc': return b.brand.localeCompare(a.brand);
+      case 'status':
+        const statusOrder: Record<string, number> = { 'out-of-service': 0, 'needs-attention': 1, 'operational': 2 };
+        return (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
+      case 'recent':
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      default: return 0;
+    }
+  });
+
   const toggleSelection = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
