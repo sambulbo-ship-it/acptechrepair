@@ -214,7 +214,28 @@ const MachineList = () => {
           </div>
         )}
 
-        {/* Category Filter */}
+        {/* Sort + Category Filter */}
+        <div className="flex items-center gap-2">
+          <div className="shrink-0">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="h-10 w-auto gap-1.5 glass-input text-xs font-medium">
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">{language === 'fr' ? 'Nom A→Z' : 'Name A→Z'}</SelectItem>
+                <SelectItem value="name-desc">{language === 'fr' ? 'Nom Z→A' : 'Name Z→A'}</SelectItem>
+                <SelectItem value="serial-asc">{language === 'fr' ? 'N° série A→Z' : 'Serial A→Z'}</SelectItem>
+                <SelectItem value="serial-desc">{language === 'fr' ? 'N° série Z→A' : 'Serial Z→A'}</SelectItem>
+                <SelectItem value="brand-asc">{language === 'fr' ? 'Marque A→Z' : 'Brand A→Z'}</SelectItem>
+                <SelectItem value="brand-desc">{language === 'fr' ? 'Marque Z→A' : 'Brand Z→A'}</SelectItem>
+                <SelectItem value="status">{language === 'fr' ? 'Statut (urgent)' : 'Status (urgent)'}</SelectItem>
+                <SelectItem value="recent">{language === 'fr' ? 'Récent' : 'Recent'}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <ScrollArea className="w-full">
           <div className="flex gap-3 pb-3">
             <button
