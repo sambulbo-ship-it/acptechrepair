@@ -365,10 +365,13 @@ const MachineDetail = () => {
 
           {/* Apply to all same brand+model */}
           {machine.brand && machine.model && (() => {
+            const machineBrand = machine.brand.trim().toLowerCase();
+            const machineModel = machine.model.trim().toLowerCase();
             const sameCount = machines.filter(
               m => m.id !== machine.id && 
-                   m.brand.toLowerCase() === machine.brand.toLowerCase() && 
-                   m.model.toLowerCase() === machine.model.toLowerCase()
+                   m.brand && m.model &&
+                   m.brand.trim().toLowerCase() === machineBrand && 
+                   m.model.trim().toLowerCase() === machineModel
             ).length;
             if (sameCount === 0) return null;
             return (
