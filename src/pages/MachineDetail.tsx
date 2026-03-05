@@ -142,7 +142,6 @@ const MachineDetail = () => {
   };
 
   const handleSheetOpen = (open: boolean) => {
-    setIsSheetOpen(open);
     if (!open) {
       setPhotos([]);
     }
