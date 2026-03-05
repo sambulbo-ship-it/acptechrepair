@@ -48,9 +48,14 @@ export const MachineCard = ({ machine, onClick, selectable, selected, onSelect }
             </h3>
           </div>
           
-          <p className="text-sm text-muted-foreground mb-1.5 truncate">
+          <p className="text-sm text-muted-foreground truncate">
             {machine.brand} {machine.model}
           </p>
+          {machine.serialNumber && (
+            <p className="text-xs text-muted-foreground/70 mb-1.5 truncate font-mono">
+              S/N: {machine.serialNumber}
+            </p>
+          )}
           
           <div className="flex items-center gap-3">
             <StatusBadge status={machine.status} />
