@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
 import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images, Copy } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 const MachineDetail = () => {
@@ -33,7 +34,7 @@ const MachineDetail = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addMachine } = useCloudData();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addMachine, machines } = useCloudData();
   const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
@@ -45,6 +46,7 @@ const MachineDetail = () => {
   const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
+  const [applyPhotosToAll, setApplyPhotosToAll] = useState(false);
   const [entryForm, setEntryForm] = useState({
     type: 'diagnostic' as EntryType,
     description: '',
@@ -176,11 +178,10 @@ const MachineDetail = () => {
     const urls = presentationPhotos.map(p => p.dataUrl).filter(Boolean);
     console.log('Saving presentation photos:', { count: urls.length, machineId: machine.id });
     
-    // Check if photos are too large (base64 can be very large)
     const totalSize = urls.reduce((acc, url) => acc + url.length, 0);
     console.log('Total photo data size (chars):', totalSize);
     
-    if (totalSize > 5000000) { // 5MB limit warning
+    if (totalSize > 5000000) {
       toast.warning(language === 'fr' 
         ? 'Les photos sont très volumineuses, cela peut prendre du temps...' 
         : 'Photos are very large, this may take a while...');
@@ -190,8 +191,31 @@ const MachineDetail = () => {
     console.log('Photo save result:', ok);
     
     if (ok) {
+      // Apply to all machines with same brand + model if checkbox is checked
+      if (applyPhotosToAll && machine.brand && machine.model) {
+        const sameMachines = machines.filter(
+          m => m.id !== machine.id && 
+               m.brand.toLowerCase() === machine.brand.toLowerCase() && 
+               m.model.toLowerCase() === machine.model.toLowerCase()
+        );
+        
+        if (sameMachines.length > 0) {
+          let successCount = 0;
+          for (const m of sameMachines) {
+            const result = await updateMachine(m.id, { photos: urls });
+            if (result) successCount++;
+          }
+          toast.success(
+            language === 'fr' 
+              ? `Photos appliquées à ${successCount} autre(s) ${machine.brand} ${machine.model}`
+              : `Photos applied to ${successCount} other ${machine.brand} ${machine.model}`
+          );
+        }
+      }
+      
       toast.success(language === 'fr' ? 'Photos enregistrées' : 'Photos saved');
       setIsPhotosEditorOpen(false);
+      setApplyPhotosToAll(false);
     } else {
       toast.error(language === 'fr' ? 'Impossible d\'enregistrer les photos' : 'Failed to save photos');
     }
@@ -319,6 +343,30 @@ const MachineDetail = () => {
           </DialogHeader>
 
           <PhotoCapture photos={presentationPhotos} onPhotosChange={setPresentationPhotos} maxPhotos={8} />
+
+          {/* Apply to all same brand+model */}
+          {machine.brand && machine.model && (() => {
+            const sameCount = machines.filter(
+              m => m.id !== machine.id && 
+                   m.brand.toLowerCase() === machine.brand.toLowerCase() && 
+                   m.model.toLowerCase() === machine.model.toLowerCase()
+            ).length;
+            if (sameCount === 0) return null;
+            return (
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                <Checkbox 
+                  id="apply-all" 
+                  checked={applyPhotosToAll} 
+                  onCheckedChange={(checked) => setApplyPhotosToAll(!!checked)}
+                />
+                <label htmlFor="apply-all" className="text-sm text-foreground cursor-pointer leading-tight">
+                  {language === 'fr' 
+                    ? `Appliquer aussi à ${sameCount} autre(s) ${machine.brand} ${machine.model}`
+                    : `Also apply to ${sameCount} other ${machine.brand} ${machine.model}`}
+                </label>
+              </div>
+            );
+          })()}
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsPhotosEditorOpen(false)}>
