@@ -45,6 +45,7 @@ const MachineDetail = () => {
   const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
+  const [applyPhotosToAll, setApplyPhotosToAll] = useState(false);
   const [entryForm, setEntryForm] = useState({
     type: 'diagnostic' as EntryType,
     description: '',
