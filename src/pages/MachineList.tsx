@@ -289,7 +289,7 @@ const MachineList = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredMachines.map((machine) => (
+            {sortedMachines.map((machine) => (
               <MachineCard
                 key={machine.id}
                 machine={machine}
