@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
-import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images } from 'lucide-react';
+import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 const MachineDetail = () => {
@@ -33,13 +33,16 @@ const MachineDetail = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team } = useCloudData();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addMachine } = useCloudData();
   const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isStatusEditorOpen, setIsStatusEditorOpen] = useState(false);
   const [isManualRepairOpen, setIsManualRepairOpen] = useState(false);
   const [isPhotosEditorOpen, setIsPhotosEditorOpen] = useState(false);
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
+  const [duplicateSerial, setDuplicateSerial] = useState('');
+  const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
   const [entryForm, setEntryForm] = useState({
@@ -194,6 +197,37 @@ const MachineDetail = () => {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!duplicateSerial.trim()) {
+      toast.error(language === 'fr' ? 'Le numéro de série est obligatoire' : 'Serial number is required');
+      return;
+    }
+    if (duplicateSerial.trim().toLowerCase() === machine.serialNumber.toLowerCase()) {
+      toast.error(language === 'fr' ? 'Le numéro de série doit être différent' : 'Serial number must be different');
+      return;
+    }
+    setDuplicating(true);
+    const result = await addMachine({
+      name: machine.name,
+      category: machine.category,
+      brand: machine.brand,
+      model: machine.model,
+      serialNumber: duplicateSerial.trim(),
+      location: machine.location,
+      status: 'operational',
+      notes: machine.notes,
+    });
+    setDuplicating(false);
+    if (result) {
+      toast.success(language === 'fr' ? 'Machine dupliquée avec succès' : 'Machine duplicated successfully');
+      setIsDuplicateOpen(false);
+      setDuplicateSerial('');
+      navigate(`/machine/${result.id}`);
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de la duplication' : 'Error duplicating machine');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-8">
       <Header
@@ -201,6 +235,13 @@ const MachineDetail = () => {
         showBack
         rightAction={
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsDuplicateOpen(true)}
+              className="p-2 text-muted-foreground hover:text-primary touch-target"
+              title={language === 'fr' ? 'Dupliquer' : 'Duplicate'}
+            >
+              <Copy className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setIsStatusEditorOpen(true)}
               className="p-2 text-primary touch-target"
@@ -228,7 +269,47 @@ const MachineDetail = () => {
         onSave={handleSaveStatus}
       />
 
-      {/* Presentation Photos Editor */}
+      {/* Duplicate Machine Dialog */}
+      <Dialog open={isDuplicateOpen} onOpenChange={(open) => { setIsDuplicateOpen(open); if (!open) setDuplicateSerial(''); }}>
+        <DialogContent className="glass-dialog">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'fr' ? 'Dupliquer l\'équipement' : 'Duplicate equipment'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              {language === 'fr'
+                ? `Toutes les informations de "${machine.name}" seront copiées. Vous devez entrer un nouveau numéro de série unique.`
+                : `All information from "${machine.name}" will be copied. You must enter a new unique serial number.`}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="duplicate-serial" className="text-sm font-medium text-foreground">
+                {language === 'fr' ? 'Nouveau numéro de série' : 'New serial number'} *
+              </Label>
+              <Input
+                id="duplicate-serial"
+                value={duplicateSerial}
+                onChange={(e) => setDuplicateSerial(e.target.value)}
+                placeholder={language === 'fr' ? 'Entrez un numéro de série différent' : 'Enter a different serial number'}
+                className="h-12 glass-input"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleDuplicate(); } }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsDuplicateOpen(false)}>
+              {language === 'fr' ? 'Annuler' : 'Cancel'}
+            </Button>
+            <Button onClick={handleDuplicate} disabled={!duplicateSerial.trim() || duplicating}>
+              {duplicating
+                ? (language === 'fr' ? 'Duplication...' : 'Duplicating...')
+                : (language === 'fr' ? 'Dupliquer' : 'Duplicate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isPhotosEditorOpen} onOpenChange={setIsPhotosEditorOpen}>
         <DialogContent className="sm:max-w-lg glass-dialog max-h-[90vh] overflow-y-auto">
           <DialogHeader>
