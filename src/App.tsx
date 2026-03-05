@@ -36,6 +36,7 @@ const RentalSale = lazy(() => import("./pages/RentalSale"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ClientCatalog = lazy(() => import("./pages/ClientCatalog"));
+const NotificationListenerLazy = lazy(() => import('./components/NotificationListener').then(m => ({ default: m.NotificationListener })));
 
 // Query client with retry and error handling
 const queryClient = new QueryClient({
@@ -99,15 +100,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/workspaces" replace />;
   }
 
-  // Import notification listener dynamically to avoid SSR issues
-  const NotificationListener = lazy(() => import('./components/NotificationListener').then(m => ({ default: m.NotificationListener })));
-
   return (
     <>
       {showSplash && <WorkspaceSplashScreen onComplete={handleSplashComplete} duration={1500} />}
       <OfflineIndicator />
       <Suspense fallback={null}>
-        <NotificationListener />
+        <NotificationListenerLazy />
       </Suspense>
       {children}
     </>

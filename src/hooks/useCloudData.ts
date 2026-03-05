@@ -112,55 +112,51 @@ export const useCloudData = () => {
     notificationCallbacksRef.current = callbacks;
   }, []);
 
-  // Handle realtime machine changes
+  // Handle realtime machine changes - use functional updater to avoid stale closures
   const handleMachineChange = useCallback((payload: RealtimePostgresChangesPayload<DbMachine>) => {
     if (!isMountedRef.current) return;
-    
-    console.log('Realtime machine change:', payload.eventType);
     
     if (payload.eventType === 'INSERT' && payload.new) {
       const newMachine = dbToMachine(payload.new as DbMachine);
       setMachines(prev => {
-        // Avoid duplicates
         if (prev.some(m => m.id === newMachine.id)) return prev;
         return [newMachine, ...prev];
       });
     } else if (payload.eventType === 'UPDATE' && payload.new) {
       const updatedMachine = dbToMachine(payload.new as DbMachine);
-      const oldMachine = machines.find(m => m.id === updatedMachine.id);
       
-      // Notify on status change
-      if (oldMachine && oldMachine.status !== updatedMachine.status) {
-        notificationCallbacksRef.current.onStatusChange?.(
-          updatedMachine.name,
-          oldMachine.status,
-          updatedMachine.status
-        );
-      }
-      
-      setMachines(prev => 
-        prev.map(m => m.id === updatedMachine.id ? updatedMachine : m)
-      );
+      // Use functional updater to read current machines without stale closure
+      setMachines(prev => {
+        const oldMachine = prev.find(m => m.id === updatedMachine.id);
+        if (oldMachine && oldMachine.status !== updatedMachine.status) {
+          notificationCallbacksRef.current.onStatusChange?.(
+            updatedMachine.name,
+            oldMachine.status,
+            updatedMachine.status
+          );
+        }
+        return prev.map(m => m.id === updatedMachine.id ? updatedMachine : m);
+      });
     } else if (payload.eventType === 'DELETE' && payload.old) {
       const deletedId = (payload.old as DbMachine).id;
       setMachines(prev => prev.filter(m => m.id !== deletedId));
       setEntries(prev => prev.filter(e => e.machineId !== deletedId));
     }
-  }, [dbToMachine, machines]);
+  }, [dbToMachine]);
 
-  // Handle realtime entry changes
+  // Handle realtime entry changes - use machinesRef to avoid stale closures
+  const machinesRef = useRef<Machine[]>([]);
+  machinesRef.current = machines;
+
   const handleEntryChange = useCallback((payload: RealtimePostgresChangesPayload<DbEntry>) => {
     if (!isMountedRef.current) return;
-    
-    console.log('Realtime entry change:', payload.eventType);
     
     if (payload.eventType === 'INSERT' && payload.new) {
       const newEntry = dbToEntry(payload.new as DbEntry);
       const newDbEntry = payload.new as DbEntry;
       
-      // Don't notify for entries we just created ourselves
       if (newDbEntry.created_by !== user?.id) {
-        const machine = machines.find(m => m.id === newEntry.machineId);
+        const machine = machinesRef.current.find(m => m.id === newEntry.machineId);
         if (machine) {
           notificationCallbacksRef.current.onNewEntry?.(
             machine.name,
@@ -183,7 +179,7 @@ export const useCloudData = () => {
       const deletedId = (payload.old as DbEntry).id;
       setEntries(prev => prev.filter(e => e.id !== deletedId));
     }
-  }, [dbToEntry, machines, user?.id]);
+  }, [dbToEntry, user?.id]);
 
   // Handle realtime team member changes
   const handleTeamChange = useCallback((payload: RealtimePostgresChangesPayload<DbTeamMember>) => {
