@@ -197,6 +197,37 @@ const MachineDetail = () => {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!duplicateSerial.trim()) {
+      toast.error(language === 'fr' ? 'Le numéro de série est obligatoire' : 'Serial number is required');
+      return;
+    }
+    if (duplicateSerial.trim().toLowerCase() === machine.serialNumber.toLowerCase()) {
+      toast.error(language === 'fr' ? 'Le numéro de série doit être différent' : 'Serial number must be different');
+      return;
+    }
+    setDuplicating(true);
+    const result = await addMachine({
+      name: machine.name,
+      category: machine.category,
+      brand: machine.brand,
+      model: machine.model,
+      serialNumber: duplicateSerial.trim(),
+      location: machine.location,
+      status: 'operational',
+      notes: machine.notes,
+    });
+    setDuplicating(false);
+    if (result) {
+      toast.success(language === 'fr' ? 'Machine dupliquée avec succès' : 'Machine duplicated successfully');
+      setIsDuplicateOpen(false);
+      setDuplicateSerial('');
+      navigate(`/machine/${result.id}`);
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de la duplication' : 'Error duplicating machine');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-8">
       <Header
@@ -204,6 +235,13 @@ const MachineDetail = () => {
         showBack
         rightAction={
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsDuplicateOpen(true)}
+              className="p-2 text-muted-foreground hover:text-primary touch-target"
+              title={language === 'fr' ? 'Dupliquer' : 'Duplicate'}
+            >
+              <Copy className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setIsStatusEditorOpen(true)}
               className="p-2 text-primary touch-target"
