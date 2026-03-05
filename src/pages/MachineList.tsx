@@ -37,6 +37,7 @@ const MachineList = () => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDuplicateOpen, setBatchDuplicateOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>('name-asc');
 
   // Setup notification callbacks
   useEffect(() => {
