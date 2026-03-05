@@ -193,22 +193,41 @@ const MachineDetail = () => {
     if (ok) {
       // Apply to all machines with same brand + model if checkbox is checked
       if (applyPhotosToAll && machine.brand && machine.model) {
+        const machineBrand = machine.brand.trim().toLowerCase();
+        const machineModel = machine.model.trim().toLowerCase();
+        
         const sameMachines = machines.filter(
           m => m.id !== machine.id && 
-               m.brand.toLowerCase() === machine.brand.toLowerCase() && 
-               m.model.toLowerCase() === machine.model.toLowerCase()
+               m.brand && m.model &&
+               m.brand.trim().toLowerCase() === machineBrand && 
+               m.model.trim().toLowerCase() === machineModel
         );
+        
+        console.log('Apply photos to all - found machines:', {
+          brand: machine.brand,
+          model: machine.model,
+          count: sameMachines.length,
+          ids: sameMachines.map(m => m.id),
+        });
         
         if (sameMachines.length > 0) {
           let successCount = 0;
           for (const m of sameMachines) {
+            console.log('Updating photos for machine:', m.id, m.name);
             const result = await updateMachine(m.id, { photos: urls });
+            console.log('Update result for', m.id, ':', result);
             if (result) successCount++;
           }
           toast.success(
             language === 'fr' 
               ? `Photos appliquées à ${successCount} autre(s) ${machine.brand} ${machine.model}`
               : `Photos applied to ${successCount} other ${machine.brand} ${machine.model}`
+          );
+        } else {
+          toast.info(
+            language === 'fr'
+              ? `Aucune autre machine ${machine.brand} ${machine.model} trouvée`
+              : `No other ${machine.brand} ${machine.model} machines found`
           );
         }
       }
@@ -346,10 +365,13 @@ const MachineDetail = () => {
 
           {/* Apply to all same brand+model */}
           {machine.brand && machine.model && (() => {
+            const machineBrand = machine.brand.trim().toLowerCase();
+            const machineModel = machine.model.trim().toLowerCase();
             const sameCount = machines.filter(
               m => m.id !== machine.id && 
-                   m.brand.toLowerCase() === machine.brand.toLowerCase() && 
-                   m.model.toLowerCase() === machine.model.toLowerCase()
+                   m.brand && m.model &&
+                   m.brand.trim().toLowerCase() === machineBrand && 
+                   m.model.trim().toLowerCase() === machineModel
             ).length;
             if (sameCount === 0) return null;
             return (
