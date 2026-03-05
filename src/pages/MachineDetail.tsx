@@ -59,6 +59,7 @@ const MachineDetail = () => {
   const machine = getMachine(id || '');
   const entries = getEntriesForMachine(id || '');
 
+  // Only sync presentation photos when dialog OPENS, not on every machine change
   useEffect(() => {
     if (!isPhotosEditorOpen || !machine) return;
 
@@ -69,7 +70,8 @@ const MachineDetail = () => {
         createdAt: new Date(),
       }))
     );
-  }, [isPhotosEditorOpen, machine]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPhotosEditorOpen]);
 
   if (!machine) {
     return (
