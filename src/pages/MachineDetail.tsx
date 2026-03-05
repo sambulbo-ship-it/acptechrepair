@@ -269,7 +269,47 @@ const MachineDetail = () => {
         onSave={handleSaveStatus}
       />
 
-      {/* Presentation Photos Editor */}
+      {/* Duplicate Machine Dialog */}
+      <Dialog open={isDuplicateOpen} onOpenChange={(open) => { setIsDuplicateOpen(open); if (!open) setDuplicateSerial(''); }}>
+        <DialogContent className="glass-dialog">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'fr' ? 'Dupliquer l\'équipement' : 'Duplicate equipment'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              {language === 'fr'
+                ? `Toutes les informations de "${machine.name}" seront copiées. Vous devez entrer un nouveau numéro de série unique.`
+                : `All information from "${machine.name}" will be copied. You must enter a new unique serial number.`}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="duplicate-serial" className="text-sm font-medium text-foreground">
+                {language === 'fr' ? 'Nouveau numéro de série' : 'New serial number'} *
+              </Label>
+              <Input
+                id="duplicate-serial"
+                value={duplicateSerial}
+                onChange={(e) => setDuplicateSerial(e.target.value)}
+                placeholder={language === 'fr' ? 'Entrez un numéro de série différent' : 'Enter a different serial number'}
+                className="h-12 glass-input"
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleDuplicate(); } }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsDuplicateOpen(false)}>
+              {language === 'fr' ? 'Annuler' : 'Cancel'}
+            </Button>
+            <Button onClick={handleDuplicate} disabled={!duplicateSerial.trim() || duplicating}>
+              {duplicating
+                ? (language === 'fr' ? 'Duplication...' : 'Duplicating...')
+                : (language === 'fr' ? 'Dupliquer' : 'Duplicate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isPhotosEditorOpen} onOpenChange={setIsPhotosEditorOpen}>
         <DialogContent className="sm:max-w-lg glass-dialog max-h-[90vh] overflow-y-auto">
           <DialogHeader>
