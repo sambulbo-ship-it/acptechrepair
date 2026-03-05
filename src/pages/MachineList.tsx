@@ -16,9 +16,10 @@ import { RecentRepairsSuggestions } from '@/components/RecentRepairsSuggestions'
 import { BatchDuplicateDialog } from '@/components/BatchDuplicateDialog';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
-import { Search, Wrench, History, Copy, X, CheckSquare } from 'lucide-react';
+import { Search, Wrench, History, Copy, X, CheckSquare, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
