@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
 import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images, Copy } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 const MachineDetail = () => {
