@@ -7,3 +7,4 @@ export { CatalogEmptyState } from './CatalogEmptyState';
 export { CatalogLoadingState } from './CatalogLoadingState';
 export { CatalogErrorState } from './CatalogErrorState';
 export { CatalogNoCodeState } from './CatalogNoCodeState';
+export { CatalogRequestDialog } from './CatalogRequestDialog';

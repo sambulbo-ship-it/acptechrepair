@@ -9,9 +9,8 @@ import {
   Check, 
   X, 
   Sparkles, 
-  FileText, 
-  Mail, 
-  Phone 
+  FileText,
+  ImageOff,
 } from 'lucide-react';
 
 export interface CatalogMachine {
@@ -46,7 +45,7 @@ interface CatalogMachineCardProps {
 }
 
 const formatPrice = (price: number | null, currency: string, language: 'en' | 'fr') => {
-  if (price === null) return '-';
+  if (price === null) return null;
   return new Intl.NumberFormat(language === 'fr' ? 'fr-FR' : 'en-US', {
     style: 'currency',
     currency: currency,
@@ -56,45 +55,74 @@ const formatPrice = (price: number | null, currency: string, language: 'en' | 'f
 
 export const CatalogMachineCard = ({ machine, language, onRequestQuote }: CatalogMachineCardProps) => {
   const CategoryIcon = getCategoryIconComponent(machine.category as EquipmentCategory);
+  const hasPhoto = machine.photos && machine.photos.length > 0;
+
+  // Best price display
+  const rentalPrices = [
+    { label: language === 'fr' ? '/jour' : '/day', value: machine.daily_rental_price },
+    { label: language === 'fr' ? '/sem.' : '/week', value: machine.weekly_rental_price },
+    { label: language === 'fr' ? '/mois' : '/month', value: machine.monthly_rental_price },
+  ].filter(p => p.value !== null);
+
+  const lowestRental = rentalPrices.length > 0
+    ? rentalPrices.reduce((min, p) => (p.value! < min.value! ? p : min))
+    : null;
 
   return (
-    <div className="glass-card overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-      {/* Image */}
-      <div className="h-48 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center relative overflow-hidden">
-        {machine.photos && machine.photos.length > 0 ? (
+    <div className="group bg-card border border-border/60 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+      {/* Image Section */}
+      <div className="relative aspect-[4/3] bg-muted/30 overflow-hidden">
+        {hasPhoto ? (
           <img 
-            src={machine.photos[0]} 
+            src={machine.photos![0]} 
             alt={machine.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
         ) : (
-          <CategoryIcon className="w-20 h-20 text-primary/30" />
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+            <CategoryIcon className="w-16 h-16 text-muted-foreground/20" />
+          </div>
         )}
         
-        {/* Stock badge */}
-        <div className="absolute top-3 right-3">
+        {/* Top badges */}
+        <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+          <div className="flex gap-1.5">
+            {machine.available_for_rental && (
+              <Badge className="bg-primary/90 text-primary-foreground border-0 text-[10px] px-2 py-0.5 font-semibold backdrop-blur-sm">
+                <CalendarDays className="w-3 h-3 mr-1" />
+                {language === 'fr' ? 'Location' : 'Rental'}
+              </Badge>
+            )}
+            {machine.available_for_sale && (
+              <Badge className="bg-success/90 text-white border-0 text-[10px] px-2 py-0.5 font-semibold backdrop-blur-sm">
+                <ShoppingCart className="w-3 h-3 mr-1" />
+                {language === 'fr' ? 'Vente' : 'Sale'}
+              </Badge>
+            )}
+          </div>
+          
           {machine.in_stock ? (
-            <Badge className="bg-success/90 text-white border-0">
+            <Badge className="bg-background/80 text-success border-0 text-[10px] px-2 py-0.5 backdrop-blur-sm">
               <Check className="w-3 h-3 mr-1" />
-              {language === 'fr' ? 'En stock' : 'In stock'}
+              {language === 'fr' ? 'Disponible' : 'Available'}
             </Badge>
           ) : (
-            <Badge variant="destructive">
+            <Badge className="bg-background/80 text-destructive border-0 text-[10px] px-2 py-0.5 backdrop-blur-sm">
               <X className="w-3 h-3 mr-1" />
-              {language === 'fr' ? 'Rupture' : 'Out of stock'}
+              {language === 'fr' ? 'Indisponible' : 'Unavailable'}
             </Badge>
           )}
         </div>
 
-        {/* Condition badge for sales */}
+        {/* Condition badge */}
         {machine.available_for_sale && machine.condition !== 'unspecified' && (
-          <div className="absolute top-3 left-3">
-            <Badge variant="secondary" className={cn(
-              "border-0",
+          <div className="absolute bottom-3 left-3">
+            <Badge className={cn(
+              "border-0 text-[10px] px-2 py-0.5 backdrop-blur-sm",
               machine.condition === 'new' 
-                ? "bg-primary/90 text-white" 
-                : "bg-secondary/90 text-foreground"
+                ? "bg-primary text-primary-foreground" 
+                : "bg-secondary text-secondary-foreground"
             )}>
               <Sparkles className="w-3 h-3 mr-1" />
               {machine.condition === 'new' 
@@ -105,126 +133,73 @@ export const CatalogMachineCard = ({ machine, language, onRequestQuote }: Catalo
         )}
       </div>
 
-      <div className="p-5 space-y-4">
-        {/* Title & Brand */}
+      {/* Content Section */}
+      <div className="p-4 space-y-3">
+        {/* Title */}
         <div>
-          <h3 className="text-lg font-bold text-foreground truncate">
+          <h3 className="font-bold text-foreground leading-tight line-clamp-1 text-base">
             {machine.name}
           </h3>
-          <p className="text-sm text-muted-foreground truncate">
-            {machine.brand} {machine.model}
-          </p>
+          {(machine.brand || machine.model) && (
+            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
+              {[machine.brand, machine.model].filter(Boolean).join(' · ')}
+            </p>
+          )}
         </div>
 
-        {/* Category */}
-        <div className="flex items-center gap-2">
-          <CategoryIcon className="w-4 h-4 text-primary" />
-          <span className="text-sm text-muted-foreground">
+        {/* Category chip */}
+        <div className="flex items-center gap-1.5">
+          <CategoryIcon className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
             {getCategoryLabel(machine.category as EquipmentCategory, language)}
           </span>
         </div>
 
-        {/* Availability badges */}
-        <div className="flex flex-wrap gap-2">
-          {machine.available_for_rental && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-              <CalendarDays className="w-3 h-3 mr-1" />
-              {language === 'fr' ? 'Location' : 'Rental'}
-            </Badge>
-          )}
-          {machine.available_for_sale && (
-            <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-              <ShoppingCart className="w-3 h-3 mr-1" />
-              {language === 'fr' ? 'Vente' : 'Sale'}
-            </Badge>
-          )}
-        </div>
-
-        {/* Prices */}
-        <div className="space-y-3 pt-3 border-t border-border/50">
-          {machine.available_for_rental && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {language === 'fr' ? 'Tarifs location' : 'Rental rates'}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="glass-card p-2 text-center">
-                  <p className="text-xs text-muted-foreground">{language === 'fr' ? 'Jour' : 'Day'}</p>
-                  <p className="text-sm font-bold text-foreground">
-                    {formatPrice(machine.daily_rental_price, machine.currency, language)}
-                  </p>
-                </div>
-                <div className="glass-card p-2 text-center">
-                  <p className="text-xs text-muted-foreground">{language === 'fr' ? 'Sem.' : 'Week'}</p>
-                  <p className="text-sm font-bold text-foreground">
-                    {formatPrice(machine.weekly_rental_price, machine.currency, language)}
-                  </p>
-                </div>
-                <div className="glass-card p-2 text-center">
-                  <p className="text-xs text-muted-foreground">{language === 'fr' ? 'Mois' : 'Month'}</p>
-                  <p className="text-sm font-bold text-foreground">
-                    {formatPrice(machine.monthly_rental_price, machine.currency, language)}
-                  </p>
-                </div>
+        {/* Pricing */}
+        <div className="space-y-2 pt-2 border-t border-border/40">
+          {machine.available_for_rental && rentalPrices.length > 0 && (
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-bold text-foreground">
+                  {formatPrice(lowestRental!.value, machine.currency, language)}
+                </span>
+                <span className="text-xs text-muted-foreground">{lowestRental!.label}</span>
               </div>
+              {rentalPrices.length > 1 && (
+                <span className="text-[10px] text-muted-foreground">
+                  {rentalPrices.map(p => `${formatPrice(p.value, machine.currency, language)}${p.label}`).join(' · ')}
+                </span>
+              )}
             </div>
           )}
           
-          {machine.available_for_sale && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {language === 'fr' ? 'Prix de vente' : 'Sale price'}
-              </p>
-              <p className="text-2xl font-bold text-success">
+          {machine.available_for_sale && machine.sale_price && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-success">
                 {formatPrice(machine.sale_price, machine.currency, language)}
-              </p>
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {language === 'fr' ? 'à l\'achat' : 'to buy'}
+              </span>
             </div>
+          )}
+
+          {!machine.available_for_rental && !machine.sale_price && (
+            <p className="text-sm text-muted-foreground italic">
+              {language === 'fr' ? 'Prix sur demande' : 'Price on request'}
+            </p>
           )}
         </div>
 
-        {/* Quote Request Button */}
-        <div className="pt-3 border-t border-border/50">
-          <Button
-            onClick={() => onRequestQuote(machine)}
-            className="w-full gap-2"
-            size="sm"
-          >
-            <FileText className="w-4 h-4" />
-            {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
-          </Button>
-        </div>
-
-        {/* Contact */}
-        {(machine.workspace_contact_email || machine.workspace_phone) && (
-          <div className="pt-3 border-t border-border/50 space-y-2">
-            {machine.workspace_contact_email && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full glass-button"
-                asChild
-              >
-                <a href={`mailto:${machine.workspace_contact_email}?subject=${encodeURIComponent(`${language === 'fr' ? 'Demande pour' : 'Inquiry for'} ${machine.name}`)}`}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  {language === 'fr' ? 'Contacter par email' : 'Contact by email'}
-                </a>
-              </Button>
-            )}
-            {machine.workspace_phone && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full glass-button"
-                asChild
-              >
-                <a href={`tel:${machine.workspace_phone}`}>
-                  <Phone className="w-4 h-4 mr-2" />
-                  {machine.workspace_phone}
-                </a>
-              </Button>
-            )}
-          </div>
-        )}
+        {/* CTA */}
+        <Button
+          onClick={() => onRequestQuote(machine)}
+          className="w-full gap-2 rounded-xl h-11"
+          size="sm"
+        >
+          <FileText className="w-4 h-4" />
+          {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
+        </Button>
       </div>
     </div>
   );

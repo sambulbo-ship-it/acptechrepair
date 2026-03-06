@@ -1,4 +1,4 @@
-import { Package } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 
 interface CatalogEmptyStateProps {
   language: 'en' | 'fr';
@@ -6,15 +6,17 @@ interface CatalogEmptyStateProps {
 
 export const CatalogEmptyState = ({ language }: CatalogEmptyStateProps) => {
   return (
-    <div className="glass-card p-12 text-center">
-      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-foreground mb-2">
-        {language === 'fr' ? 'Aucun équipement trouvé' : 'No equipment found'}
+    <div className="py-16 text-center">
+      <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+        <SearchX className="w-8 h-8 text-muted-foreground/50" />
+      </div>
+      <h3 className="text-base font-semibold text-foreground mb-1">
+        {language === 'fr' ? 'Aucun résultat' : 'No results'}
       </h3>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground max-w-xs mx-auto">
         {language === 'fr' 
-          ? 'Aucun équipement ne correspond à votre recherche.'
-          : 'No equipment matches your search.'}
+          ? 'Essayez de modifier vos filtres ou votre recherche.'
+          : 'Try adjusting your filters or search terms.'}
       </p>
     </div>
   );
