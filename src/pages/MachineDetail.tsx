@@ -35,7 +35,7 @@ const MachineDetail = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addTeamMember, addMachine, machines, loading: machinesLoading } = useCloudData();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addTeamMember, updateTeamMember, removeTeamMember, addMachine, machines, loading: machinesLoading } = useCloudData();
   const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
