@@ -35,7 +35,7 @@ const MachineDetail = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { isWorkspaceAdmin } = useAuth();
-  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addMachine, machines, loading: machinesLoading } = useCloudData();
+  const { getMachine, getEntriesForMachine, addEntry, deleteEntry, deleteMachine, updateMachine, team, addTeamMember, addMachine, machines, loading: machinesLoading } = useCloudData();
   const { settings } = useWorkspaceSettings();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
@@ -434,6 +434,10 @@ const MachineDetail = () => {
         machineName={machine.name}
         onSave={handleSaveManualRepair}
         teamMembers={team}
+        onAddTeamMember={async (name) => {
+          const member = await addTeamMember(name);
+          return member ? { id: member.id, name: member.name } : null;
+        }}
       />
 
       <div className="p-4 space-y-4">

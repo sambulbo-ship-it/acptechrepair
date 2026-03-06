@@ -40,6 +40,7 @@ interface ManualRepairEntryProps {
   machineName: string;
   onSave: (data: RepairEntryData) => Promise<boolean>;
   teamMembers: { id: string; name: string }[];
+  onAddTeamMember?: (name: string) => Promise<{ id: string; name: string } | null>;
 }
 
 export interface RepairEntryData {
@@ -64,12 +65,16 @@ export const ManualRepairEntry = ({
   machineName,
   onSave,
   teamMembers,
+  onAddTeamMember,
 }: ManualRepairEntryProps) => {
   const { language } = useLanguage();
   const { supportsLiquidGlass } = useApplePlatform();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [showAddTechnician, setShowAddTechnician] = useState(false);
+  const [newTechnicianName, setNewTechnicianName] = useState('');
+  const [addingTechnician, setAddingTechnician] = useState(false);
 
   const [form, setForm] = useState<RepairEntryData>({
     type: 'repair',
@@ -157,6 +162,21 @@ export const ManualRepairEntry = ({
     setPdfFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAddTechnician = async () => {
+    if (!newTechnicianName.trim() || !onAddTeamMember) return;
+    setAddingTechnician(true);
+    const member = await onAddTeamMember(newTechnicianName.trim());
+    setAddingTechnician(false);
+    if (member) {
+      setForm(prev => ({ ...prev, technicianId: member.id }));
+      setNewTechnicianName('');
+      setShowAddTechnician(false);
+      toast.success(language === 'fr' ? 'Technicien ajouté' : 'Technician added');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding technician');
     }
   };
 
@@ -352,6 +372,39 @@ export const ManualRepairEntry = ({
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Add technician inline */}
+              {onAddTeamMember && (
+                <>
+                  {showAddTechnician ? (
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        value={newTechnicianName}
+                        onChange={(e) => setNewTechnicianName(e.target.value)}
+                        placeholder={language === 'fr' ? 'Nom du technicien' : 'Technician name'}
+                        className={cn('h-10 flex-1', supportsLiquidGlass && 'glass-input')}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTechnician(); } }}
+                      />
+                      <Button size="sm" onClick={handleAddTechnician} disabled={addingTechnician || !newTechnicianName.trim()}>
+                        {addingTechnician ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setShowAddTechnician(false); setNewTechnicianName(''); }}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground"
+                      onClick={() => setShowAddTechnician(true)}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      {language === 'fr' ? 'Ajouter un technicien' : 'Add a technician'}
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           )}
 
