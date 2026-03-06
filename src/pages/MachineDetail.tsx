@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCloudData } from '@/hooks/useCloudData';
 import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
+import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EntryCard } from '@/components/EntryCard';
@@ -46,6 +47,8 @@ const MachineDetail = () => {
   const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
+  const [machinePhotos, setMachinePhotos] = useState<string[]>([]);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
   const [applyPhotosToAll, setApplyPhotosToAll] = useState(false);
   const [savingPhotos, setSavingPhotos] = useState(false);
   const [entryForm, setEntryForm] = useState({
@@ -60,19 +63,33 @@ const MachineDetail = () => {
   const machine = getMachine(id || '');
   const entries = getEntriesForMachine(id || '');
 
-  // Sync presentation photos when dialog opens or machine changes while open
+  // Fetch photos separately (not included in list query for performance)
   useEffect(() => {
-    if (!isPhotosEditorOpen || !machine) return;
+    if (!id) return;
+    setPhotosLoaded(false);
+    supabase
+      .from('machines')
+      .select('photos')
+      .eq('id', id)
+      .single()
+      .then(({ data }) => {
+        setMachinePhotos(data?.photos || []);
+        setPhotosLoaded(true);
+      });
+  }, [id]);
+
+  // Sync presentation photos when dialog opens
+  useEffect(() => {
+    if (!isPhotosEditorOpen || !photosLoaded) return;
 
     setPresentationPhotos(
-      (machine.photos || []).map((url, index) => ({
+      (machinePhotos || []).map((url, index) => ({
         id: `presentation-${index}`,
         dataUrl: url,
         createdAt: new Date(),
       }))
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPhotosEditorOpen, machine?.id]);
+  }, [isPhotosEditorOpen, machinePhotos, photosLoaded]);
 
   if (machinesLoading) {
     return (
@@ -208,6 +225,7 @@ const MachineDetail = () => {
       const ok = await updateMachine(machine.id, { photos: urls });
       
       if (ok) {
+        setMachinePhotos(urls);
         if (applyPhotosToAll && machine.brand && machine.model) {
           const machineBrand = machine.brand.trim().toLowerCase();
           const machineModel = machine.model.trim().toLowerCase();
@@ -263,7 +281,7 @@ const MachineDetail = () => {
       location: machine.location,
       status: 'operational',
       notes: machine.notes,
-      photos: machine.photos,
+      photos: machinePhotos,
     });
     setDuplicating(false);
     if (result) {
@@ -476,9 +494,14 @@ const MachineDetail = () => {
               </Button>
             </div>
 
-            {machine.photos && machine.photos.length > 0 ? (
+            {!photosLoaded ? (
+              <div className="flex items-center gap-2 py-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span className="text-sm text-muted-foreground">{language === 'fr' ? 'Chargement des photos...' : 'Loading photos...'}</span>
+              </div>
+            ) : machinePhotos.length > 0 ? (
               <PhotoGallery
-                photos={machine.photos.map((url, index) => ({
+                photos={machinePhotos.map((url, index) => ({
                   id: `photo-${index}`,
                   dataUrl: url,
                   createdAt: new Date(),

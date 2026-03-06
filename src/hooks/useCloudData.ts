@@ -226,9 +226,10 @@ export const useCloudData = () => {
 
     try {
       // Fetch machines with timeout
+      // Exclude photos from list queries for performance (photos are large base64 strings)
       const machinesPromise = supabase
         .from('machines')
-        .select('*')
+        .select('id, workspace_id, name, category, brand, model, serial_number, location, status, notes, created_at, updated_at, created_by')
         .eq('workspace_id', currentWorkspace.id)
         .order('created_at', { ascending: false });
 
