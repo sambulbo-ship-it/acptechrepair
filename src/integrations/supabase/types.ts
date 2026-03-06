@@ -1324,6 +1324,7 @@ export type Database = {
       }
     }
     Functions: {
+      check_is_app_admin: { Args: { _user_id: string }; Returns: boolean }
       find_workspace_by_invite_code: {
         Args: { _invite_code: string }
         Returns: {
