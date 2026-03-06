@@ -12,6 +12,7 @@ interface WorkspaceInfo {
 interface UsePublicCatalogResult {
   machines: CatalogMachine[];
   workspace: WorkspaceInfo | null;
+  resolvedWorkspaceId: string | null;
   loading: boolean;
   error: string | null;
   noCode: boolean;
