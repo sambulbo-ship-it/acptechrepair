@@ -225,6 +225,7 @@ const MachineDetail = () => {
       const ok = await updateMachine(machine.id, { photos: urls });
       
       if (ok) {
+        setMachinePhotos(urls);
         if (applyPhotosToAll && machine.brand && machine.model) {
           const machineBrand = machine.brand.trim().toLowerCase();
           const machineModel = machine.model.trim().toLowerCase();
