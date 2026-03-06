@@ -67,6 +67,11 @@ export const usePublicCatalog = (
         throw new Error(data.error || 'Erreur inconnue');
       }
 
+      // Store resolved workspace ID for quote requests
+      if (data.workspace_id) {
+        setResolvedWsId(data.workspace_id);
+      }
+
       // Map the response to CatalogMachine format
       const machinesList: CatalogMachine[] = (data.machines || []).map((m: any) => ({
         id: m.id,
