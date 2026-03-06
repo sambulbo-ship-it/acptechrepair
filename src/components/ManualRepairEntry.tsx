@@ -547,5 +547,27 @@ export const ManualRepairEntry = ({
         </div>
       </SheetContent>
     </Sheet>
+
+      <AlertDialog open={!!deletingTechnicianId} onOpenChange={(open) => { if (!open) setDeletingTechnicianId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'fr' ? 'Supprimer ce technicien ?' : 'Delete this technician?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'fr' 
+                ? 'Cette action est irréversible. Le technicien sera supprimé de l\'équipe.'
+                : 'This action cannot be undone. The technician will be removed from the team.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === 'fr' ? 'Annuler' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTechnician} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {language === 'fr' ? 'Supprimer' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
