@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { X, Download, Smartphone, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 const BANNER_DISMISSED_KEY = 'pwa_banner_dismissed';
 const BANNER_DISMISSED_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export const InstallBanner = () => {
+export const InstallBanner = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -136,4 +136,6 @@ export const InstallBanner = () => {
       </div>
     </div>
   );
-};
+});
+
+InstallBanner.displayName = 'InstallBanner';
