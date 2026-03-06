@@ -665,6 +665,7 @@ export const useCloudData = () => {
     getEntriesForMachine,
     deleteEntry,
     addTeamMember,
+    updateTeamMember,
     removeTeamMember,
     getStats,
     refreshData: fetchData,

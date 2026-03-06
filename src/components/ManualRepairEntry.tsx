@@ -68,6 +68,8 @@ export const ManualRepairEntry = ({
   onSave,
   teamMembers,
   onAddTeamMember,
+  onUpdateTeamMember,
+  onDeleteTeamMember,
 }: ManualRepairEntryProps) => {
   const { language } = useLanguage();
   const { supportsLiquidGlass } = useApplePlatform();
@@ -77,6 +79,9 @@ export const ManualRepairEntry = ({
   const [showAddTechnician, setShowAddTechnician] = useState(false);
   const [newTechnicianName, setNewTechnicianName] = useState('');
   const [addingTechnician, setAddingTechnician] = useState(false);
+  const [editingTechnicianId, setEditingTechnicianId] = useState<string | null>(null);
+  const [editingTechnicianName, setEditingTechnicianName] = useState('');
+  const [deletingTechnicianId, setDeletingTechnicianId] = useState<string | null>(null);
 
   const [form, setForm] = useState<RepairEntryData>({
     type: 'repair',
