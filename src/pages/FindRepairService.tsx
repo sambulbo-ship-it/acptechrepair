@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,17 +81,27 @@ const FindRepairService = () => {
   }, [selectedBrand, providers]);
 
   const loadProviders = async () => {
-    const { data, error } = await supabase
-      .from('repair_service_providers')
-      .select('*')
-      .eq('is_visible', true);
-
-    if (error) {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-providers`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
+      );
+      const result = await response.json();
+      if (result.success) {
+        setProviders(result.providers || []);
+        setFilteredProviders(result.providers || []);
+      } else {
+        console.error('Error loading providers:', result.error);
+        toast.error('Erreur lors du chargement des réparateurs');
+      }
+    } catch (error) {
       console.error('Error loading providers:', error);
       toast.error('Erreur lors du chargement des réparateurs');
-    } else {
-      setProviders(data || []);
-      setFilteredProviders(data || []);
     }
     setLoading(false);
   };
