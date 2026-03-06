@@ -153,7 +153,7 @@ export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [options.machineCategory, options.machineBrand, options.machineModel]);
+  }, [options.machineCategory, options.machineBrand, options.machineModel, currentWorkspace?.id]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
