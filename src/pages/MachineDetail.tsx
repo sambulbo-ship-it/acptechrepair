@@ -386,8 +386,10 @@ const MachineDetail = () => {
             <Button variant="ghost" onClick={() => setIsPhotosEditorOpen(false)}>
               {language === 'fr' ? 'Annuler' : 'Cancel'}
             </Button>
-            <Button onClick={handleSavePresentationPhotos}>
-              {language === 'fr' ? 'Enregistrer' : 'Save'}
+            <Button onClick={handleSavePresentationPhotos} disabled={savingPhotos}>
+              {savingPhotos 
+                ? (language === 'fr' ? 'Enregistrement...' : 'Saving...') 
+                : (language === 'fr' ? 'Enregistrer' : 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>
