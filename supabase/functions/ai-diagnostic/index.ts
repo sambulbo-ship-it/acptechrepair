@@ -48,6 +48,16 @@ function validateBoolean(value: unknown): boolean {
   return typeof value === 'boolean' ? value : false;
 }
 
+// UUID validation
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function validateWorkspaceId(value: unknown): string {
+  if (!value || typeof value !== 'string' || !uuidRegex.test(value)) {
+    throw new Error('Valid workspace_id is required');
+  }
+  return value;
+}
+
 // Basic prompt injection detection
 function detectInjection(message: string): boolean {
   const injectionPatterns = [
@@ -136,29 +146,30 @@ serve(async (req) => {
       });
     }
 
-    // 5. Verify user has at least one workspace membership
-    const { data: memberData, error: memberError } = await supabaseAuth
-      .from('workspace_members')
-      .select('workspace_id')
-      .eq('user_id', userId)
-      .limit(1)
-      .maybeSingle();
-
-    if (memberError || !memberData) {
-      return new Response(JSON.stringify({ error: 'Access denied. Join a workspace first.' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // 6. Parse and validate input
+    // 5. Parse and validate input
     const body = await req.json();
     
     const message = validateMessage(body.message);
+    const workspaceId = validateWorkspaceId(body.workspaceId);
     const machineCategory = validateOptionalString('machineCategory', body.machineCategory, 100);
     const machineBrand = validateOptionalString('machineBrand', body.machineBrand, 100);
     const machineModel = validateOptionalString('machineModel', body.machineModel, 100);
     const enableWebSearch = validateBoolean(body.enableWebSearch);
+
+    // 6. Verify user is a member of the workspace
+    const { data: memberData, error: memberError } = await supabaseAuth
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', userId)
+      .eq('workspace_id', workspaceId)
+      .maybeSingle();
+
+    if (memberError || !memberData) {
+      return new Response(JSON.stringify({ error: 'Access denied. You are not a member of this workspace.' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // 7. Check for prompt injection attempts
     if (detectInjection(message)) {
@@ -176,14 +187,14 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // 9. Use service role for cross-workspace queries (now that user is authenticated)
+    // 9. Use service role for queries - SCOPED TO USER'S WORKSPACE ONLY
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch anonymous repair data - NEVER include workspace info
+    // Fetch repair data ONLY from the user's workspace
     let repairs: RepairData[] = [];
     
-    // Priority 1: Same exact model
+    // Priority 1: Same exact model within workspace
     if (machineModel && machineBrand) {
       const { data: modelRepairs } = await supabase
         .from("diagnostic_entries")
@@ -191,8 +202,9 @@ serve(async (req) => {
           description,
           type,
           priority,
-          machines!inner(category, brand, model)
+          machines!inner(category, brand, model, workspace_id)
         `)
+        .eq('machines.workspace_id', workspaceId)
         .limit(50);
 
       if (modelRepairs) {
@@ -211,7 +223,7 @@ serve(async (req) => {
       }
     }
 
-    // Priority 2: Same brand, different models
+    // Priority 2: Same brand, different models within workspace
     if (repairs.length < 10 && machineBrand) {
       const { data: brandRepairs } = await supabase
         .from("diagnostic_entries")
@@ -219,8 +231,9 @@ serve(async (req) => {
           description,
           type,
           priority,
-          machines!inner(category, brand, model)
+          machines!inner(category, brand, model, workspace_id)
         `)
+        .eq('machines.workspace_id', workspaceId)
         .limit(50);
 
       if (brandRepairs) {
@@ -240,7 +253,7 @@ serve(async (req) => {
       }
     }
 
-    // Priority 3: Same category (equivalent equipment from other brands)
+    // Priority 3: Same category within workspace
     if (repairs.length < 20 && machineCategory) {
       const { data: categoryRepairs } = await supabase
         .from("diagnostic_entries")
@@ -248,8 +261,9 @@ serve(async (req) => {
           description,
           type,
           priority,
-          machines!inner(category, brand, model)
+          machines!inner(category, brand, model, workspace_id)
         `)
+        .eq('machines.workspace_id', workspaceId)
         .limit(50);
 
       if (categoryRepairs) {
@@ -269,7 +283,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch knowledge entries (shared expertise from technicians)
+    // Fetch knowledge entries ONLY from the user's workspace
     interface KnowledgeData {
       category: string;
       brand: string | null;
@@ -279,14 +293,13 @@ serve(async (req) => {
     }
     let knowledgeEntries: KnowledgeData[] = [];
 
-    // Query knowledge_entries table for relevant expertise
     const { data: knowledgeData } = await supabase
       .from("knowledge_entries")
       .select("category, brand, model, problem_description, solution_description")
+      .eq('workspace_id', workspaceId)
       .limit(100);
 
     if (knowledgeData) {
-      // Filter by relevance: same model > same brand > same category
       const relevant = knowledgeData.filter((k: any) => {
         if (machineModel && machineBrand && 
             k.model?.toLowerCase() === machineModel.toLowerCase() &&
@@ -316,7 +329,6 @@ serve(async (req) => {
       `[${r.type?.toUpperCase() || 'REPAIR'}] ${r.brand || 'Unknown'} ${r.model || ''}: ${r.description}`
     ).join("\n");
 
-    // Build knowledge context from shared expertise
     const knowledgeContext = knowledgeEntries.map(k =>
       `[EXPERTISE] ${k.brand || 'Marque inconnue'} ${k.model || ''} - Problème: ${k.problem} → Solution: ${k.solution}`
     ).join("\n");
@@ -367,7 +379,7 @@ ${enableWebSearch ? "L'utilisateur a demandé une recherche web. Tu peux mention
           { role: "user", content: message },
         ],
         stream: true,
-        max_tokens: 1000, // Limit response tokens to control costs
+        max_tokens: 1000,
       }),
     });
 
@@ -397,7 +409,6 @@ ${enableWebSearch ? "L'utilisateur a demandé une recherche web. Tu peux mention
     });
   } catch (error) {
     if (error instanceof Error) {
-      // Return validation errors with 400
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

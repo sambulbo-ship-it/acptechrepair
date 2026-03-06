@@ -27,7 +27,7 @@ const ClientCatalog = () => {
   const inviteCode = searchParams.get('invite_code');
   
   // Use custom hook for data fetching
-  const { machines, workspace, loading, error, noCode } = usePublicCatalog(workspaceId, inviteCode);
+  const { machines, workspace, resolvedWorkspaceId, loading, error, noCode } = usePublicCatalog(workspaceId, inviteCode);
   
   // Local state for filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,7 +40,6 @@ const ClientCatalog = () => {
 
   // Derive workspace info
   const workspaceName = workspace?.name || machines[0]?.workspace_name || '';
-  const resolvedWorkspaceId = machines[0]?.workspace_id || '';
 
   // Filter machines based on search, category, and tab
   const filteredMachines = useMemo(() => {
@@ -145,7 +144,7 @@ const ClientCatalog = () => {
             brand: selectedMachineForQuote.brand,
             model: selectedMachineForQuote.model,
           }}
-          workspaceId={resolvedWorkspaceId}
+          workspaceId={resolvedWorkspaceId || ''}
           workspaceName={workspaceName}
           availableForRental={selectedMachineForQuote.available_for_rental}
           availableForSale={selectedMachineForQuote.available_for_sale}

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,6 +14,7 @@ interface UseAIDiagnosticOptions {
 }
 
 export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
+  const { currentWorkspace } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
           },
           body: JSON.stringify({
             message: trimmedMessage,
+            workspaceId: currentWorkspace?.id,
             machineCategory: options.machineCategory?.trim().slice(0, 100),
             machineBrand: options.machineBrand?.trim().slice(0, 100),
             machineModel: options.machineModel?.trim().slice(0, 100),
@@ -150,7 +153,7 @@ export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [options.machineCategory, options.machineBrand, options.machineModel]);
+  }, [options.machineCategory, options.machineBrand, options.machineModel, currentWorkspace?.id]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
