@@ -104,7 +104,8 @@ serve(async (req) => {
       return {
         id: m.id, name: m.name, brand: m.brand, model: m.model,
         category: m.category, photos: m.photos,
-        workspace_id: w.id, workspace_name: w.name,
+        // Don't expose internal workspace_id to public
+        workspace_name: w.name,
         workspace_logo: w.logo_url, workspace_primary_color: w.primary_color,
         workspace_contact_email: provider?.contact_email || null,
         workspace_phone: provider?.phone || null,
