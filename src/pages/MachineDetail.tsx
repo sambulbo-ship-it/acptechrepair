@@ -434,6 +434,10 @@ const MachineDetail = () => {
         machineName={machine.name}
         onSave={handleSaveManualRepair}
         teamMembers={team}
+        onAddTeamMember={async (name) => {
+          const member = await addTeamMember(name);
+          return member ? { id: member.id, name: member.name } : null;
+        }}
       />
 
       <div className="p-4 space-y-4">
