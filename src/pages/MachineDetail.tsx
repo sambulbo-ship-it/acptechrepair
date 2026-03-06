@@ -74,6 +74,19 @@ const MachineDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPhotosEditorOpen, machine?.id]);
 
+  if (machinesLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground text-sm">
+            {language === 'fr' ? 'Chargement...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!machine) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
