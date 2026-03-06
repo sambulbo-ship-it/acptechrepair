@@ -65,12 +65,16 @@ export const ManualRepairEntry = ({
   machineName,
   onSave,
   teamMembers,
+  onAddTeamMember,
 }: ManualRepairEntryProps) => {
   const { language } = useLanguage();
   const { supportsLiquidGlass } = useApplePlatform();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [showAddTechnician, setShowAddTechnician] = useState(false);
+  const [newTechnicianName, setNewTechnicianName] = useState('');
+  const [addingTechnician, setAddingTechnician] = useState(false);
 
   const [form, setForm] = useState<RepairEntryData>({
     type: 'repair',
