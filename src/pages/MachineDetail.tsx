@@ -250,6 +250,7 @@ const MachineDetail = () => {
       location: machine.location,
       status: 'operational',
       notes: machine.notes,
+      photos: machine.photos,
     });
     setDuplicating(false);
     if (result) {
