@@ -63,19 +63,33 @@ const MachineDetail = () => {
   const machine = getMachine(id || '');
   const entries = getEntriesForMachine(id || '');
 
-  // Sync presentation photos when dialog opens or machine changes while open
+  // Fetch photos separately (not included in list query for performance)
   useEffect(() => {
-    if (!isPhotosEditorOpen || !machine) return;
+    if (!id) return;
+    setPhotosLoaded(false);
+    supabase
+      .from('machines')
+      .select('photos')
+      .eq('id', id)
+      .single()
+      .then(({ data }) => {
+        setMachinePhotos(data?.photos || []);
+        setPhotosLoaded(true);
+      });
+  }, [id]);
+
+  // Sync presentation photos when dialog opens
+  useEffect(() => {
+    if (!isPhotosEditorOpen || !photosLoaded) return;
 
     setPresentationPhotos(
-      (machine.photos || []).map((url, index) => ({
+      (machinePhotos || []).map((url, index) => ({
         id: `presentation-${index}`,
         dataUrl: url,
         createdAt: new Date(),
       }))
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPhotosEditorOpen, machine?.id]);
+  }, [isPhotosEditorOpen, machinePhotos, photosLoaded]);
 
   if (machinesLoading) {
     return (
