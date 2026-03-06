@@ -65,22 +65,70 @@ serve(async (req) => {
       );
     }
 
-    // Fetch catalog items - only public-safe fields
-    const { data: catalogItems, error: dbError } = await supabase
-      .from("rental_sale_config")
-      .select(`
-        id, available_for_rental, available_for_sale,
-        daily_rental_price, weekly_rental_price, monthly_rental_price,
-        sale_price, currency, rental_notes, sale_notes,
-        machine_id, workspace_id,
-        machines!inner ( id, name, brand, model, category, photos, status ),
-        workspaces!inner ( id, name, logo_url, primary_color )
-      `)
+    // Fetch guest link settings
+    const { data: guestSettings } = await supabase
+      .from("workspace_settings")
+      .select("guest_link_enabled, guest_show_catalog, guest_show_repair_request, guest_show_maintenance_request")
       .eq("workspace_id", resolvedWorkspaceId)
-      .or("available_for_rental.eq.true,available_for_sale.eq.true")
-      .eq("machines.status", "operational");
+      .maybeSingle();
 
-    if (dbError) throw dbError;
+    const guestConfig = {
+      guest_link_enabled: guestSettings?.guest_link_enabled ?? false,
+      guest_show_catalog: guestSettings?.guest_show_catalog ?? true,
+      guest_show_repair_request: guestSettings?.guest_show_repair_request ?? false,
+      guest_show_maintenance_request: guestSettings?.guest_show_maintenance_request ?? false,
+    };
+
+    // If guest link is not enabled, deny access
+    if (!guestConfig.guest_link_enabled) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Guest access is not enabled for this workspace", machines: [] }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let machines: any[] = [];
+
+    // Only fetch catalog if enabled
+    if (guestConfig.guest_show_catalog) {
+      const { data: catalogItems, error: dbError } = await supabase
+        .from("rental_sale_config")
+        .select(`
+          id, available_for_rental, available_for_sale,
+          daily_rental_price, weekly_rental_price, monthly_rental_price,
+          sale_price, currency, rental_notes, sale_notes,
+          machine_id, workspace_id,
+          machines!inner ( id, name, brand, model, category, photos, status ),
+          workspaces!inner ( id, name, logo_url, primary_color )
+        `)
+        .eq("workspace_id", resolvedWorkspaceId)
+        .or("available_for_rental.eq.true,available_for_sale.eq.true")
+        .eq("machines.status", "operational");
+
+      if (dbError) throw dbError;
+
+      machines = (catalogItems || []).map((item: any) => {
+        const m = item.machines;
+        const w = item.workspaces;
+        return {
+          id: m.id, name: m.name, brand: m.brand, model: m.model,
+          category: m.category, photos: m.photos,
+          workspace_name: w.name,
+          workspace_logo: w.logo_url, workspace_primary_color: w.primary_color,
+          workspace_contact_email: null,
+          workspace_phone: null,
+          available_for_rental: item.available_for_rental,
+          available_for_sale: item.available_for_sale,
+          daily_rental_price: item.daily_rental_price,
+          weekly_rental_price: item.weekly_rental_price,
+          monthly_rental_price: item.monthly_rental_price,
+          sale_price: item.sale_price, currency: item.currency,
+          in_stock: true,
+          rental_notes: item.available_for_rental ? item.rental_notes : null,
+          sale_notes: item.available_for_sale ? item.sale_notes : null,
+        };
+      });
+    }
 
     // Get contact info
     const { data: provider } = await supabase
@@ -91,6 +139,13 @@ serve(async (req) => {
       .limit(1)
       .single();
 
+    // Attach contact info to machines
+    machines = machines.map((m: any) => ({
+      ...m,
+      workspace_contact_email: provider?.contact_email || null,
+      workspace_phone: provider?.phone || null,
+    }));
+
     // Get workspace info
     const { data: wsInfo } = await supabase
       .from("workspaces")
@@ -98,33 +153,11 @@ serve(async (req) => {
       .eq("id", resolvedWorkspaceId)
       .single();
 
-    const machines = (catalogItems || []).map((item: any) => {
-      const m = item.machines;
-      const w = item.workspaces;
-      return {
-        id: m.id, name: m.name, brand: m.brand, model: m.model,
-        category: m.category, photos: m.photos,
-        // Don't expose internal workspace_id to public
-        workspace_name: w.name,
-        workspace_logo: w.logo_url, workspace_primary_color: w.primary_color,
-        workspace_contact_email: provider?.contact_email || null,
-        workspace_phone: provider?.phone || null,
-        available_for_rental: item.available_for_rental,
-        available_for_sale: item.available_for_sale,
-        daily_rental_price: item.daily_rental_price,
-        weekly_rental_price: item.weekly_rental_price,
-        monthly_rental_price: item.monthly_rental_price,
-        sale_price: item.sale_price, currency: item.currency,
-        in_stock: true,
-        rental_notes: item.available_for_rental ? item.rental_notes : null,
-        sale_notes: item.available_for_sale ? item.sale_notes : null,
-      };
-    });
-
     return new Response(
       JSON.stringify({
         success: true, machines, total: machines.length,
         workspace_id: resolvedWorkspaceId,
+        guest_config: guestConfig,
         workspace: wsInfo ? {
           name: wsInfo.name, logo_url: wsInfo.logo_url,
           primary_color: wsInfo.primary_color,

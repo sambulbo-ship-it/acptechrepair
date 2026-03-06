@@ -9,10 +9,18 @@ interface WorkspaceInfo {
   phone: string | null;
 }
 
+interface GuestConfig {
+  guest_link_enabled: boolean;
+  guest_show_catalog: boolean;
+  guest_show_repair_request: boolean;
+  guest_show_maintenance_request: boolean;
+}
+
 interface UsePublicCatalogResult {
   machines: CatalogMachine[];
   workspace: WorkspaceInfo | null;
   resolvedWorkspaceId: string | null;
+  guestConfig: GuestConfig | null;
   loading: boolean;
   error: string | null;
   noCode: boolean;
@@ -26,6 +34,7 @@ export const usePublicCatalog = (
   const [machines, setMachines] = useState<CatalogMachine[]>([]);
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [resolvedWsId, setResolvedWsId] = useState<string | null>(null);
+  const [guestConfig, setGuestConfig] = useState<GuestConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noCode, setNoCode] = useState(false);
@@ -41,7 +50,6 @@ export const usePublicCatalog = (
       setLoading(true);
       setError(null);
 
-      // Use edge function for public catalog access (no direct DB queries needed)
       const params = new URLSearchParams({ format: 'json' });
       if (workspaceId) params.set('workspace_id', workspaceId);
       if (inviteCode) params.set('invite_code', inviteCode);
@@ -67,12 +75,14 @@ export const usePublicCatalog = (
         throw new Error(data.error || 'Erreur inconnue');
       }
 
-      // Store resolved workspace ID for quote requests
       if (data.workspace_id) {
         setResolvedWsId(data.workspace_id);
       }
 
-      // Map the response to CatalogMachine format
+      if (data.guest_config) {
+        setGuestConfig(data.guest_config);
+      }
+
       const machinesList: CatalogMachine[] = (data.machines || []).map((m: any) => ({
         id: m.id,
         name: m.name,
@@ -80,7 +90,7 @@ export const usePublicCatalog = (
         model: m.model,
         category: m.category,
         photos: m.photos,
-        workspace_id: '', // Don't expose internal IDs
+        workspace_id: '',
         workspace_name: m.workspace_name,
         workspace_logo: m.workspace_logo,
         workspace_contact_email: m.workspace_contact_email,
@@ -129,6 +139,7 @@ export const usePublicCatalog = (
     machines,
     workspace,
     resolvedWorkspaceId: resolvedWsId,
+    guestConfig,
     loading,
     error,
     noCode,

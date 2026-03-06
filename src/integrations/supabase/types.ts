@@ -1207,6 +1207,10 @@ export type Database = {
           enable_barcode_scan: boolean
           enable_qrcode_print: boolean
           enable_qrcode_scan: boolean
+          guest_link_enabled: boolean
+          guest_show_catalog: boolean
+          guest_show_maintenance_request: boolean
+          guest_show_repair_request: boolean
           id: string
           require_scan_notes: boolean
           scan_history_retention_days: number
@@ -1219,6 +1223,10 @@ export type Database = {
           enable_barcode_scan?: boolean
           enable_qrcode_print?: boolean
           enable_qrcode_scan?: boolean
+          guest_link_enabled?: boolean
+          guest_show_catalog?: boolean
+          guest_show_maintenance_request?: boolean
+          guest_show_repair_request?: boolean
           id?: string
           require_scan_notes?: boolean
           scan_history_retention_days?: number
@@ -1231,6 +1239,10 @@ export type Database = {
           enable_barcode_scan?: boolean
           enable_qrcode_print?: boolean
           enable_qrcode_scan?: boolean
+          guest_link_enabled?: boolean
+          guest_show_catalog?: boolean
+          guest_show_maintenance_request?: boolean
+          guest_show_repair_request?: boolean
           id?: string
           require_scan_notes?: boolean
           scan_history_retention_days?: number

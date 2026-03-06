@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { 
   Settings, 
   ScanLine, 
@@ -13,14 +14,23 @@ import {
   Printer, 
   History,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  Link2,
+  Eye,
+  ShoppingCart,
+  Wrench,
+  CalendarCheck,
+  Copy,
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 const WorkspaceSettings = () => {
   const { language } = useLanguage();
   const { currentWorkspace, isWorkspaceAdmin } = useAuth();
   const { settings, loading, updateSettings, isAdmin } = useWorkspaceSettings();
+  const [copied, setCopied] = useState(false);
 
   const handleToggle = async (key: string, value: boolean) => {
     const success = await updateSettings({ [key]: value });
@@ -36,6 +46,22 @@ const WorkspaceSettings = () => {
     const success = await updateSettings({ scan_history_retention_days: days });
     if (success) {
       toast.success(language === 'fr' ? 'Paramètre mis à jour' : 'Setting updated');
+    }
+  };
+
+  const getGuestLink = () => {
+    if (!currentWorkspace) return '';
+    return `${window.location.origin}/catalog?workspace=${currentWorkspace.id}`;
+  };
+
+  const copyGuestLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getGuestLink());
+      setCopied(true);
+      toast.success(language === 'fr' ? 'Lien copié !' : 'Link copied!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(language === 'fr' ? 'Erreur de copie' : 'Copy failed');
     }
   };
 
@@ -81,6 +107,114 @@ const WorkspaceSettings = () => {
           </div>
         ) : settings ? (
           <>
+            {/* Guest Link Settings */}
+            <div className="ios-card p-4 space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Link2 className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">
+                    {language === 'fr' ? 'Lien invité' : 'Guest Link'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'fr' ? 'Accès en lecture seule pour visiteurs' : 'Read-only access for visitors'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Eye className="w-5 h-5 text-muted-foreground" />
+                    <Label htmlFor="guest-enabled">
+                      {language === 'fr' ? 'Activer le lien invité' : 'Enable guest link'}
+                    </Label>
+                  </div>
+                  <Switch
+                    id="guest-enabled"
+                    checked={settings.guest_link_enabled}
+                    onCheckedChange={(checked) => handleToggle('guest_link_enabled', checked)}
+                    disabled={!isAdmin}
+                  />
+                </div>
+
+                {settings.guest_link_enabled && (
+                  <>
+                    <div className="p-3 bg-secondary rounded-xl space-y-2">
+                      <p className="text-xs text-muted-foreground font-medium">
+                        {language === 'fr' ? 'Lien de partage' : 'Share link'}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs text-foreground bg-background/50 p-2 rounded-lg flex-1 truncate">
+                          {getGuestLink()}
+                        </code>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={copyGuestLink}
+                          className="shrink-0"
+                        >
+                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'fr' 
+                        ? 'Choisissez les sections visibles par les invités :'
+                        : 'Choose which sections guests can see:'}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+                        <Label htmlFor="guest-catalog">
+                          {language === 'fr' ? 'Catalogue location / vente' : 'Rental / sale catalog'}
+                        </Label>
+                      </div>
+                      <Switch
+                        id="guest-catalog"
+                        checked={settings.guest_show_catalog}
+                        onCheckedChange={(checked) => handleToggle('guest_show_catalog', checked)}
+                        disabled={!isAdmin}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Wrench className="w-5 h-5 text-muted-foreground" />
+                        <Label htmlFor="guest-repair">
+                          {language === 'fr' ? 'Demande de réparation' : 'Repair request'}
+                        </Label>
+                      </div>
+                      <Switch
+                        id="guest-repair"
+                        checked={settings.guest_show_repair_request}
+                        onCheckedChange={(checked) => handleToggle('guest_show_repair_request', checked)}
+                        disabled={!isAdmin}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CalendarCheck className="w-5 h-5 text-muted-foreground" />
+                        <Label htmlFor="guest-maintenance">
+                          {language === 'fr' ? 'Demande d\'entretien' : 'Maintenance request'}
+                        </Label>
+                      </div>
+                      <Switch
+                        id="guest-maintenance"
+                        checked={settings.guest_show_maintenance_request}
+                        onCheckedChange={(checked) => handleToggle('guest_show_maintenance_request', checked)}
+                        disabled={!isAdmin}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Scan Settings */}
             <div className="ios-card p-4 space-y-4">
               <div className="flex items-center gap-3 mb-4">
