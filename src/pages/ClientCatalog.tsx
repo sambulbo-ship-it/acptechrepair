@@ -144,7 +144,7 @@ const ClientCatalog = () => {
             brand: selectedMachineForQuote.brand,
             model: selectedMachineForQuote.model,
           }}
-          workspaceId={resolvedWorkspaceId}
+          workspaceId={resolvedWorkspaceId || ''}
           workspaceName={workspaceName}
           availableForRental={selectedMachineForQuote.available_for_rental}
           availableForSale={selectedMachineForQuote.available_for_sale}
