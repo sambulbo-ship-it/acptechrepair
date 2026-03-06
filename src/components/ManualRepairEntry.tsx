@@ -222,7 +222,7 @@ export const ManualRepairEntry = ({
     setDeletingTechnicianId(null);
   };
 
-
+  const handleSave = async () => {
     if (!form.description) {
       toast.error(language === 'fr' ? 'Veuillez ajouter une description' : 'Please add a description');
       return;
