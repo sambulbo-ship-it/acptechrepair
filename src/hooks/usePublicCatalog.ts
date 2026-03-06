@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import type { CatalogMachine } from '@/components/catalog';
 
 interface WorkspaceInfo {
@@ -40,103 +39,71 @@ export const usePublicCatalog = (
       setLoading(true);
       setError(null);
 
-      // Resolve workspace ID from invite code if needed
-      let resolvedWorkspaceId = workspaceId;
+      // Use edge function for public catalog access (no direct DB queries needed)
+      const params = new URLSearchParams({ format: 'json' });
+      if (workspaceId) params.set('workspace_id', workspaceId);
+      if (inviteCode) params.set('invite_code', inviteCode);
 
-      if (!resolvedWorkspaceId && inviteCode) {
-        const { data: wsData, error: wsError } = await supabase
-          .rpc('find_workspace_by_invite_code', { _invite_code: inviteCode });
-
-        if (wsError || !wsData?.length) {
-          setError('Code d\'invitation invalide');
-          setLoading(false);
-          return;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-catalog?${params.toString()}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
         }
-        resolvedWorkspaceId = wsData[0].id;
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erreur lors du chargement du catalogue');
       }
 
-      if (!resolvedWorkspaceId) {
-        setError('Workspace non trouvé');
-        setLoading(false);
-        return;
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur inconnue');
       }
 
-      // Fetch catalog items directly from DB (anon RLS allows this)
-      const { data: catalogItems, error: dbError } = await supabase
-        .from('rental_sale_config')
-        .select(`
-          id, available_for_rental, available_for_sale,
-          daily_rental_price, weekly_rental_price, monthly_rental_price,
-          sale_price, currency, rental_notes, sale_notes,
-          machine_id, workspace_id,
-          machines!inner ( id, name, brand, model, category, photos, status ),
-          workspaces!inner ( id, name, logo_url, primary_color )
-        `)
-        .eq('workspace_id', resolvedWorkspaceId)
-        .or('available_for_rental.eq.true,available_for_sale.eq.true')
-        .eq('machines.status', 'operational');
-
-      if (dbError) throw dbError;
-
-      // Get contact info
-      const { data: provider } = await supabase
-        .from('repair_service_providers')
-        .select('contact_email, phone')
-        .eq('workspace_id', resolvedWorkspaceId)
-        .eq('is_visible', true)
-        .limit(1)
-        .single();
-
-      // Get workspace info
-      const { data: wsInfo } = await supabase
-        .from('workspaces')
-        .select('name, logo_url, primary_color')
-        .eq('id', resolvedWorkspaceId)
-        .single();
-
-      const machinesList: CatalogMachine[] = (catalogItems || []).map((item: any) => {
-        const m = item.machines;
-        const w = item.workspaces;
-        return {
-          id: m.id,
-          name: m.name,
-          brand: m.brand,
-          model: m.model,
-          category: m.category,
-          photos: m.photos,
-          workspace_id: w.id,
-          workspace_name: w.name,
-          workspace_logo: w.logo_url,
-          workspace_primary_color: w.primary_color,
-          workspace_contact_email: provider?.contact_email || null,
-          workspace_phone: provider?.phone || null,
-          available_for_rental: item.available_for_rental,
-          available_for_sale: item.available_for_sale,
-          daily_rental_price: item.daily_rental_price,
-          weekly_rental_price: item.weekly_rental_price,
-          monthly_rental_price: item.monthly_rental_price,
-          sale_price: item.sale_price,
-          currency: item.currency,
-          in_stock: true,
-          condition: (item.sale_notes?.toLowerCase().includes('neuf') || item.sale_notes?.toLowerCase().includes('new'))
-            ? 'new' as const
-            : (item.sale_notes?.toLowerCase().includes('occasion') || item.sale_notes?.toLowerCase().includes('used'))
-              ? 'used' as const
-              : 'unspecified' as const,
-          rental_notes: item.available_for_rental ? item.rental_notes : null,
-          sale_notes: item.available_for_sale ? item.sale_notes : null,
-        };
-      });
+      // Map the response to CatalogMachine format
+      const machinesList: CatalogMachine[] = (data.machines || []).map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        brand: m.brand,
+        model: m.model,
+        category: m.category,
+        photos: m.photos,
+        workspace_id: '', // Don't expose internal IDs
+        workspace_name: m.workspace_name,
+        workspace_logo: m.workspace_logo,
+        workspace_contact_email: m.workspace_contact_email,
+        workspace_phone: m.workspace_phone,
+        available_for_rental: m.available_for_rental,
+        available_for_sale: m.available_for_sale,
+        daily_rental_price: m.daily_rental_price,
+        weekly_rental_price: m.weekly_rental_price,
+        monthly_rental_price: m.monthly_rental_price,
+        sale_price: m.sale_price,
+        currency: m.currency,
+        in_stock: m.in_stock,
+        condition: (m.sale_notes?.toLowerCase().includes('neuf') || m.sale_notes?.toLowerCase().includes('new'))
+          ? 'new' as const
+          : (m.sale_notes?.toLowerCase().includes('occasion') || m.sale_notes?.toLowerCase().includes('used'))
+            ? 'used' as const
+            : 'unspecified' as const,
+        rental_notes: m.rental_notes,
+        sale_notes: m.sale_notes,
+      }));
 
       setMachines(machinesList);
 
-      if (wsInfo) {
+      if (data.workspace) {
         setWorkspace({
-          name: wsInfo.name,
-          logo_url: wsInfo.logo_url,
-          primary_color: wsInfo.primary_color,
-          contact_email: provider?.contact_email || null,
-          phone: provider?.phone || null,
+          name: data.workspace.name,
+          logo_url: data.workspace.logo_url,
+          primary_color: data.workspace.primary_color,
+          contact_email: data.workspace.contact_email,
+          phone: data.workspace.phone,
         });
       }
     } catch (err) {
