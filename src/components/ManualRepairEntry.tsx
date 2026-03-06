@@ -196,8 +196,33 @@ export const ManualRepairEntry = ({
       toast.error(language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding technician');
     }
   };
+  const handleEditTechnician = async () => {
+    if (!editingTechnicianId || !editingTechnicianName.trim() || !onUpdateTeamMember) return;
+    const success = await onUpdateTeamMember(editingTechnicianId, editingTechnicianName.trim());
+    if (success) {
+      setEditingTechnicianId(null);
+      setEditingTechnicianName('');
+      toast.success(language === 'fr' ? 'Technicien modifié' : 'Technician updated');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error updating technician');
+    }
+  };
 
-  const handleSave = async () => {
+  const handleDeleteTechnician = async () => {
+    if (!deletingTechnicianId || !onDeleteTeamMember) return;
+    const success = await onDeleteTeamMember(deletingTechnicianId);
+    if (success) {
+      if (form.technicianId === deletingTechnicianId) {
+        setForm(prev => ({ ...prev, technicianId: '' }));
+      }
+      toast.success(language === 'fr' ? 'Technicien supprimé' : 'Technician deleted');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de la suppression' : 'Error deleting technician');
+    }
+    setDeletingTechnicianId(null);
+  };
+
+
     if (!form.description) {
       toast.error(language === 'fr' ? 'Veuillez ajouter une description' : 'Please add a description');
       return;
