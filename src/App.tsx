@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useEffect } from 'react';
+import { Suspense, lazy, useState, useEffect, forwardRef } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,7 +50,7 @@ const queryClient = new QueryClient({
 });
 
 // Protected route wrapper with splash screen
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const { user, loading, currentWorkspace, workspacesLoading, workspacesLoaded, workspaces } = useAuth();
   const [showSplash, setShowSplash] = useState(false);
   const [splashShown, setSplashShown] = useState(false);
@@ -95,8 +95,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // If logged in with workspaces but none selected, select the first one automatically
   if (!currentWorkspace && workspaces.length > 0) {
-    // The AuthContext should handle selecting the first workspace,
-    // but if for some reason it hasn't, redirect to workspaces
     return <Navigate to="/workspaces" replace />;
   }
 
@@ -110,10 +108,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       {children}
     </>
   );
-};
+});
+ProtectedRoute.displayName = 'ProtectedRoute';
 
 // Public route wrapper (redirect if already logged in)
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+const PublicRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -125,10 +124,11 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <>{children}</>;
-};
+});
+PublicRoute.displayName = 'PublicRoute';
 
 // Workspaces route - needs auth but not workspace
-const WorkspacesRoute = ({ children }: { children: React.ReactNode }) => {
+const WorkspacesRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -140,7 +140,8 @@ const WorkspacesRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <>{children}</>;
-};
+});
+WorkspacesRoute.displayName = 'WorkspacesRoute';
 
 const AppRoutes = () => (
   <Suspense fallback={<LoadingScreen />}>
