@@ -128,6 +128,7 @@ export const usePublicCatalog = (
   return {
     machines,
     workspace,
+    resolvedWorkspaceId: resolvedWsId,
     loading,
     error,
     noCode,

@@ -124,6 +124,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true, machines, total: machines.length,
+        workspace_id: resolvedWorkspaceId,
         workspace: wsInfo ? {
           name: wsInfo.name, logo_url: wsInfo.logo_url,
           primary_color: wsInfo.primary_color,
