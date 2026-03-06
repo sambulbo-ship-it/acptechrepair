@@ -593,6 +593,27 @@ export const useCloudData = () => {
     }
   };
 
+  const updateTeamMember = async (id: string, name: string, role?: string): Promise<boolean> => {
+    if (!id || !name?.trim()) return false;
+    try {
+      const updateData: { name: string; role?: string } = { name: name.trim() };
+      if (role !== undefined) updateData.role = role;
+      const { error } = await supabase
+        .from('team_members')
+        .update(updateData)
+        .eq('id', id);
+      if (error) {
+        console.error('Error updating team member:', error);
+        return false;
+      }
+      setTeam(prev => prev.map(m => m.id === id ? { ...m, name: name.trim(), ...(role !== undefined ? { role } : {}) } : m));
+      return true;
+    } catch (err) {
+      console.error('updateTeamMember error:', err);
+      return false;
+    }
+  };
+
   const removeTeamMember = async (id: string): Promise<boolean> => {
     if (!id) return false;
 
@@ -644,6 +665,7 @@ export const useCloudData = () => {
     getEntriesForMachine,
     deleteEntry,
     addTeamMember,
+    updateTeamMember,
     removeTeamMember,
     getStats,
     refreshData: fetchData,

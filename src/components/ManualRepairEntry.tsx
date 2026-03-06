@@ -19,6 +19,16 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Loader2, 
   FileText, 
@@ -29,6 +39,9 @@ import {
   Calendar,
   Euro,
   Plus,
+  Pencil,
+  Trash2,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -41,6 +54,8 @@ interface ManualRepairEntryProps {
   onSave: (data: RepairEntryData) => Promise<boolean>;
   teamMembers: { id: string; name: string }[];
   onAddTeamMember?: (name: string) => Promise<{ id: string; name: string } | null>;
+  onUpdateTeamMember?: (id: string, name: string) => Promise<boolean>;
+  onDeleteTeamMember?: (id: string) => Promise<boolean>;
 }
 
 export interface RepairEntryData {
@@ -66,6 +81,8 @@ export const ManualRepairEntry = ({
   onSave,
   teamMembers,
   onAddTeamMember,
+  onUpdateTeamMember,
+  onDeleteTeamMember,
 }: ManualRepairEntryProps) => {
   const { language } = useLanguage();
   const { supportsLiquidGlass } = useApplePlatform();
@@ -75,6 +92,9 @@ export const ManualRepairEntry = ({
   const [showAddTechnician, setShowAddTechnician] = useState(false);
   const [newTechnicianName, setNewTechnicianName] = useState('');
   const [addingTechnician, setAddingTechnician] = useState(false);
+  const [editingTechnicianId, setEditingTechnicianId] = useState<string | null>(null);
+  const [editingTechnicianName, setEditingTechnicianName] = useState('');
+  const [deletingTechnicianId, setDeletingTechnicianId] = useState<string | null>(null);
 
   const [form, setForm] = useState<RepairEntryData>({
     type: 'repair',
@@ -179,6 +199,31 @@ export const ManualRepairEntry = ({
       toast.error(language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding technician');
     }
   };
+  const handleEditTechnician = async () => {
+    if (!editingTechnicianId || !editingTechnicianName.trim() || !onUpdateTeamMember) return;
+    const success = await onUpdateTeamMember(editingTechnicianId, editingTechnicianName.trim());
+    if (success) {
+      setEditingTechnicianId(null);
+      setEditingTechnicianName('');
+      toast.success(language === 'fr' ? 'Technicien modifié' : 'Technician updated');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error updating technician');
+    }
+  };
+
+  const handleDeleteTechnician = async () => {
+    if (!deletingTechnicianId || !onDeleteTeamMember) return;
+    const success = await onDeleteTeamMember(deletingTechnicianId);
+    if (success) {
+      if (form.technicianId === deletingTechnicianId) {
+        setForm(prev => ({ ...prev, technicianId: '' }));
+      }
+      toast.success(language === 'fr' ? 'Technicien supprimé' : 'Technician deleted');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de la suppression' : 'Error deleting technician');
+    }
+    setDeletingTechnicianId(null);
+  };
 
   const handleSave = async () => {
     if (!form.description) {
@@ -220,6 +265,7 @@ export const ManualRepairEntry = ({
   const isExternalRepair = form.type === 'external-repair';
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className={cn(
         'h-[90vh] rounded-t-3xl overflow-hidden border-t-0',
@@ -373,6 +419,47 @@ export const ManualRepairEntry = ({
                 </SelectContent>
               </Select>
 
+              {/* Technician management list */}
+              {teamMembers.length > 0 && (onUpdateTeamMember || onDeleteTeamMember) && (
+                <div className="space-y-1 pt-1">
+                  {teamMembers.map((member) => (
+                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30">
+                      {editingTechnicianId === member.id ? (
+                        <>
+                          <Input
+                            value={editingTechnicianName}
+                            onChange={(e) => setEditingTechnicianName(e.target.value)}
+                            className={cn('h-8 flex-1 text-sm', supportsLiquidGlass && 'glass-input')}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEditTechnician(); } }}
+                            autoFocus
+                          />
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleEditTechnician} disabled={!editingTechnicianName.trim()}>
+                            <Check className="w-3.5 h-3.5 text-primary" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditingTechnicianId(null); setEditingTechnicianName(''); }}>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1 text-sm">{member.name}</span>
+                          {onUpdateTeamMember && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditingTechnicianId(member.id); setEditingTechnicianName(member.name); }}>
+                              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {onDeleteTeamMember && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setDeletingTechnicianId(member.id)}>
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Add technician inline */}
               {onAddTeamMember && (
                 <>
@@ -461,5 +548,27 @@ export const ManualRepairEntry = ({
         </div>
       </SheetContent>
     </Sheet>
+
+      <AlertDialog open={!!deletingTechnicianId} onOpenChange={(open) => { if (!open) setDeletingTechnicianId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'fr' ? 'Supprimer ce technicien ?' : 'Delete this technician?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'fr' 
+                ? 'Cette action est irréversible. Le technicien sera supprimé de l\'équipe.'
+                : 'This action cannot be undone. The technician will be removed from the team.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === 'fr' ? 'Annuler' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTechnician} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {language === 'fr' ? 'Supprimer' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
