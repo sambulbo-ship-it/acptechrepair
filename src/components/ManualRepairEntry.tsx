@@ -40,6 +40,7 @@ interface ManualRepairEntryProps {
   machineName: string;
   onSave: (data: RepairEntryData) => Promise<boolean>;
   teamMembers: { id: string; name: string }[];
+  onAddTeamMember?: (name: string) => Promise<{ id: string; name: string } | null>;
 }
 
 export interface RepairEntryData {
