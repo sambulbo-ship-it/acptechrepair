@@ -14,6 +14,7 @@ interface UseAIDiagnosticOptions {
 }
 
 export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
+  const { currentWorkspace } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
