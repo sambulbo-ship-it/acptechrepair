@@ -136,4 +136,6 @@ export const InstallBanner = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </div>
   );
-};
+});
+
+InstallBanner.displayName = 'InstallBanner';
