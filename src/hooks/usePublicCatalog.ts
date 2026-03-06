@@ -25,6 +25,7 @@ export const usePublicCatalog = (
 ): UsePublicCatalogResult => {
   const [machines, setMachines] = useState<CatalogMachine[]>([]);
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
+  const [resolvedWsId, setResolvedWsId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [noCode, setNoCode] = useState(false);
