@@ -2,15 +2,10 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { EquipmentCategory } from '@/data/equipmentData';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarDays, ShoppingCart, Wrench, CalendarCheck } from 'lucide-react';
 import { QuoteRequestForm } from '@/components/QuoteRequestForm';
 import { usePublicCatalog } from '@/hooks/usePublicCatalog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
   CatalogHeader,
@@ -23,6 +18,7 @@ import {
   CatalogNoCodeState,
   type CatalogMachine,
 } from '@/components/catalog';
+import { CatalogRequestDialog } from '@/components/catalog/CatalogRequestDialog';
 
 type TabValue = 'all' | 'rental' | 'sale';
 
@@ -41,13 +37,8 @@ const ClientCatalog = () => {
   const [quoteFormOpen, setQuoteFormOpen] = useState(false);
   const [selectedMachineForQuote, setSelectedMachineForQuote] = useState<CatalogMachine | null>(null);
 
-  // Repair/maintenance request dialog state
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [requestType, setRequestType] = useState<'repair' | 'maintenance'>('repair');
-  const [requestForm, setRequestForm] = useState({
-    name: '', email: '', phone: '', brand: '', model: '', description: ''
-  });
-  const [requestSubmitting, setRequestSubmitting] = useState(false);
 
   const workspaceName = workspace?.name || machines[0]?.workspace_name || '';
 
@@ -74,50 +65,7 @@ const ClientCatalog = () => {
 
   const openRequestDialog = (type: 'repair' | 'maintenance') => {
     setRequestType(type);
-    setRequestForm({ name: '', email: '', phone: '', brand: '', model: '', description: '' });
     setRequestDialogOpen(true);
-  };
-
-  const submitRequest = async () => {
-    if (!requestForm.email || !requestForm.description || !requestForm.brand) {
-      toast.error(language === 'fr' ? 'Veuillez remplir les champs obligatoires' : 'Please fill required fields');
-      return;
-    }
-
-    setRequestSubmitting(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-repair-request`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({
-            workspace_id: resolvedWorkspaceId,
-            client_name: requestForm.name,
-            client_email: requestForm.email,
-            client_phone: requestForm.phone,
-            brand: requestForm.brand,
-            model: requestForm.model,
-            description: `[${requestType === 'repair' ? 'RÉPARATION' : 'ENTRETIEN'}] ${requestForm.description}`,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Error');
-      }
-
-      toast.success(language === 'fr' ? 'Demande envoyée avec succès !' : 'Request sent successfully!');
-      setRequestDialogOpen(false);
-    } catch (err) {
-      toast.error(language === 'fr' ? 'Erreur lors de l\'envoi' : 'Failed to send request');
-    } finally {
-      setRequestSubmitting(false);
-    }
   };
 
   if (loading) return <CatalogLoadingState language={language} />;
@@ -128,32 +76,42 @@ const ClientCatalog = () => {
   const showRepair = guestConfig?.guest_show_repair_request ?? false;
   const showMaintenance = guestConfig?.guest_show_maintenance_request ?? false;
 
+  const tabOptions = [
+    { value: 'all' as TabValue, label: language === 'fr' ? 'Tout' : 'All', icon: null },
+    { value: 'rental' as TabValue, label: language === 'fr' ? 'Location' : 'Rental', icon: CalendarDays },
+    { value: 'sale' as TabValue, label: language === 'fr' ? 'Vente' : 'Sale', icon: ShoppingCart },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      <CatalogHeader workspaceName={workspaceName} language={language} />
+      <CatalogHeader 
+        workspaceName={workspaceName} 
+        language={language}
+        logoUrl={workspace?.logo_url}
+      />
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-4 py-5 space-y-4 max-w-6xl">
         {/* Service request buttons */}
         {(showRepair || showMaintenance) && (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-2">
             {showRepair && (
               <Button
                 variant="outline"
-                className="gap-2 flex-1 min-w-[200px] h-14 rounded-xl border-primary/30 hover:bg-primary/10"
+                className="gap-2 flex-1 h-12 rounded-xl border-border/60 hover:border-primary/30 hover:bg-primary/5"
                 onClick={() => openRequestDialog('repair')}
               >
-                <Wrench className="w-5 h-5 text-primary" />
-                {language === 'fr' ? 'Demander une réparation' : 'Request repair'}
+                <Wrench className="w-4 h-4 text-primary" />
+                <span className="text-sm">{language === 'fr' ? 'Réparation' : 'Repair'}</span>
               </Button>
             )}
             {showMaintenance && (
               <Button
                 variant="outline"
-                className="gap-2 flex-1 min-w-[200px] h-14 rounded-xl border-primary/30 hover:bg-primary/10"
+                className="gap-2 flex-1 h-12 rounded-xl border-border/60 hover:border-primary/30 hover:bg-primary/5"
                 onClick={() => openRequestDialog('maintenance')}
               >
-                <CalendarCheck className="w-5 h-5 text-primary" />
-                {language === 'fr' ? 'Demander un entretien' : 'Request maintenance'}
+                <CalendarCheck className="w-4 h-4 text-primary" />
+                <span className="text-sm">{language === 'fr' ? 'Entretien' : 'Maintenance'}</span>
               </Button>
             )}
           </div>
@@ -165,6 +123,7 @@ const ClientCatalog = () => {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               language={language}
+              resultCount={filteredMachines.length}
             />
 
             <CatalogCategoryFilter
@@ -173,45 +132,46 @@ const ClientCatalog = () => {
               language={language}
             />
 
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-              <TabsList className="grid w-full grid-cols-3 glass-card h-14">
-                <TabsTrigger value="all" className="data-[state=active]:bg-primary/20 rounded-xl">
-                  {language === 'fr' ? 'Tout' : 'All'}
-                </TabsTrigger>
-                <TabsTrigger value="rental" className="data-[state=active]:bg-primary/20 rounded-xl">
-                  <CalendarDays className="w-4 h-4 mr-2" />
-                  {language === 'fr' ? 'Location' : 'Rental'}
-                </TabsTrigger>
-                <TabsTrigger value="sale" className="data-[state=active]:bg-primary/20 rounded-xl">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {language === 'fr' ? 'Vente' : 'Sale'}
-                </TabsTrigger>
-              </TabsList>
+            {/* Tab filter pills */}
+            <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl w-fit">
+              {tabOptions.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={`px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                    activeTab === tab.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-              <TabsContent value={activeTab} className="mt-6">
-                {filteredMachines.length === 0 ? (
-                  <CatalogEmptyState language={language} />
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredMachines.map((machine) => (
-                      <CatalogMachineCard
-                        key={machine.id}
-                        machine={machine}
-                        language={language}
-                        onRequestQuote={openQuoteForm}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            {/* Results */}
+            {filteredMachines.length === 0 ? (
+              <CatalogEmptyState language={language} />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredMachines.map((machine) => (
+                  <CatalogMachineCard
+                    key={machine.id}
+                    machine={machine}
+                    language={language}
+                    onRequestQuote={openQuoteForm}
+                  />
+                ))}
+              </div>
+            )}
           </>
         )}
 
         {!showCatalog && !showRepair && !showMaintenance && (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">
-              {language === 'fr' ? 'Aucun contenu disponible pour le moment.' : 'No content available at the moment.'}
+          <div className="text-center py-20">
+            <p className="text-muted-foreground text-sm">
+              {language === 'fr' ? 'Aucun contenu disponible.' : 'No content available.'}
             </p>
           </div>
         )}
@@ -236,97 +196,18 @@ const ClientCatalog = () => {
       )}
 
       {/* Repair / Maintenance Request Dialog */}
-      <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {requestType === 'repair'
-                ? (language === 'fr' ? 'Demande de réparation' : 'Repair Request')
-                : (language === 'fr' ? 'Demande d\'entretien' : 'Maintenance Request')
-              }
-            </DialogTitle>
-            <DialogDescription>
-              {language === 'fr' 
-                ? `Remplissez ce formulaire pour soumettre une demande de ${requestType === 'repair' ? 'réparation' : 'entretien'}.`
-                : `Fill out this form to submit a ${requestType} request.`}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Nom *' : 'Name *'}</Label>
-              <Input
-                value={requestForm.name}
-                onChange={(e) => setRequestForm(f => ({ ...f, name: e.target.value }))}
-                className="bg-secondary border-0 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Email *' : 'Email *'}</Label>
-              <Input
-                type="email"
-                value={requestForm.email}
-                onChange={(e) => setRequestForm(f => ({ ...f, email: e.target.value }))}
-                className="bg-secondary border-0 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Téléphone' : 'Phone'}</Label>
-              <Input
-                value={requestForm.phone}
-                onChange={(e) => setRequestForm(f => ({ ...f, phone: e.target.value }))}
-                className="bg-secondary border-0 rounded-xl"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>{language === 'fr' ? 'Marque *' : 'Brand *'}</Label>
-                <Input
-                  value={requestForm.brand}
-                  onChange={(e) => setRequestForm(f => ({ ...f, brand: e.target.value }))}
-                  className="bg-secondary border-0 rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{language === 'fr' ? 'Modèle' : 'Model'}</Label>
-                <Input
-                  value={requestForm.model}
-                  onChange={(e) => setRequestForm(f => ({ ...f, model: e.target.value }))}
-                  className="bg-secondary border-0 rounded-xl"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Description *' : 'Description *'}</Label>
-              <Textarea
-                value={requestForm.description}
-                onChange={(e) => setRequestForm(f => ({ ...f, description: e.target.value }))}
-                className="bg-secondary border-0 rounded-xl min-h-[100px]"
-                placeholder={
-                  requestType === 'repair'
-                    ? (language === 'fr' ? 'Décrivez le problème...' : 'Describe the issue...')
-                    : (language === 'fr' ? 'Décrivez l\'entretien souhaité...' : 'Describe the maintenance needed...')
-                }
-              />
-            </div>
-            <Button 
-              onClick={submitRequest} 
-              disabled={requestSubmitting}
-              className="w-full h-12 rounded-xl"
-            >
-              {requestSubmitting 
-                ? (language === 'fr' ? 'Envoi...' : 'Sending...')
-                : (language === 'fr' ? 'Envoyer la demande' : 'Send request')
-              }
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CatalogRequestDialog
+        open={requestDialogOpen}
+        onOpenChange={setRequestDialogOpen}
+        requestType={requestType}
+        workspaceId={resolvedWorkspaceId}
+        language={language}
+      />
 
       {/* Footer */}
-      <footer className="py-8 text-center border-t border-border mt-12">
-        <p className="text-xs text-muted-foreground">
-          {workspaceName} - {language === 'fr' ? 'Catalogue d\'équipements' : 'Equipment catalog'}
+      <footer className="py-6 text-center border-t border-border/30 mt-12">
+        <p className="text-[11px] text-muted-foreground/60">
+          {workspaceName} — {language === 'fr' ? 'Catalogue d\'équipements' : 'Equipment catalog'}
         </p>
       </footer>
     </div>
