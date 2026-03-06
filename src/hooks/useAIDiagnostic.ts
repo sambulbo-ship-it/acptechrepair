@@ -56,6 +56,7 @@ export const useAIDiagnostic = (options: UseAIDiagnosticOptions = {}) => {
           },
           body: JSON.stringify({
             message: trimmedMessage,
+            workspaceId: currentWorkspace?.id,
             machineCategory: options.machineCategory?.trim().slice(0, 100),
             machineBrand: options.machineBrand?.trim().slice(0, 100),
             machineModel: options.machineModel?.trim().slice(0, 100),
