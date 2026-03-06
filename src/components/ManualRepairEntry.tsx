@@ -165,6 +165,21 @@ export const ManualRepairEntry = ({
     }
   };
 
+  const handleAddTechnician = async () => {
+    if (!newTechnicianName.trim() || !onAddTeamMember) return;
+    setAddingTechnician(true);
+    const member = await onAddTeamMember(newTechnicianName.trim());
+    setAddingTechnician(false);
+    if (member) {
+      setForm(prev => ({ ...prev, technicianId: member.id }));
+      setNewTechnicianName('');
+      setShowAddTechnician(false);
+      toast.success(language === 'fr' ? 'Technicien ajouté' : 'Technician added');
+    } else {
+      toast.error(language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding technician');
+    }
+  };
+
   const handleSave = async () => {
     if (!form.description) {
       toast.error(language === 'fr' ? 'Veuillez ajouter une description' : 'Please add a description');
