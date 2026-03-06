@@ -438,6 +438,8 @@ const MachineDetail = () => {
           const member = await addTeamMember(name);
           return member ? { id: member.id, name: member.name } : null;
         }}
+        onUpdateTeamMember={async (id, name) => updateTeamMember(id, name)}
+        onDeleteTeamMember={async (id) => removeTeamMember(id)}
       />
 
       <div className="p-4 space-y-4">
