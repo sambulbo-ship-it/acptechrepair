@@ -39,6 +39,9 @@ import {
   Calendar,
   Euro,
   Plus,
+  Pencil,
+  Trash2,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
