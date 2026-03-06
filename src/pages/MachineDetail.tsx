@@ -47,6 +47,8 @@ const MachineDetail = () => {
   const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
   const [presentationPhotos, setPresentationPhotos] = useState<EntryPhoto[]>([]);
+  const [machinePhotos, setMachinePhotos] = useState<string[]>([]);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
   const [applyPhotosToAll, setApplyPhotosToAll] = useState(false);
   const [savingPhotos, setSavingPhotos] = useState(false);
   const [entryForm, setEntryForm] = useState({
