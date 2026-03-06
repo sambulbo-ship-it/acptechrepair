@@ -265,6 +265,7 @@ export const ManualRepairEntry = ({
   const isExternalRepair = form.type === 'external-repair';
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className={cn(
         'h-[90vh] rounded-t-3xl overflow-hidden border-t-0',
