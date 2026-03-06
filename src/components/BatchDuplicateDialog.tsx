@@ -62,9 +62,10 @@ export const BatchDuplicateDialog = ({ open, onOpenChange, selectedMachines, onC
         brand: machine.brand,
         model: machine.model,
         serialNumber: serialNumbers[machine.id].trim(),
-        location: machine.location,
+        location: '',
         status: 'operational',
-        notes: machine.notes,
+        notes: '',
+        photos: machine.photos,
       });
       if (result) successCount++;
     }

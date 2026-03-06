@@ -278,9 +278,9 @@ const MachineDetail = () => {
       brand: machine.brand,
       model: machine.model,
       serialNumber: duplicateSerial.trim(),
-      location: machine.location,
+      location: '',
       status: 'operational',
-      notes: machine.notes,
+      notes: '',
       photos: machinePhotos,
     });
     setDuplicating(false);
