@@ -112,7 +112,7 @@ const ProtectedRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>
 ProtectedRoute.displayName = 'ProtectedRoute';
 
 // Public route wrapper (redirect if already logged in)
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+const PublicRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -124,10 +124,11 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <>{children}</>;
-};
+});
+PublicRoute.displayName = 'PublicRoute';
 
 // Workspaces route - needs auth but not workspace
-const WorkspacesRoute = ({ children }: { children: React.ReactNode }) => {
+const WorkspacesRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -139,7 +140,8 @@ const WorkspacesRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <>{children}</>;
-};
+});
+WorkspacesRoute.displayName = 'WorkspacesRoute';
 
 const AppRoutes = () => (
   <Suspense fallback={<LoadingScreen />}>
