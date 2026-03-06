@@ -493,9 +493,14 @@ const MachineDetail = () => {
               </Button>
             </div>
 
-            {machine.photos && machine.photos.length > 0 ? (
+            {!photosLoaded ? (
+              <div className="flex items-center gap-2 py-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span className="text-sm text-muted-foreground">{language === 'fr' ? 'Chargement des photos...' : 'Loading photos...'}</span>
+              </div>
+            ) : machinePhotos.length > 0 ? (
               <PhotoGallery
-                photos={machine.photos.map((url, index) => ({
+                photos={machinePhotos.map((url, index) => ({
                   id: `photo-${index}`,
                   dataUrl: url,
                   createdAt: new Date(),
