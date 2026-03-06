@@ -418,6 +418,47 @@ export const ManualRepairEntry = ({
                 </SelectContent>
               </Select>
 
+              {/* Technician management list */}
+              {teamMembers.length > 0 && (onUpdateTeamMember || onDeleteTeamMember) && (
+                <div className="space-y-1 pt-1">
+                  {teamMembers.map((member) => (
+                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30">
+                      {editingTechnicianId === member.id ? (
+                        <>
+                          <Input
+                            value={editingTechnicianName}
+                            onChange={(e) => setEditingTechnicianName(e.target.value)}
+                            className={cn('h-8 flex-1 text-sm', supportsLiquidGlass && 'glass-input')}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEditTechnician(); } }}
+                            autoFocus
+                          />
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleEditTechnician} disabled={!editingTechnicianName.trim()}>
+                            <Check className="w-3.5 h-3.5 text-primary" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditingTechnicianId(null); setEditingTechnicianName(''); }}>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1 text-sm">{member.name}</span>
+                          {onUpdateTeamMember && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => { setEditingTechnicianId(member.id); setEditingTechnicianName(member.name); }}>
+                              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {onDeleteTeamMember && (
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setDeletingTechnicianId(member.id)}>
+                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Add technician inline */}
               {onAddTeamMember && (
                 <>
