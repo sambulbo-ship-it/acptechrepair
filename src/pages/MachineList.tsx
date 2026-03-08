@@ -8,7 +8,7 @@ import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { useScanHistory } from '@/hooks/useScanHistory';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { MachineCard } from '@/components/MachineCard';
+import { MachineGroupCard } from '@/components/MachineGroupCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { AIProductScanner } from '@/components/AIProductScanner';
