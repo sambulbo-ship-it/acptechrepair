@@ -99,6 +99,23 @@ const MachineList = () => {
     }
   });
 
+  // Group machines by name + brand + model
+  const groupedMachines = useMemo(() => {
+    const groups = new Map<string, typeof sortedMachines>();
+    for (const machine of sortedMachines) {
+      const key = `${machine.name.toLowerCase()}|${machine.brand.toLowerCase()}|${machine.model.toLowerCase()}`;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(machine);
+    }
+    return Array.from(groups.values()).map(machines => ({
+      representative: machines[0],
+      machines,
+      count: machines.length,
+    }));
+  }, [sortedMachines]);
+
   const toggleSelection = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
