@@ -13,9 +13,10 @@ interface MachineCardProps {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (checked: boolean) => void;
+  count?: number;
 }
 
-export const MachineCard = ({ machine, onClick, selectable, selected, onSelect }: MachineCardProps) => {
+export const MachineCard = ({ machine, onClick, selectable, selected, onSelect, count }: MachineCardProps) => {
   const { language } = useLanguage();
   const category = getCategoryById(machine.category);
   const CategoryIcon = getCategoryIconComponent(machine.category);
@@ -45,6 +46,11 @@ export const MachineCard = ({ machine, onClick, selectable, selected, onSelect }
           <div className="flex items-center gap-2 mb-0.5">
             <h3 className="font-semibold text-foreground truncate">
               {machine.name}
+              {count && count > 1 && (
+                <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-bold">
+                  × {count}
+                </span>
+              )}
             </h3>
           </div>
           

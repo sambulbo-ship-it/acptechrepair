@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,6 +98,23 @@ const MachineList = () => {
       default: return 0;
     }
   });
+
+  // Group machines by name + brand + model
+  const groupedMachines = useMemo(() => {
+    const groups = new Map<string, typeof sortedMachines>();
+    for (const machine of sortedMachines) {
+      const key = `${machine.name.toLowerCase()}|${machine.brand.toLowerCase()}|${machine.model.toLowerCase()}`;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(machine);
+    }
+    return Array.from(groups.values()).map(machines => ({
+      representative: machines[0],
+      machines,
+      count: machines.length,
+    }));
+  }, [sortedMachines]);
 
   const toggleSelection = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -306,14 +323,25 @@ const MachineList = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {sortedMachines.map((machine) => (
+            {groupedMachines.map((group) => (
               <MachineCard
-                key={machine.id}
-                machine={machine}
-                onClick={() => !selectionMode && navigate(`/machine/${machine.id}`)}
+                key={group.representative.id}
+                machine={group.representative}
+                count={group.count}
+                onClick={() => {
+                  if (selectionMode) return;
+                  if (group.count > 1) {
+                    // Filter to show only this group
+                    setSearchQuery(`${group.representative.name}`);
+                  } else {
+                    navigate(`/machine/${group.representative.id}`);
+                  }
+                }}
                 selectable={selectionMode}
-                selected={selectedIds.has(machine.id)}
-                onSelect={(checked) => toggleSelection(machine.id, checked)}
+                selected={group.machines.every(m => selectedIds.has(m.id))}
+                onSelect={(checked) => {
+                  group.machines.forEach(m => toggleSelection(m.id, checked));
+                }}
               />
             ))}
           </div>
