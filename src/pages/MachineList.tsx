@@ -306,14 +306,25 @@ const MachineList = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {sortedMachines.map((machine) => (
+            {groupedMachines.map((group) => (
               <MachineCard
-                key={machine.id}
-                machine={machine}
-                onClick={() => !selectionMode && navigate(`/machine/${machine.id}`)}
+                key={group.representative.id}
+                machine={group.representative}
+                count={group.count}
+                onClick={() => {
+                  if (selectionMode) return;
+                  if (group.count > 1) {
+                    // Filter to show only this group
+                    setSearchQuery(`${group.representative.name}`);
+                  } else {
+                    navigate(`/machine/${group.representative.id}`);
+                  }
+                }}
                 selectable={selectionMode}
-                selected={selectedIds.has(machine.id)}
-                onSelect={(checked) => toggleSelection(machine.id, checked)}
+                selected={group.machines.every(m => selectedIds.has(m.id))}
+                onSelect={(checked) => {
+                  group.machines.forEach(m => toggleSelection(m.id, checked));
+                }}
               />
             ))}
           </div>
