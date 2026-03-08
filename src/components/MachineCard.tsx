@@ -13,6 +13,7 @@ interface MachineCardProps {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (checked: boolean) => void;
+  count?: number;
 }
 
 export const MachineCard = ({ machine, onClick, selectable, selected, onSelect }: MachineCardProps) => {
