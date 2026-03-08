@@ -16,7 +16,7 @@ interface MachineCardProps {
   count?: number;
 }
 
-export const MachineCard = ({ machine, onClick, selectable, selected, onSelect }: MachineCardProps) => {
+export const MachineCard = ({ machine, onClick, selectable, selected, onSelect, count }: MachineCardProps) => {
   const { language } = useLanguage();
   const category = getCategoryById(machine.category);
   const CategoryIcon = getCategoryIconComponent(machine.category);
