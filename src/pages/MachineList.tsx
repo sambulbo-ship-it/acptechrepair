@@ -8,7 +8,7 @@ import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { useScanHistory } from '@/hooks/useScanHistory';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { MachineCard } from '@/components/MachineCard';
+import { MachineGroupCard } from '@/components/MachineGroupCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { AIProductScanner } from '@/components/AIProductScanner';
@@ -99,22 +99,32 @@ const MachineList = () => {
     }
   });
 
-  // Group machines by name + brand + model
-  const groupedMachines = useMemo(() => {
-    const groups = new Map<string, typeof sortedMachines>();
+  // Separate non-operational machines
+  const { operationalMachines, problemMachines } = useMemo(() => {
+    const operational: typeof sortedMachines = [];
+    const problem: typeof sortedMachines = [];
     for (const machine of sortedMachines) {
+      if (machine.status === 'out-of-service' || machine.status === 'needs-attention') {
+        problem.push(machine);
+      } else {
+        operational.push(machine);
+      }
+    }
+    return { operationalMachines: operational, problemMachines: problem };
+  }, [sortedMachines]);
+
+  // Group only operational machines by name + brand + model
+  const groupedMachines = useMemo(() => {
+    const groups = new Map<string, typeof operationalMachines>();
+    for (const machine of operationalMachines) {
       const key = `${machine.name.toLowerCase()}|${machine.brand.toLowerCase()}|${machine.model.toLowerCase()}`;
       if (!groups.has(key)) {
         groups.set(key, []);
       }
       groups.get(key)!.push(machine);
     }
-    return Array.from(groups.values()).map(machines => ({
-      representative: machines[0],
-      machines,
-      count: machines.length,
-    }));
-  }, [sortedMachines]);
+    return Array.from(groups.values());
+  }, [operationalMachines]);
 
   const toggleSelection = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -323,25 +333,38 @@ const MachineList = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {groupedMachines.map((group) => (
-              <MachineCard
-                key={group.representative.id}
-                machine={group.representative}
-                count={group.count}
-                onClick={() => {
-                  if (selectionMode) return;
-                  if (group.count > 1) {
-                    // Filter to show only this group
-                    setSearchQuery(`${group.representative.name}`);
-                  } else {
-                    navigate(`/machine/${group.representative.id}`);
-                  }
-                }}
+            {/* Problem machines section */}
+            {problemMachines.length > 0 && (
+              <>
+                <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
+                  {language === 'fr' ? '⚠️ Machines en alerte' : '⚠️ Machines needing attention'}
+                  <span className="text-xs font-normal text-muted-foreground">({problemMachines.length})</span>
+                </h3>
+                {problemMachines.map((machine) => (
+                  <MachineGroupCard
+                    key={machine.id}
+                    machines={[machine]}
+                    selectable={selectionMode}
+                    selectedIds={selectedIds}
+                    onToggleSelection={toggleSelection}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Operational grouped machines */}
+            {groupedMachines.length > 0 && problemMachines.length > 0 && (
+              <h3 className="text-sm font-semibold text-foreground mt-4">
+                {language === 'fr' ? '✅ Opérationnels' : '✅ Operational'}
+              </h3>
+            )}
+            {groupedMachines.map((group, idx) => (
+              <MachineGroupCard
+                key={group[0].id + '-group-' + idx}
+                machines={group}
                 selectable={selectionMode}
-                selected={group.machines.every(m => selectedIds.has(m.id))}
-                onSelect={(checked) => {
-                  group.machines.forEach(m => toggleSelection(m.id, checked));
-                }}
+                selectedIds={selectedIds}
+                onToggleSelection={toggleSelection}
               />
             ))}
           </div>
