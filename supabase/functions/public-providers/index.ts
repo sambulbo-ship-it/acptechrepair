@@ -29,8 +29,9 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error('[public-providers] Error:', err);
     return new Response(
-      JSON.stringify({ success: false, error: String(err), providers: [] }),
+      JSON.stringify({ success: false, error: 'Internal server error', providers: [] }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

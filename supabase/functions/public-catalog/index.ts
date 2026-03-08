@@ -168,8 +168,9 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error('[public-catalog] Error:', err);
     return new Response(
-      JSON.stringify({ success: false, error: String(err), machines: [] }),
+      JSON.stringify({ success: false, error: 'Internal server error', machines: [] }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
