@@ -99,22 +99,32 @@ const MachineList = () => {
     }
   });
 
-  // Group machines by name + brand + model
-  const groupedMachines = useMemo(() => {
-    const groups = new Map<string, typeof sortedMachines>();
+  // Separate non-operational machines
+  const { operationalMachines, problemMachines } = useMemo(() => {
+    const operational: typeof sortedMachines = [];
+    const problem: typeof sortedMachines = [];
     for (const machine of sortedMachines) {
+      if (machine.status === 'out-of-service' || machine.status === 'needs-attention') {
+        problem.push(machine);
+      } else {
+        operational.push(machine);
+      }
+    }
+    return { operationalMachines: operational, problemMachines: problem };
+  }, [sortedMachines]);
+
+  // Group only operational machines by name + brand + model
+  const groupedMachines = useMemo(() => {
+    const groups = new Map<string, typeof operationalMachines>();
+    for (const machine of operationalMachines) {
       const key = `${machine.name.toLowerCase()}|${machine.brand.toLowerCase()}|${machine.model.toLowerCase()}`;
       if (!groups.has(key)) {
         groups.set(key, []);
       }
       groups.get(key)!.push(machine);
     }
-    return Array.from(groups.values()).map(machines => ({
-      representative: machines[0],
-      machines,
-      count: machines.length,
-    }));
-  }, [sortedMachines]);
+    return Array.from(groups.values());
+  }, [operationalMachines]);
 
   const toggleSelection = (id: string, checked: boolean) => {
     setSelectedIds(prev => {
