@@ -21,7 +21,7 @@ const AddMachine = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addMachine } = useCloudData();
+  const { addMachine, machines } = useCloudData();
   const { getBrandsForCategory, addCustomBrand, getCustomBrandsForCategory, removeCustomBrand } = useWorkspaceBrands();
 
   // Pre-fill from URL params (from AI scanner)
@@ -74,6 +74,21 @@ const AddMachine = () => {
     }
 
     const finalBrand = formData.brand === 'Other' ? formData.customBrand : formData.brand;
+
+    // Check for duplicate serial number with same brand + model
+    const duplicate = machines.find(m =>
+      m.serialNumber.toLowerCase() === formData.serialNumber.trim().toLowerCase() &&
+      m.brand.toLowerCase() === finalBrand.toLowerCase() &&
+      m.model.toLowerCase() === formData.model.trim().toLowerCase()
+    );
+    if (duplicate) {
+      toast.error(
+        language === 'fr'
+          ? `Un équipement ${finalBrand} ${formData.model} avec ce numéro de série existe déjà`
+          : `A ${finalBrand} ${formData.model} with this serial number already exists`
+      );
+      return;
+    }
 
     const result = await addMachine({
       name: formData.name,

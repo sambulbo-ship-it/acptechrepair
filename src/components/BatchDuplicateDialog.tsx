@@ -28,6 +28,8 @@ export const BatchDuplicateDialog = ({ open, onOpenChange, selectedMachines, onC
     setSerialNumbers(prev => ({ ...prev, [machineId]: value }));
   };
 
+  const { machines: allMachines } = useCloudData();
+
   const getErrors = () => {
     const errors: Record<string, string> = {};
     const serials = Object.values(serialNumbers).filter(Boolean).map(s => s.trim().toLowerCase());
@@ -40,6 +42,18 @@ export const BatchDuplicateDialog = ({ open, onOpenChange, selectedMachines, onC
         errors[machine.id] = language === 'fr' ? 'Doit être différent de l\'original' : 'Must differ from original';
       } else if (serials.filter(s => s === serial.toLowerCase()).length > 1) {
         errors[machine.id] = language === 'fr' ? 'Doublon détecté' : 'Duplicate detected';
+      } else {
+        // Check existing machines with same brand + model + serial
+        const existingDuplicate = allMachines.find(m =>
+          m.serialNumber.toLowerCase() === serial.toLowerCase() &&
+          m.brand.toLowerCase() === machine.brand.toLowerCase() &&
+          m.model.toLowerCase() === machine.model.toLowerCase()
+        );
+        if (existingDuplicate) {
+          errors[machine.id] = language === 'fr'
+            ? `Ce S/N existe déjà pour ${machine.brand} ${machine.model}`
+            : `This S/N already exists for ${machine.brand} ${machine.model}`;
+        }
       }
     }
     return errors;
