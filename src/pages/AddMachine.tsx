@@ -21,7 +21,7 @@ const AddMachine = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addMachine } = useCloudData();
+  const { addMachine, machines } = useCloudData();
   const { getBrandsForCategory, addCustomBrand, getCustomBrandsForCategory, removeCustomBrand } = useWorkspaceBrands();
 
   // Pre-fill from URL params (from AI scanner)
