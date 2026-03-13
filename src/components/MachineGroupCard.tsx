@@ -71,10 +71,16 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
   // Group card - expandable
   return (
     <div className="space-y-1">
-      <div className={cn(
-        "w-full glass-card p-4 text-left flex items-center gap-4 transition-all duration-200",
-        selectable && allSelected && "ring-2 ring-primary/50 bg-primary/5"
-      )}>
+      <button
+        type="button"
+        onClick={() => {
+          if (!selectable) setExpanded(!expanded);
+        }}
+        className={cn(
+          "w-full glass-card p-4 text-left flex items-center gap-4 transition-all duration-200 cursor-pointer active:scale-[0.98]",
+          selectable && allSelected && "ring-2 ring-primary/50 bg-primary/5"
+        )}
+      >
         {selectable && (
           <Checkbox
             checked={allSelected}
@@ -85,10 +91,7 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
             onClick={(e) => e.stopPropagation()}
           />
         )}
-        <button
-          onClick={() => !selectable && setExpanded(!expanded)}
-          className="flex items-center gap-4 flex-1 min-w-0 touch-target active:scale-[0.98]"
-        >
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
             <CategoryIcon className="w-6 h-6 text-primary" />
           </div>
