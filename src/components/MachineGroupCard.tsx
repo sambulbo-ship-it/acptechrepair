@@ -117,8 +117,8 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
           ) : (
             <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
           )}
-        </button>
-      </div>
+        </div>
+      </button>
 
       {expanded && (
         <div className="ml-6 space-y-1 border-l-2 border-primary/20 pl-3">
