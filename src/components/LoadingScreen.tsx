@@ -13,7 +13,7 @@ export const LoadingScreen = forwardRef<HTMLDivElement, LoadingScreenProps>(
           <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center">
             <Wrench className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-foreground">Tech Repair</span>
+          <span className="text-xl font-bold text-foreground">ACP Tech Repair</span>
         </div>
         <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
         <p className="text-sm text-muted-foreground">{message}</p>

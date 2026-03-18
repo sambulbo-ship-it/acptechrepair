@@ -69,7 +69,7 @@ const Install = () => {
             </div>
             <CardTitle>App installée !</CardTitle>
             <CardDescription>
-              Tech Repair est maintenant installée sur votre appareil.
+              ACP Tech Repair est maintenant installée sur votre appareil.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -89,7 +89,7 @@ const Install = () => {
           <div className="mx-auto mb-4 w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
             <Download className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle>Installer Tech Repair</CardTitle>
+          <CardTitle>Installer ACP Tech Repair</CardTitle>
           <CardDescription>
             Installez l'application pour un accès rapide depuis votre écran d'accueil.
           </CardDescription>
@@ -161,7 +161,7 @@ const Install = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0">2</span>
-                  <span>Ou utilisez le menu du navigateur → "Installer Tech Repair"</span>
+                  <span>Ou utilisez le menu du navigateur → "Installer ACP Tech Repair"</span>
                 </li>
               </ol>
             </div>

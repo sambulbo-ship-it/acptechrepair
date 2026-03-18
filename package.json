@@ -1,7 +1,7 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "acp-tech-repair",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,13 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "build:android": "npm run build && npx cap sync android && npx cap open android",
+    "sync:ios": "npx cap sync ios",
+    "sync:android": "npx cap sync android",
+    "cap:copy": "npx cap copy",
+    "cap:sync": "npx cap sync"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",

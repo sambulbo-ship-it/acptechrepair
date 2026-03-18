@@ -161,7 +161,7 @@ const Settings = () => {
         {/* App Info */}
         <div className="glass-card p-4">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Tech Repair
+            ACP Tech Repair
           </h3>
           <p className="text-xs text-muted-foreground">
             Version 1.0.0

@@ -102,7 +102,7 @@ export const InstallBanner = forwardRef<HTMLDivElement>((_, ref) => {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-foreground text-sm">
-              Installer Tech Repair
+              Installer ACP Tech Repair
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isIOS 

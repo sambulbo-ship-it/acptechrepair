@@ -20,15 +20,17 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "robots.txt"],
       manifest: {
-        name: "Tech Repair",
-        short_name: "TechRepair",
-        description: "Track equipment diagnostics, repairs, and maintenance",
-        theme_color: "#0f1419",
-        background_color: "#0f1419",
+        name: "ACP Tech Repair",
+        short_name: "ACPRepair",
+        description: "Gestion de parc technique multi-plateforme pour toutes les entreprises. Suivi des réparations, scan IA, équipes, analytics.",
+        lang: "fr",
+        theme_color: "#0a0c0f",
+        background_color: "#0a0c0f",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
+        categories: ["business", "productivity", "utilities"],
         icons: [
           {
             src: "/pwa-192x192.png",
