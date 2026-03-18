@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
-import { Check, LogOut, Building2, Shield, Bell, Palette, Settings as SettingsIcon, ChevronRight, FileText, Wrench } from 'lucide-react';
+import { Check, LogOut, Building2, Shield, Bell, Palette, Settings as SettingsIcon, ChevronRight, FileText, Wrench, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -62,6 +62,15 @@ const Settings = () => {
             Paramètres rapides
           </h3>
           
+          <button
+            onClick={() => navigate('/analytics')}
+            className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
+          >
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <span className="flex-1 text-left text-foreground">Statistiques</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+
           <button
             onClick={() => navigate('/notification-settings')}
             className="w-full glass-list-item px-4 py-4 flex items-center gap-3 hover:bg-secondary/30 transition-colors"

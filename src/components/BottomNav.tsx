@@ -1,6 +1,6 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Wrench, PlusCircle, Users, Settings, Package, ShoppingCart, BarChart3 } from 'lucide-react';
+import { Wrench, PlusCircle, Settings, Package, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const BottomNav = () => {
@@ -11,7 +11,6 @@ export const BottomNav = () => {
   const navItems = [
     { path: '/', icon: Wrench, label: t('equipment') },
     { path: '/rental-sale', icon: ShoppingCart, label: t('rentalSale') },
-    { path: '/analytics', icon: BarChart3, label: 'Stats' },
     { path: '/add', icon: PlusCircle, label: t('addMachine') },
     { path: '/repair-resources', icon: Package, label: t('resources') },
     { path: '/settings', icon: Settings, label: t('settings') },
@@ -34,7 +33,7 @@ export const BottomNav = () => {
               style={{
                 background: `
                   radial-gradient(ellipse 80% 50% at 50% 0%, hsla(0 0% 100% / 0.15) 0%, transparent 50%),
-                  radial-gradient(ellipse 60% 40% at 50% 100%, hsla(25 95% 53% / 0.1) 0%, transparent 50%)
+                  radial-gradient(ellipse 60% 40% at 50% 100%, hsla(213 94% 60% / 0.1) 0%, transparent 50%)
                 `
               }}
             />
@@ -54,7 +53,7 @@ export const BottomNav = () => {
                     'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300',
                     isActive 
                       ? 'nav-item-active' 
-                      : 'text-white/60 hover:text-white/90 hover:bg-white/5 active:scale-95'
+                      : 'text-foreground/50 hover:text-foreground/90 hover:bg-foreground/5 active:scale-95'
                   )}
                 >
                   <Icon className={cn('w-5 h-5 transition-all', isActive && 'stroke-[2.5]')} />
