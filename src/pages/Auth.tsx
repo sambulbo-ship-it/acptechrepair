@@ -114,7 +114,7 @@ const Auth = () => {
           <div className="w-20 h-20 rounded-3xl glass-card flex items-center justify-center mb-4">
             <Wrench className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">Tech Repair</h1>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">ACP Tech Repair</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestion d'équipements</p>
         </div>
 

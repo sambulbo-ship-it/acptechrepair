@@ -11,7 +11,7 @@ interface Translations {
 
 export const translations: Translations = {
   // App
-  appName: { en: 'Tech Repair', fr: 'Tech Repair' },
+  appName: { en: 'ACP Tech Repair', fr: 'ACP Tech Repair' },
   
   // Navigation
   equipment: { en: 'Equipment', fr: 'Équipements' },

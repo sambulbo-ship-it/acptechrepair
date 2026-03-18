@@ -53,7 +53,7 @@ export const WorkspaceSplashScreen = ({ onComplete, duration = 2000 }: Workspace
 
       {/* Workspace name */}
       <h1 className="text-2xl font-bold text-white mb-4">
-        {currentWorkspace?.name || 'Repair Logbook'}
+        {currentWorkspace?.name || 'ACP Tech Repair'}
       </h1>
 
       {/* Loading indicator */}
@@ -64,7 +64,7 @@ export const WorkspaceSplashScreen = ({ onComplete, duration = 2000 }: Workspace
 
       {/* Branding badge */}
       <div className="absolute bottom-8 text-white/50 text-xs">
-        Powered by Repair Logbook
+        Powered by ACP Tech Repair
       </div>
     </div>
   );

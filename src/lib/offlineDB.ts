@@ -38,7 +38,7 @@ interface OfflineDBSchema extends DBSchema {
   };
 }
 
-const DB_NAME = 'repair-logbook-offline';
+const DB_NAME = 'acp-tech-repair-offline';
 const DB_VERSION = 1;
 
 let dbPromise: Promise<IDBPDatabase<OfflineDBSchema>> | null = null;
