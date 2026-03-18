@@ -295,7 +295,7 @@ const MachineDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="min-h-screen bg-background pb-28">
       <Header
         title={machine.name}
         showBack
@@ -457,6 +457,21 @@ const MachineDetail = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 {getCategoryLabel(machine.category, language)}
               </p>
+              {entries.length > 0 && (() => {
+                const lastEntry = entries[0];
+                const lastDate = new Date(lastEntry.date);
+                const daysDiff = Math.floor((Date.now() - lastDate.getTime()) / 86400000);
+                const label = daysDiff === 0
+                  ? (language === 'fr' ? "Aujourd'hui" : 'Today')
+                  : daysDiff === 1
+                    ? (language === 'fr' ? 'Il y a 1 jour' : '1 day ago')
+                    : language === 'fr' ? `Il y a ${daysDiff} jours` : `${daysDiff} days ago`;
+                return (
+                  <p className="text-xs text-primary font-medium mt-1">
+                    {language === 'fr' ? 'Dernière intervention : ' : 'Last service: '}{label}
+                  </p>
+                );
+              })()}
             </div>
             <StatusBadge status={machine.status} />
           </div>
@@ -717,6 +732,19 @@ const MachineDetail = () => {
           </div>
         )}
       </div>
+
+      {/* FAB - Add Entry */}
+      {team.length > 0 && (
+        <div className="fixed bottom-6 left-4 right-4 z-40">
+          <Button
+            className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg gap-2"
+            onClick={() => setIsSheetOpen(true)}
+          >
+            <Plus className="w-5 h-5" />
+            {t('addEntry')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
