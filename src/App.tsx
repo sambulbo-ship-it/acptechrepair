@@ -25,6 +25,7 @@ const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const WorkspaceBranding = lazy(() => import("./pages/WorkspaceBranding"));
 const Install = lazy(() => import("./pages/Install"));
+const Landing = lazy(() => import("./pages/Landing"));
 const Admin = lazy(() => import("./pages/Admin"));
 const RepairResources = lazy(() => import("./pages/RepairResources"));
 const AIAssistant = lazy(() => import("./pages/AIAssistant"));
@@ -78,9 +79,13 @@ const ProtectedRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>
     return <LoadingScreen message="Vérification de la session..." />;
   }
 
-  // Not logged in
+  // Not logged in — show landing page instead of redirecting to /auth
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <Landing />
+      </Suspense>
+    );
   }
 
   // Wait until workspace list is actually loaded (prevents false "no workspace" state)
@@ -147,6 +152,7 @@ const AppRoutes = () => (
   <Suspense fallback={<LoadingScreen />}>
     <Routes>
       {/* Truly public routes - no auth wrapper at all */}
+      <Route path="/landing" element={<Landing />} />
       <Route path="/install" element={<Install />} />
       <Route path="/find-repair" element={<FindRepairService />} />
       <Route path="/catalog" element={<ClientCatalog />} />

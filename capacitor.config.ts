@@ -1,21 +1,21 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.techrepair',
-  appName: 'Tech Repair',
+  appId: 'com.acptechrepair.app',
+  appName: 'ACP Tech Repair',
   webDir: 'dist',
-  server: {
-    url: 'https://8369cce7-c2e9-4f93-bf6e-e4f5dd0e8aff.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+  // No server.url = native builds use local dist/ bundle (production-ready)
   // iOS configuration
   ios: {
-    scheme: 'TechRepair',
+    scheme: 'ACPTechRepair',
     contentInset: 'automatic',
+    preferredContentMode: 'mobile',
   },
   // Android configuration
   android: {
-    allowMixedContent: true,
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
   },
   plugins: {
     Keyboard: {
@@ -24,8 +24,17 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: '#0f1419',
+      backgroundColor: '#0a0c0f',
       showSpinner: false,
+      androidScaleType: 'CENTER_CROP',
+      spinnerColor: '#3b82f6',
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#0a0c0f',
     },
   },
 };
