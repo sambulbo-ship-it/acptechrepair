@@ -43,8 +43,18 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
           onClick={() => !selectable && navigate(`/machine/${representative.id}`)}
           className="flex items-center gap-4 flex-1 min-w-0 touch-target active:scale-[0.98]"
         >
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-            <CategoryIcon className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-2xl flex-shrink-0 overflow-hidden">
+            {representative.photos && representative.photos.length > 0 ? (
+              <img
+                src={representative.photos[0]}
+                alt={representative.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center">
+                <CategoryIcon className="w-6 h-6 text-primary" />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground truncate">{representative.name}</h3>
@@ -92,8 +102,18 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
           />
         )}
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-            <CategoryIcon className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-2xl flex-shrink-0 overflow-hidden">
+            {representative.photos && representative.photos.length > 0 ? (
+              <img
+                src={representative.photos[0]}
+                alt={representative.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center">
+                <CategoryIcon className="w-6 h-6 text-primary" />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">

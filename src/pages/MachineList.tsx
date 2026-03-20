@@ -16,7 +16,7 @@ import { RecentRepairsSuggestions } from '@/components/RecentRepairsSuggestions'
 import { BatchDuplicateDialog } from '@/components/BatchDuplicateDialog';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
-import { Search, Wrench, History, Copy, X, CheckSquare, ArrowUpDown } from 'lucide-react';
+import { Search, Wrench, History, Copy, X, CheckSquare, ArrowUpDown, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -337,7 +337,8 @@ const MachineList = () => {
             {problemMachines.length > 0 && (
               <>
                 <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
-                  {language === 'fr' ? '⚠️ Machines en alerte' : '⚠️ Machines needing attention'}
+                  <AlertTriangle className="w-4 h-4" />
+                  {language === 'fr' ? 'Machines en alerte' : 'Machines needing attention'}
                   <span className="text-xs font-normal text-muted-foreground">({problemMachines.length})</span>
                 </h3>
                 {problemMachines.map((machine) => (
@@ -354,8 +355,9 @@ const MachineList = () => {
 
             {/* Operational grouped machines */}
             {groupedMachines.length > 0 && problemMachines.length > 0 && (
-              <h3 className="text-sm font-semibold text-foreground mt-4">
-                {language === 'fr' ? '✅ Opérationnels' : '✅ Operational'}
+              <h3 className="text-sm font-semibold text-success flex items-center gap-2 mt-4">
+                <CheckCircle2 className="w-4 h-4" />
+                {language === 'fr' ? 'Opérationnels' : 'Operational'}
               </h3>
             )}
             {groupedMachines.map((group, idx) => (

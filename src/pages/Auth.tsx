@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wrench, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { Wrench, Mail, Lock, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -106,16 +106,37 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col">
+    <div className="min-h-screen min-h-[100dvh] bg-[#0a0c0f] flex flex-col relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[400px] bg-blue-500/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl" />
+      </div>
+
+      {/* Back to landing */}
+      <div className="relative px-4 pt-4 pt-[env(safe-area-inset-top)]">
+        <button
+          onClick={() => navigate('/landing')}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-white transition-colors py-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {isSignUp
+            ? (language === 'fr' ? 'Retour' : 'Back')
+            : (language === 'fr' ? 'Accueil' : 'Home')}
+        </button>
+      </div>
+
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-8">
         {/* Logo - Glass Effect */}
-        <div className="flex flex-col items-center mb-12">
-          <div className="w-20 h-20 rounded-3xl glass-card flex items-center justify-center mb-4">
+        <div className="flex flex-col items-center mb-10">
+          <div className="w-20 h-20 rounded-3xl glass-card flex items-center justify-center mb-4 shadow-lg shadow-blue-500/10">
             <Wrench className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">ACP Tech Repair</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestion d'équipements</p>
+          <h1 className="text-xl font-semibold text-white tracking-tight">ACP Tech Repair</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {language === 'fr' ? 'Gestion d\'équipements' : 'Equipment Management'}
+          </p>
         </div>
 
         {/* Form - Glass Style */}
@@ -237,9 +258,9 @@ const Auth = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-6 text-center pb-[env(safe-area-inset-bottom)]">
+      <footer className="relative py-6 text-center pb-[env(safe-area-inset-bottom)]">
         <p className="text-xs text-muted-foreground">
-          Gérez vos équipements en toute simplicité
+          {language === 'fr' ? 'Gérez vos équipements en toute simplicité' : 'Manage your equipment with ease'}
         </p>
       </footer>
     </div>
