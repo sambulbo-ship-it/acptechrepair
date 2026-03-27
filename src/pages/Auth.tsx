@@ -258,9 +258,18 @@ const Auth = () => {
       </div>
 
       {/* Footer */}
-      <footer className="relative py-6 text-center pb-[env(safe-area-inset-bottom)]">
+      <footer className="relative py-6 text-center pb-[env(safe-area-inset-bottom)] space-y-1">
         <p className="text-xs text-muted-foreground">
           {language === 'fr' ? 'Gérez vos équipements en toute simplicité' : 'Manage your equipment with ease'}
+        </p>
+        <p className="text-xs text-muted-foreground/60">
+          <button
+            onClick={() => navigate('/privacy')}
+            className="underline hover:text-muted-foreground transition-colors"
+          >
+            {language === 'fr' ? 'Politique de confidentialité' : 'Privacy policy'}
+          </button>
+          {' · '}© {new Date().getFullYear()} Animal Coat Production
         </p>
       </footer>
     </div>

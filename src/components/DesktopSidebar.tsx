@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Wrench, PlusCircle, Settings, Package, ShoppingCart,
-  BarChart3, Globe, LogOut, Building2, Bell, Cpu
+  BarChart3, Globe, LogOut, Building2, Bell, Cpu, Layers, Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationToggle } from './NotificationToggle';
@@ -18,7 +18,8 @@ export const DesktopSidebar = () => {
   const navItems = [
     { path: '/', icon: Wrench, label: t('equipment') },
     { path: '/rental-sale', icon: ShoppingCart, label: t('rentalSale') },
-    { path: '/add', icon: PlusCircle, label: t('addMachine') },
+    { path: '/add', icon: PlusCircle, label: t('addMachine'), badge: '+' },
+    { path: '/bulk-add', icon: Layers, label: language === 'fr' ? 'Stock en masse' : 'Bulk stock' },
     { path: '/repair-resources', icon: Package, label: t('resources') },
     { path: '/analytics', icon: BarChart3, label: language === 'fr' ? 'Statistiques' : 'Analytics' },
     { path: '/ai-assistant', icon: Cpu, label: 'AI Assistant' },
@@ -67,8 +68,8 @@ export const DesktopSidebar = () => {
             >
               <Icon className={cn('w-5 h-5 shrink-0', isActive && 'stroke-[2.5]')} />
               {item.label}
-              {item.path === '/add' && (
-                <span className="ml-auto text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-md font-semibold">+</span>
+              {'badge' in item && item.badge && (
+                <span className="ml-auto text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-md font-semibold">{item.badge}</span>
               )}
             </button>
           );
@@ -89,6 +90,14 @@ export const DesktopSidebar = () => {
           <Globe className="w-5 h-5 shrink-0" />
           <span>{language === 'fr' ? 'English' : 'Français'}</span>
           <span className="ml-auto text-xs uppercase bg-secondary px-1.5 py-0.5 rounded font-mono">{language}</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/privacy')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all duration-200"
+        >
+          <Shield className="w-5 h-5 shrink-0" />
+          <span>{language === 'fr' ? 'Confidentialité' : 'Privacy'}</span>
         </button>
 
         {user && (

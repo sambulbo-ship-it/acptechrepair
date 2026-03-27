@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { equipmentCategories, EquipmentCategory, getCategoryById } from '@/data/equipmentData';
 import { MachineStatus } from '@/types/machine';
 import { toast } from 'sonner';
-import { Plus, X, Sparkles } from 'lucide-react';
+import { Plus, X, Sparkles, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const AddMachine = () => {
@@ -135,8 +135,49 @@ const AddMachine = () => {
   return (
     <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title={t('addEquipment')} showBack />
-      
-      <form onSubmit={handleSubmit} className="p-4 space-y-4">
+
+      {/* Desktop page header */}
+      <div className="hidden lg:flex items-center justify-between px-8 pt-8 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t('addEquipment')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {language === 'fr' ? 'Ajouter un équipement unique' : 'Add a single piece of equipment'}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2 glass-button"
+          onClick={() => navigate('/bulk-add')}
+        >
+          <Layers className="w-4 h-4" />
+          {language === 'fr' ? 'Mise en stock massive' : 'Bulk stock entry'}
+        </Button>
+      </div>
+
+      {/* Mobile bulk add banner */}
+      <div className="lg:hidden mx-4 mt-4">
+        <button
+          type="button"
+          onClick={() => navigate('/bulk-add')}
+          className="w-full glass-card p-3 flex items-center gap-3 text-left hover:bg-secondary/40 transition-colors rounded-2xl border border-primary/20"
+        >
+          <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              {language === 'fr' ? 'Mise en stock massive' : 'Bulk stock entry'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {language === 'fr' ? 'Ajouter 10, 50, 130+ pièces d\'un coup' : 'Add 10, 50, 130+ items at once'}
+            </p>
+          </div>
+          <span className="ml-auto text-primary text-lg">›</span>
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-4 lg:px-8 lg:pb-8 space-y-4">
         <div className="glass-card p-5 space-y-5">
           {/* Custom Name */}
           <div className="space-y-2">

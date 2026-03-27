@@ -358,7 +358,13 @@ const Landing = () => {
           <button onClick={() => navigate('/auth')} className="hover:text-white transition-colors">
             {fr ? 'Connexion' : 'Sign in'}
           </button>
+          <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">
+            {fr ? 'Confidentialité' : 'Privacy policy'}
+          </button>
         </div>
+        <p className="mt-3 text-xs text-muted-foreground/60">
+          © {new Date().getFullYear()} Animal Coat Production · RGPD · Belgique
+        </p>
       </footer>
     </div>
   );

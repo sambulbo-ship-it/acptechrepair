@@ -38,6 +38,8 @@ const RentalSale = lazy(() => import("./pages/RentalSale"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ClientCatalog = lazy(() => import("./pages/ClientCatalog"));
+const BulkAddMachine = lazy(() => import("./pages/BulkAddMachine"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const NotificationListenerLazy = lazy(() => import('./components/NotificationListener').then(m => ({ default: m.NotificationListener })));
 
 // Query client with retry and error handling
@@ -157,6 +159,7 @@ const AppRoutes = () => (
       <Route path="/install" element={<Install />} />
       <Route path="/find-repair" element={<FindRepairService />} />
       <Route path="/catalog" element={<ClientCatalog />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
       
       {/* Public routes (redirect if already logged in) */}
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
@@ -168,6 +171,7 @@ const AppRoutes = () => (
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/add" element={<ProtectedRoute><AddMachine /></ProtectedRoute>} />
+      <Route path="/bulk-add" element={<ProtectedRoute><BulkAddMachine /></ProtectedRoute>} />
       <Route path="/machine/:id" element={<ProtectedRoute><MachineDetail /></ProtectedRoute>} />
       <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

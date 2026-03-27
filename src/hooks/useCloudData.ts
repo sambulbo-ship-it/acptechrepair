@@ -401,6 +401,58 @@ export const useCloudData = () => {
     }
   };
 
+  const addMachinesBulk = async (
+    base: Omit<Machine, 'id' | 'createdAt' | 'updatedAt' | 'serialNumber'>,
+    serialNumbers: string[],
+    onProgress?: (done: number, total: number) => void
+  ): Promise<{ added: number; skipped: number; errors: number }> => {
+    if (!currentWorkspace || !user) return { added: 0, skipped: 0, errors: 0 };
+
+    const BATCH = 25; // supabase safe batch size
+    let added = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    // Deduplicate against existing machines
+    const existingSerials = new Set(
+      machines.map(m => `${m.brand.toLowerCase()}|${m.model.toLowerCase()}|${m.serialNumber.toLowerCase()}`)
+    );
+
+    const toInsert = serialNumbers.filter(sn => {
+      const key = `${base.brand.toLowerCase()}|${(base.model || '').toLowerCase()}|${sn.toLowerCase()}`;
+      if (existingSerials.has(key)) { skipped++; return false; }
+      return true;
+    });
+
+    for (let i = 0; i < toInsert.length; i += BATCH) {
+      const batch = toInsert.slice(i, i + BATCH).map(sn => ({
+        workspace_id: currentWorkspace.id,
+        name: base.name || 'Sans nom',
+        category: base.category || 'other',
+        brand: base.brand || null,
+        model: base.model || null,
+        serial_number: sn,
+        location: base.location || null,
+        status: base.status || 'operational',
+        notes: base.notes || null,
+        photos: [],
+        created_by: user.id,
+      }));
+
+      const { data, error } = await supabase.from('machines').insert(batch).select();
+      if (error) {
+        errors += batch.length;
+      } else if (data) {
+        const newMachines = data.map(dbToMachine);
+        setMachines(prev => [...newMachines, ...prev]);
+        added += newMachines.length;
+      }
+      onProgress?.(Math.min(i + BATCH, toInsert.length), toInsert.length);
+    }
+
+    return { added, skipped, errors };
+  };
+
   const updateMachine = async (id: string, updates: Partial<Machine>): Promise<boolean> => {
     if (!id) {
       console.error('updateMachine: no id provided');
@@ -658,6 +710,7 @@ export const useCloudData = () => {
     loading,
     error,
     addMachine,
+    addMachinesBulk,
     updateMachine,
     deleteMachine,
     getMachine,
