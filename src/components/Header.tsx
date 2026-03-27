@@ -28,7 +28,7 @@ export const Header = ({ title, showBack, onBack, rightAction, showNotifications
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-header pt-[env(safe-area-inset-top)]">
+    <header className="lg:hidden sticky top-0 z-50 glass-header pt-[env(safe-area-inset-top)]">
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {showBack && (

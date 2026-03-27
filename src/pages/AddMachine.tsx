@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCloudData } from '@/hooks/useCloudData';
 import { useWorkspaceBrands } from '@/hooks/useWorkspaceBrands';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -133,7 +133,7 @@ const AddMachine = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title={t('addEquipment')} showBack />
       
       <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -368,8 +368,8 @@ const AddMachine = () => {
         </DialogContent>
       </Dialog>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

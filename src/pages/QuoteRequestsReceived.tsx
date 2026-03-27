@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -321,8 +321,8 @@ const QuoteRequestsReceived = () => {
         )}
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

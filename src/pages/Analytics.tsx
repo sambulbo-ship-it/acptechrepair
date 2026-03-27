@@ -4,7 +4,7 @@ import { useApplePlatform } from '@/hooks/useApplePlatform';
 import { useRentalSale } from '@/hooks/useRentalSale';
 import { useCloudData } from '@/hooks/useCloudData';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -213,10 +213,11 @@ const Analytics = () => {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col pb-20">
+    <AppLayout>
+    <div className="min-h-screen lg:min-h-0 bg-background flex flex-col pb-20 lg:pb-0">
       <Header title={t.title} showBack />
 
-      <main className="flex-1 px-4 py-4 space-y-4">
+      <main className="flex-1 px-4 py-4 lg:px-8 lg:py-6 space-y-4">
         {/* KPI Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className={cn(cardClass, 'col-span-2')}>
@@ -424,8 +425,9 @@ const Analytics = () => {
         </Tabs>
       </main>
 
-      <BottomNav />
+      </main>
     </div>
+    </AppLayout>
   );
 };
 

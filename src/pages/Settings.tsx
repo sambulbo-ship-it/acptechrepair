@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Check, LogOut, Building2, Shield, Bell, Palette, Settings as SettingsIcon, ChevronRight, FileText, Wrench, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title={t('settings')} />
       
       <div className="p-4 space-y-4">
@@ -178,8 +178,8 @@ const Settings = () => {
         </div>
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

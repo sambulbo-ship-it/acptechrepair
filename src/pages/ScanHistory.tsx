@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScanHistory } from '@/hooks/useScanHistory';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { 
   History, 
@@ -69,7 +69,7 @@ const ScanHistory = () => {
   const groupedScans = groupScansByDate();
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header 
         title={language === 'fr' ? 'Historique des scans' : 'Scan History'}
         showBack
@@ -192,8 +192,8 @@ const ScanHistory = () => {
         )}
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

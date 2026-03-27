@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useRepairResources, RepairLocation, ExternalRepair, SparePart } from '@/hooks/useRepairResources';
 import { useCloudData } from '@/hooks/useCloudData';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -309,18 +309,19 @@ const RepairResources = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title={language === 'fr' ? 'Ressources' : 'Resources'} showBack />
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
         </div>
-        <BottomNav />
+        </div>
+    </AppLayout>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title={language === 'fr' ? 'Ressources Réparation' : 'Repair Resources'} showBack />
 
       <div className="p-4 space-y-4">
@@ -802,8 +803,8 @@ const RepairResources = () => {
         </Tabs>
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

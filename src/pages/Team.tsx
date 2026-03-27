@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCloudData } from '@/hooks/useCloudData';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -78,7 +78,7 @@ const Team = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header 
         title={t('team')} 
         showBack 
@@ -220,8 +220,8 @@ const Team = () => {
         )}
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

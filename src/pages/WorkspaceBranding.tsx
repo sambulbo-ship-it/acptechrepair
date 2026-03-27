@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspaceBranding } from '@/hooks/useWorkspaceBranding';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,19 +71,20 @@ const WorkspaceBranding = () => {
 
   if (!currentWorkspace) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title="Personnalisation" showBack />
         <div className="p-4 text-center text-muted-foreground">
           Sélectionnez un espace de travail
         </div>
-        <BottomNav />
+        </div>
+    </AppLayout>
       </div>
     );
   }
 
   if (!isWorkspaceAdmin) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title="Personnalisation" showBack />
         <div className="p-4 text-center">
           <Palette className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -94,13 +95,14 @@ const WorkspaceBranding = () => {
             Seuls les administrateurs peuvent personnaliser le branding.
           </p>
         </div>
-        <BottomNav />
+        </div>
+    </AppLayout>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title="Personnalisation" showBack />
 
       {/* Preview splash */}
@@ -280,8 +282,8 @@ const WorkspaceBranding = () => {
         )}
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

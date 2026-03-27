@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -171,7 +171,8 @@ const RepairServiceSettings = () => {
             </CardContent>
           </Card>
         </div>
-        <BottomNav />
+        </div>
+    </AppLayout>
       </div>
     );
   }
@@ -374,8 +375,8 @@ const RepairServiceSettings = () => {
         )}
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

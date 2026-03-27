@@ -2,7 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -67,7 +67,7 @@ const WorkspaceSettings = () => {
 
   if (!currentWorkspace) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header 
           title={language === 'fr' ? 'Paramètres workspace' : 'Workspace Settings'}
           showBack
@@ -77,13 +77,14 @@ const WorkspaceSettings = () => {
             {language === 'fr' ? 'Aucun workspace sélectionné' : 'No workspace selected'}
           </p>
         </div>
-        <BottomNav />
+        </div>
+    </AppLayout>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header 
         title={language === 'fr' ? 'Paramètres workspace' : 'Workspace Settings'}
         showBack
@@ -388,8 +389,8 @@ const WorkspaceSettings = () => {
         ) : null}
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

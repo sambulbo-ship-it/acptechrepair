@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { KnowledgeEntryForm } from '@/components/KnowledgeEntryForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -284,7 +284,8 @@ const AIAssistant = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <AppLayout>
+    <div className="min-h-screen lg:min-h-0 bg-background pb-20 lg:pb-0">
       <Header title="Assistant IA" showBack />
       
       {/* Knowledge Entry Form */}
@@ -506,8 +507,9 @@ const AIAssistant = () => {
         </div>
       </div>
 
-      <BottomNav />
+      </div>
     </div>
+    </AppLayout>
   );
 };
 

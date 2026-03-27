@@ -7,7 +7,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { useScanHistory } from '@/hooks/useScanHistory';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { MachineGroupCard } from '@/components/MachineGroupCard';
 import { WorkspaceSelector } from '@/components/WorkspaceSelector';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
@@ -16,7 +16,7 @@ import { RecentRepairsSuggestions } from '@/components/RecentRepairsSuggestions'
 import { BatchDuplicateDialog } from '@/components/BatchDuplicateDialog';
 import { equipmentCategories, EquipmentCategory } from '@/data/equipmentData';
 import { getCategoryIconComponent } from '@/components/CategoryIcon';
-import { Search, Wrench, History, Copy, X, CheckSquare, ArrowUpDown, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Search, Wrench, History, Copy, X, CheckSquare, ArrowUpDown, AlertTriangle, CheckCircle2, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -146,7 +146,8 @@ const MachineList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout>
+      {/* Header — hidden on desktop (sidebar provides navigation) */}
       <Header
         title={selectionMode
           ? (language === 'fr' ? `${selectedIds.size} sélectionné(s)` : `${selectedIds.size} selected`)
@@ -160,111 +161,109 @@ const MachineList = () => {
           ) : undefined
         }
       />
-      
-      <div className="p-4 space-y-4">
-        {currentWorkspace && <WorkspaceSelector />}
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="glass-stats p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">{t('totalEquipment')}</p>
+      <div className="flex-1 overflow-y-auto">
+        {/* Desktop page header */}
+        <div className="hidden lg:flex items-center justify-between px-8 pt-8 pb-2">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{t('equipment')}</h1>
+            {currentWorkspace && (
+              <p className="text-sm text-muted-foreground mt-0.5">{currentWorkspace.name}</p>
+            )}
           </div>
-          <div className="glass-stats p-3 text-center">
-            <p className="text-2xl font-bold text-success">{stats.operational}</p>
-            <p className="text-xs text-muted-foreground">{t('inService')}</p>
-          </div>
-          <div className="glass-stats p-3 text-center">
-            <p className="text-2xl font-bold text-warning">{stats.needsAttention + stats.outOfService}</p>
-            <p className="text-xs text-muted-foreground">{t('needsWork')}</p>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder={t('searchMachines')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 glass-input"
+          <div className="flex items-center gap-3">
+            <BarcodeScanner
+              onScan={handleScan}
+              enableBarcode={settings?.enable_barcode_scan ?? true}
+              enableQRCode={settings?.enable_qrcode_scan ?? true}
             />
+            <AIProductScanner
+              onExistingProductFound={(machineId) => navigate(`/machine/${machineId}`)}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 glass-button"
+              onClick={() => navigate('/scan-history')}
+            >
+              <History className="w-4 h-4" />
+              {language === 'fr' ? 'Scans' : 'Scan history'}
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate('/add')}
+            >
+              <PlusCircle className="w-4 h-4" />
+              {language === 'fr' ? 'Ajouter' : 'Add machine'}
+            </Button>
           </div>
-          <BarcodeScanner 
-            onScan={handleScan}
-            enableBarcode={settings?.enable_barcode_scan ?? true}
-            enableQRCode={settings?.enable_qrcode_scan ?? true}
-          />
-          <AIProductScanner 
-            onExistingProductFound={(machineId) => navigate(`/machine/${machineId}`)}
-          />
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 glass-button"
-            onClick={() => navigate('/scan-history')}
-            aria-label={language === 'fr' ? 'Historique des scans' : 'Scan history'}
-          >
-            <History className="w-5 h-5" />
-          </Button>
         </div>
 
-        <RecentRepairsSuggestions machines={machines} entries={entries} />
-
-        {/* Selection mode toggle + actions bar */}
-        {!selectionMode && filteredMachines.length > 0 && (
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full gap-1.5 text-xs"
-              onClick={() => setSelectionMode(true)}
-            >
-              <CheckSquare className="w-4 h-4" />
-              {language === 'fr' ? 'Sélectionner' : 'Select'}
-            </Button>
+        <div className="p-4 lg:px-8 lg:py-6 space-y-4 lg:space-y-6 pb-24 lg:pb-8">
+          {/* Mobile workspace selector */}
+          <div className="lg:hidden">
+            {currentWorkspace && <WorkspaceSelector />}
           </div>
-        )}
 
-        {selectionMode && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full text-xs"
-              onClick={() => {
-                if (selectedIds.size === filteredMachines.length) {
-                  setSelectedIds(new Set());
-                } else {
-                  setSelectedIds(new Set(filteredMachines.map(m => m.id)));
-                }
-              }}
-            >
-              {selectedIds.size === filteredMachines.length
-                ? (language === 'fr' ? 'Tout désélectionner' : 'Deselect all')
-                : (language === 'fr' ? 'Tout sélectionner' : 'Select all')}
-            </Button>
-            <Button
-              size="sm"
-              className="rounded-full gap-1.5 text-xs"
-              disabled={selectedIds.size === 0}
-              onClick={() => setBatchDuplicateOpen(true)}
-            >
-              <Copy className="w-4 h-4" />
-              {language === 'fr' ? `Dupliquer (${selectedIds.size})` : `Duplicate (${selectedIds.size})`}
-            </Button>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+            <div className="glass-stats p-3 lg:p-5 text-center">
+              <p className="text-2xl lg:text-3xl font-bold text-foreground">{stats.total}</p>
+              <p className="text-xs text-muted-foreground">{t('totalEquipment')}</p>
+            </div>
+            <div className="glass-stats p-3 lg:p-5 text-center">
+              <p className="text-2xl lg:text-3xl font-bold text-success">{stats.operational}</p>
+              <p className="text-xs text-muted-foreground">{t('inService')}</p>
+            </div>
+            <div className="glass-stats p-3 lg:p-5 text-center">
+              <p className="text-2xl lg:text-3xl font-bold text-warning">{stats.needsAttention + stats.outOfService}</p>
+              <p className="text-xs text-muted-foreground">{t('needsWork')}</p>
+            </div>
+            <div className="hidden lg:block glass-stats p-5 text-center">
+              <p className="text-3xl font-bold text-primary">{stats.needsAttention}</p>
+              <p className="text-xs text-muted-foreground">{language === 'fr' ? 'À surveiller' : 'Needs attention'}</p>
+            </div>
           </div>
-        )}
 
-        {/* Sort + Category Filter */}
-        <div className="flex items-center gap-2">
-          <div className="shrink-0">
+          {/* Search row */}
+          <div className="flex gap-2 lg:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={t('searchMachines')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 glass-input"
+              />
+            </div>
+            {/* Mobile-only scanner buttons */}
+            <div className="lg:hidden flex gap-2">
+              <BarcodeScanner
+                onScan={handleScan}
+                enableBarcode={settings?.enable_barcode_scan ?? true}
+                enableQRCode={settings?.enable_qrcode_scan ?? true}
+              />
+              <AIProductScanner
+                onExistingProductFound={(machineId) => navigate(`/machine/${machineId}`)}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 glass-button"
+                onClick={() => navigate('/scan-history')}
+                aria-label={language === 'fr' ? 'Historique des scans' : 'Scan history'}
+              >
+                <History className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Sort selector — always visible */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-10 w-auto gap-1.5 glass-input text-xs font-medium">
+              <SelectTrigger className="h-12 w-auto gap-1.5 glass-input text-xs font-medium shrink-0">
                 <ArrowUpDown className="w-3.5 h-3.5" />
-                <SelectValue />
+                <span className="hidden sm:inline"><SelectValue /></span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="name-asc">{language === 'fr' ? 'Nom A→Z' : 'Name A→Z'}</SelectItem>
@@ -278,99 +277,149 @@ const MachineList = () => {
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <ScrollArea className="w-full">
-          <div className="flex gap-3 pb-3">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={cn(
-                'px-6 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 min-w-fit',
-                selectedCategory === 'all'
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
-                  : 'glass-card hover:bg-secondary/50 text-foreground border border-border/50'
-              )}
-            >
-              {t('allCategories')}
-            </button>
-            {equipmentCategories.filter(c => c.id !== 'other').map((cat) => {
-              const CategoryIcon = getCategoryIconComponent(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={cn(
-                    'px-6 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center gap-2 min-w-fit',
-                    selectedCategory === cat.id
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
-                      : 'glass-card hover:bg-secondary/50 text-foreground border border-border/50'
-                  )}
-                >
-                  <CategoryIcon className="w-4 h-4" />
-                  {language === 'fr' ? cat.labelFr : cat.labelEn}
-                </button>
-              );
-            })}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+          <RecentRepairsSuggestions machines={machines} entries={entries} />
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : sortedMachines.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-              <Wrench className="w-8 h-8 text-muted-foreground" />
+          {/* Selection mode toggle + actions bar */}
+          {!selectionMode && filteredMachines.length > 0 && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-1.5 text-xs"
+                onClick={() => setSelectionMode(true)}
+              >
+                <CheckSquare className="w-4 h-4" />
+                {language === 'fr' ? 'Sélectionner' : 'Select'}
+              </Button>
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {t('noMachines')}
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              {t('addFirst')}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {/* Problem machines section */}
-            {problemMachines.length > 0 && (
-              <>
-                <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  {language === 'fr' ? 'Machines en alerte' : 'Machines needing attention'}
-                  <span className="text-xs font-normal text-muted-foreground">({problemMachines.length})</span>
+          )}
+
+          {selectionMode && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full text-xs"
+                onClick={() => {
+                  if (selectedIds.size === filteredMachines.length) {
+                    setSelectedIds(new Set());
+                  } else {
+                    setSelectedIds(new Set(filteredMachines.map(m => m.id)));
+                  }
+                }}
+              >
+                {selectedIds.size === filteredMachines.length
+                  ? (language === 'fr' ? 'Tout désélectionner' : 'Deselect all')
+                  : (language === 'fr' ? 'Tout sélectionner' : 'Select all')}
+              </Button>
+              <Button
+                size="sm"
+                className="rounded-full gap-1.5 text-xs"
+                disabled={selectedIds.size === 0}
+                onClick={() => setBatchDuplicateOpen(true)}
+              >
+                <Copy className="w-4 h-4" />
+                {language === 'fr' ? `Dupliquer (${selectedIds.size})` : `Duplicate (${selectedIds.size})`}
+              </Button>
+            </div>
+          )}
+
+          {/* Category filter */}
+          <ScrollArea className="w-full">
+            <div className="flex gap-2 pb-2">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={cn(
+                  'px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 min-w-fit',
+                  selectedCategory === 'all'
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                    : 'glass-card hover:bg-secondary/50 text-foreground border border-border/50'
+                )}
+              >
+                {t('allCategories')}
+              </button>
+              {equipmentCategories.filter(c => c.id !== 'other').map((cat) => {
+                const CategoryIcon = getCategoryIconComponent(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      'px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 flex items-center gap-2 min-w-fit',
+                      selectedCategory === cat.id
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                        : 'glass-card hover:bg-secondary/50 text-foreground border border-border/50'
+                    )}
+                  >
+                    <CategoryIcon className="w-4 h-4" />
+                    {language === 'fr' ? cat.labelFr : cat.labelEn}
+                  </button>
+                );
+              })}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+
+          {/* Machine list */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : sortedMachines.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                <Wrench className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">{t('noMachines')}</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">{t('addFirst')}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Problem machines section */}
+              {problemMachines.length > 0 && (
+                <>
+                  <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    {language === 'fr' ? 'Machines en alerte' : 'Machines needing attention'}
+                    <span className="text-xs font-normal text-muted-foreground">({problemMachines.length})</span>
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {problemMachines.map((machine) => (
+                      <MachineGroupCard
+                        key={machine.id}
+                        machines={[machine]}
+                        selectable={selectionMode}
+                        selectedIds={selectedIds}
+                        onToggleSelection={toggleSelection}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Operational grouped machines */}
+              {groupedMachines.length > 0 && problemMachines.length > 0 && (
+                <h3 className="text-sm font-semibold text-success flex items-center gap-2 mt-4">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {language === 'fr' ? 'Opérationnels' : 'Operational'}
+                  <span className="text-xs font-normal text-muted-foreground">({operationalMachines.length})</span>
                 </h3>
-                {problemMachines.map((machine) => (
+              )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                {groupedMachines.map((group, idx) => (
                   <MachineGroupCard
-                    key={machine.id}
-                    machines={[machine]}
+                    key={group[0].id + '-group-' + idx}
+                    machines={group}
                     selectable={selectionMode}
                     selectedIds={selectedIds}
                     onToggleSelection={toggleSelection}
                   />
                 ))}
-              </>
-            )}
-
-            {/* Operational grouped machines */}
-            {groupedMachines.length > 0 && problemMachines.length > 0 && (
-              <h3 className="text-sm font-semibold text-success flex items-center gap-2 mt-4">
-                <CheckCircle2 className="w-4 h-4" />
-                {language === 'fr' ? 'Opérationnels' : 'Operational'}
-              </h3>
-            )}
-            {groupedMachines.map((group, idx) => (
-              <MachineGroupCard
-                key={group[0].id + '-group-' + idx}
-                machines={group}
-                selectable={selectionMode}
-                selectedIds={selectedIds}
-                onToggleSelection={toggleSelection}
-              />
-            ))}
-          </div>
-        )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <BatchDuplicateDialog
@@ -379,9 +428,7 @@ const MachineList = () => {
         selectedMachines={selectedMachines}
         onComplete={handleBatchComplete}
       />
-
-      <BottomNav />
-    </div>
+    </AppLayout>
   );
 };
 

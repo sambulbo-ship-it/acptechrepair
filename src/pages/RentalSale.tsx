@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { useRentalSale, RentalTransaction } from '@/hooks/useRentalSale';
 import { useCloudData } from '@/hooks/useCloudData';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -426,7 +426,8 @@ const RentalSale = () => {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col pb-20">
+    <AppLayout>
+    <div className="min-h-screen lg:min-h-0 min-h-[100dvh] bg-background flex flex-col pb-20 lg:pb-0">
       <Header title={t.title} showBack />
 
       <main className="flex-1 px-4 py-4 space-y-4">
@@ -1022,8 +1023,9 @@ const RentalSale = () => {
         </DialogContent>
       </Dialog>
 
-      <BottomNav />
+      </div>
     </div>
+    </AppLayout>
   );
 };
 

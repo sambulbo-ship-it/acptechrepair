@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { AppLayout } from '@/components/AppLayout';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -168,18 +168,19 @@ const NotificationSettings = () => {
 
   if (!currentWorkspace) {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title="Notifications" showBack />
         <div className="p-4 text-center text-muted-foreground">
           Sélectionnez un espace de travail
         </div>
-        <BottomNav />
+        </div>
+    </AppLayout>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title="Notifications" showBack />
 
       <div className="p-4 space-y-4">
@@ -356,8 +357,8 @@ const NotificationSettings = () => {
         </Card>
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
