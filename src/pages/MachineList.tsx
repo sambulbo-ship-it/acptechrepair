@@ -150,7 +150,7 @@ const MachineList = () => {
       {/* Header — hidden on desktop (sidebar provides navigation) */}
       <Header
         title={selectionMode
-          ? (language === 'fr' ? `${selectedIds.size} sélectionné(s)` : `${selectedIds.size} selected`)
+          ? `${selectedIds.size} ${t('selected')}`
           : t('equipment')
         }
         rightAction={
@@ -187,7 +187,7 @@ const MachineList = () => {
               onClick={() => navigate('/scan-history')}
             >
               <History className="w-4 h-4" />
-              {language === 'fr' ? 'Scans' : 'Scan history'}
+              {t('scanHistory')}
             </Button>
             <Button
               size="sm"
@@ -195,7 +195,7 @@ const MachineList = () => {
               onClick={() => navigate('/add')}
             >
               <PlusCircle className="w-4 h-4" />
-              {language === 'fr' ? 'Ajouter' : 'Add machine'}
+              {t('addEquipment')}
             </Button>
           </div>
         </div>
@@ -222,7 +222,7 @@ const MachineList = () => {
             </div>
             <div className="hidden lg:block glass-stats p-5 text-center">
               <p className="text-3xl font-bold text-primary">{stats.needsAttention}</p>
-              <p className="text-xs text-muted-foreground">{language === 'fr' ? 'À surveiller' : 'Needs attention'}</p>
+              <p className="text-xs text-muted-foreground">{t('toWatch')}</p>
             </div>
           </div>
 
@@ -253,7 +253,7 @@ const MachineList = () => {
                 size="icon"
                 className="shrink-0 glass-button"
                 onClick={() => navigate('/scan-history')}
-                aria-label={language === 'fr' ? 'Historique des scans' : 'Scan history'}
+                aria-label={t('scanHistory')}
               >
                 <History className="w-5 h-5" />
               </Button>
@@ -266,14 +266,14 @@ const MachineList = () => {
                 <span className="hidden sm:inline"><SelectValue /></span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name-asc">{language === 'fr' ? 'Nom A→Z' : 'Name A→Z'}</SelectItem>
-                <SelectItem value="name-desc">{language === 'fr' ? 'Nom Z→A' : 'Name Z→A'}</SelectItem>
-                <SelectItem value="serial-asc">{language === 'fr' ? 'N° série A→Z' : 'Serial A→Z'}</SelectItem>
-                <SelectItem value="serial-desc">{language === 'fr' ? 'N° série Z→A' : 'Serial Z→A'}</SelectItem>
-                <SelectItem value="brand-asc">{language === 'fr' ? 'Marque A→Z' : 'Brand A→Z'}</SelectItem>
-                <SelectItem value="brand-desc">{language === 'fr' ? 'Marque Z→A' : 'Brand Z→A'}</SelectItem>
-                <SelectItem value="status">{language === 'fr' ? 'Statut (urgent)' : 'Status (urgent)'}</SelectItem>
-                <SelectItem value="recent">{language === 'fr' ? 'Récent' : 'Recent'}</SelectItem>
+                <SelectItem value="name-asc">{t('sortNameAsc')}</SelectItem>
+                <SelectItem value="name-desc">{t('sortNameDesc')}</SelectItem>
+                <SelectItem value="serial-asc">{t('sortSerialAsc')}</SelectItem>
+                <SelectItem value="serial-desc">{t('sortSerialDesc')}</SelectItem>
+                <SelectItem value="brand-asc">{t('sortBrandAsc')}</SelectItem>
+                <SelectItem value="brand-desc">{t('sortBrandDesc')}</SelectItem>
+                <SelectItem value="status">{t('sortStatus')}</SelectItem>
+                <SelectItem value="recent">{t('sortRecent')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -290,7 +290,7 @@ const MachineList = () => {
                 onClick={() => setSelectionMode(true)}
               >
                 <CheckSquare className="w-4 h-4" />
-                {language === 'fr' ? 'Sélectionner' : 'Select'}
+                {t('select')}
               </Button>
             </div>
           )}
@@ -310,8 +310,8 @@ const MachineList = () => {
                 }}
               >
                 {selectedIds.size === filteredMachines.length
-                  ? (language === 'fr' ? 'Tout désélectionner' : 'Deselect all')
-                  : (language === 'fr' ? 'Tout sélectionner' : 'Select all')}
+                  ? t('deselectAll')
+                  : t('selectAll')}
               </Button>
               <Button
                 size="sm"
@@ -320,7 +320,7 @@ const MachineList = () => {
                 onClick={() => setBatchDuplicateOpen(true)}
               >
                 <Copy className="w-4 h-4" />
-                {language === 'fr' ? `Dupliquer (${selectedIds.size})` : `Duplicate (${selectedIds.size})`}
+                {`${t('duplicate')} (${selectedIds.size})`}
               </Button>
             </div>
           )}
@@ -381,7 +381,7 @@ const MachineList = () => {
                 <>
                   <h3 className="text-sm font-semibold text-destructive flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />
-                    {language === 'fr' ? 'Machines en alerte' : 'Machines needing attention'}
+                    {t('machinesInAlert')}
                     <span className="text-xs font-normal text-muted-foreground">({problemMachines.length})</span>
                   </h3>
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -402,7 +402,7 @@ const MachineList = () => {
               {groupedMachines.length > 0 && problemMachines.length > 0 && (
                 <h3 className="text-sm font-semibold text-success flex items-center gap-2 mt-4">
                   <CheckCircle2 className="w-4 h-4" />
-                  {language === 'fr' ? 'Opérationnels' : 'Operational'}
+                  {t('operationalSection')}
                   <span className="text-xs font-normal text-muted-foreground">({operationalMachines.length})</span>
                 </h3>
               )}

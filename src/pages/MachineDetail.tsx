@@ -24,6 +24,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EntryType, EntryPhoto, MachineStatus } from '@/types/machine';
 import { Plus, Trash2, MapPin, Hash, AlertCircle, Bot, ChevronDown, Settings2, Wrench, Images, Copy } from 'lucide-react';
@@ -43,6 +53,7 @@ const MachineDetail = () => {
   const [isManualRepairOpen, setIsManualRepairOpen] = useState(false);
   const [isPhotosEditorOpen, setIsPhotosEditorOpen] = useState(false);
   const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [duplicateSerial, setDuplicateSerial] = useState('');
   const [duplicating, setDuplicating] = useState(false);
   const [photos, setPhotos] = useState<EntryPhoto[]>([]);
@@ -158,17 +169,22 @@ const MachineDetail = () => {
     }
   };
 
-  const handleDeleteMachine = async () => {
+  const requestDeleteMachine = () => {
     if (!isWorkspaceAdmin) {
-      toast.error(language === 'fr' ? 'Seuls les admins peuvent supprimer' : 'Only admins can delete');
+      toast.error(t('adminsOnly'));
       return;
     }
-    if (confirm(language === 'fr' ? 'Supprimer cet équipement?' : 'Delete this equipment?')) {
-      const success = await deleteMachine(machine.id);
-      if (success) {
-        navigate('/');
-        toast.success(language === 'fr' ? 'Équipement supprimé' : 'Equipment deleted');
-      }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteMachine = async () => {
+    setIsDeleteConfirmOpen(false);
+    const success = await deleteMachine(machine.id);
+    if (success) {
+      navigate('/');
+      toast.success(t('equipmentDeleted'));
+    } else {
+      toast.error(t('genericError'));
     }
   };
 
@@ -180,11 +196,9 @@ const MachineDetail = () => {
   };
 
   const handleSaveStatus = async (status: MachineStatus, notes: string): Promise<boolean> => {
-    console.log('Saving status:', { status, notes, machineId: machine.id });
     const result = await updateMachine(machine.id, { status, notes });
-    console.log('Status save result:', result);
     if (result) {
-      toast.success(language === 'fr' ? 'Statut mis à jour' : 'Status updated');
+      toast.success(t('statusUpdated'));
     }
     return result;
   };
@@ -212,8 +226,6 @@ const MachineDetail = () => {
     
     try {
       const urls = presentationPhotos.map(p => p.dataUrl).filter(Boolean);
-      console.log('Saving presentation photos:', { count: urls.length, machineId: machine.id });
-      
       const totalSize = urls.reduce((acc, url) => acc + url.length, 0);
       
       if (totalSize > 5000000) {
@@ -304,26 +316,51 @@ const MachineDetail = () => {
             <button
               onClick={() => setIsDuplicateOpen(true)}
               className="p-2 text-muted-foreground hover:text-primary touch-target"
-              title={language === 'fr' ? 'Dupliquer' : 'Duplicate'}
+              title={t('duplicate')}
+              aria-label={t('duplicate')}
             >
               <Copy className="w-5 h-5" />
             </button>
             <button
               onClick={() => setIsStatusEditorOpen(true)}
               className="p-2 text-primary touch-target"
-              title={language === 'fr' ? 'Modifier l\'état' : 'Edit status'}
+              title={t('editStatus')}
+              aria-label={t('editStatus')}
             >
               <Settings2 className="w-5 h-5" />
             </button>
             <button
-              onClick={handleDeleteMachine}
+              onClick={requestDeleteMachine}
               className="p-2 text-destructive touch-target"
+              title={t('delete')}
+              aria-label={t('delete')}
             >
               <Trash2 className="w-5 h-5" />
             </button>
           </div>
         }
       />
+
+      {/* Delete confirmation — professional AlertDialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent className="glass-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteEquipment')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteEquipmentDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMachine}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Status Editor Dialog */}
       <MachineStatusEditor

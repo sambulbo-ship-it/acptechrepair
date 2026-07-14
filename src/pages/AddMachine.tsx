@@ -133,7 +133,8 @@ const AddMachine = () => {
   };
 
   return (
-    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+    <AppLayout>
+      <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title={t('addEquipment')} showBack />
 
       {/* Desktop page header */}

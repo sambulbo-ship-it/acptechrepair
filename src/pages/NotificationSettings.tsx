@@ -168,7 +168,8 @@ const NotificationSettings = () => {
 
   if (!currentWorkspace) {
     return (
-      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+      <AppLayout>
+        <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title="Notifications" showBack />
         <div className="p-4 text-center text-muted-foreground">
           Sélectionnez un espace de travail
@@ -180,7 +181,8 @@ const NotificationSettings = () => {
   }
 
   return (
-    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+    <AppLayout>
+      <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title="Notifications" showBack />
 
       <div className="p-4 space-y-4">

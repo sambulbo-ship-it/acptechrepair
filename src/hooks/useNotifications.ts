@@ -51,13 +51,11 @@ export const useNotifications = () => {
 
   const sendNotification = useCallback((options: NotificationOptions) => {
     if (!isSupported) {
-      console.log('Notifications not supported, showing toast instead');
       toast.info(options.title, { description: options.body });
       return null;
     }
 
     if (permission !== 'granted') {
-      console.log('Notification permission not granted, showing toast instead');
       toast.info(options.title, { description: options.body });
       return null;
     }

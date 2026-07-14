@@ -54,7 +54,6 @@ export const BarcodeScanner = ({
           const isQRCode = decodedText.length > 20 || /[a-zA-Z]/.test(decodedText);
           const scanType = isQRCode ? 'qrcode' : 'barcode';
           
-          console.log('Scanned:', decodedText, 'Type:', scanType);
           onScan(decodedText, scanType);
           stopScanner();
           setIsOpen(false);

@@ -309,7 +309,8 @@ const RepairResources = () => {
 
   if (loading) {
     return (
-      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+      <AppLayout>
+        <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title={language === 'fr' ? 'Ressources' : 'Resources'} showBack />
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
@@ -321,7 +322,8 @@ const RepairResources = () => {
   }
 
   return (
-    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+    <AppLayout>
+      <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title={language === 'fr' ? 'Ressources Réparation' : 'Repair Resources'} showBack />
 
       <div className="p-4 space-y-4">

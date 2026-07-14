@@ -15,21 +15,46 @@ interface MachineGroupCardProps {
   onToggleSelection?: (id: string, checked: boolean) => void;
 }
 
+/** Photo thumbnail or category icon fallback */
+const MachineThumb = ({ machine }: { machine: Machine }) => {
+  const CategoryIcon = getCategoryIconComponent(machine.category);
+  const photo = machine.photos?.[0];
+
+  return (
+    <div className="w-12 h-12 rounded-2xl flex-shrink-0 overflow-hidden">
+      {photo ? (
+        <img
+          src={photo}
+          alt={machine.name}
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center">
+          <CategoryIcon className="w-6 h-6 text-primary" aria-hidden="true" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Displays one machine, or an expandable group of identical machines
+ * (same name + brand + model) with per-unit serial numbers.
+ */
 export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSelection }: MachineGroupCardProps) => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const representative = machines[0];
   const count = machines.length;
-  const CategoryIcon = getCategoryIconComponent(representative.category);
   const allSelected = machines.every(m => selectedIds?.has(m.id));
 
   if (count === 1) {
-    // Single machine - navigate directly
     return (
       <div className={cn(
-        "w-full glass-card p-4 text-left flex items-center gap-4 transition-all duration-200",
-        selectable && selectedIds?.has(representative.id) && "ring-2 ring-primary/50 bg-primary/5"
+        'w-full glass-card p-4 text-left flex items-center gap-4 transition-all duration-200',
+        selectable && selectedIds?.has(representative.id) && 'ring-2 ring-primary/50 bg-primary/5'
       )}>
         {selectable && (
           <Checkbox
@@ -37,58 +62,50 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
             onCheckedChange={(checked) => onToggleSelection?.(representative.id, !!checked)}
             className="shrink-0"
             onClick={(e) => e.stopPropagation()}
+            aria-label={`${t('select')} ${representative.name}`}
           />
         )}
         <button
           onClick={() => !selectable && navigate(`/machine/${representative.id}`)}
-          className="flex items-center gap-4 flex-1 min-w-0 touch-target active:scale-[0.98]"
+          className="flex items-center gap-4 flex-1 min-w-0 touch-target active:scale-[0.98] transition-transform"
         >
-          <div className="w-12 h-12 rounded-2xl flex-shrink-0 overflow-hidden">
-            {representative.photos && representative.photos.length > 0 ? (
-              <img
-                src={representative.photos[0]}
-                alt={representative.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center">
-                <CategoryIcon className="w-6 h-6 text-primary" />
-              </div>
-            )}
-          </div>
+          <MachineThumb machine={representative} />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground truncate">{representative.name}</h3>
-            <p className="text-sm text-muted-foreground truncate">{representative.brand} {representative.model}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {representative.brand} {representative.model}
+            </p>
             {representative.serialNumber && (
-              <p className="text-xs text-muted-foreground/70 mb-1.5 truncate font-mono">S/N: {representative.serialNumber}</p>
+              <p className="text-xs text-muted-foreground/70 mb-1.5 truncate font-mono">
+                S/N: {representative.serialNumber}
+              </p>
             )}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <StatusBadge status={representative.status} />
               {representative.location && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="w-3 h-3" />
+                  <MapPin className="w-3 h-3" aria-hidden="true" />
                   {representative.location}
                 </span>
               )}
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
         </button>
       </div>
     );
   }
 
-  // Group card - expandable
+  // Group card — expandable list of units
   return (
     <div className="space-y-1">
       <button
         type="button"
-        onClick={() => {
-          if (!selectable) setExpanded(!expanded);
-        }}
+        onClick={() => { if (!selectable) setExpanded(!expanded); }}
+        aria-expanded={expanded}
         className={cn(
-          "w-full glass-card p-4 text-left flex items-center gap-4 transition-all duration-200 cursor-pointer active:scale-[0.98]",
-          selectable && allSelected && "ring-2 ring-primary/50 bg-primary/5"
+          'w-full glass-card p-4 text-left flex items-center gap-4 transition-all duration-200 cursor-pointer active:scale-[0.98]',
+          selectable && allSelected && 'ring-2 ring-primary/50 bg-primary/5'
         )}
       >
         {selectable && (
@@ -99,22 +116,11 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
             }}
             className="shrink-0"
             onClick={(e) => e.stopPropagation()}
+            aria-label={`${t('selectAll')} ${representative.name}`}
           />
         )}
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-2xl flex-shrink-0 overflow-hidden">
-            {representative.photos && representative.photos.length > 0 ? (
-              <img
-                src={representative.photos[0]}
-                alt={representative.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center">
-                <CategoryIcon className="w-6 h-6 text-primary" />
-              </div>
-            )}
-          </div>
+          <MachineThumb machine={representative} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <h3 className="font-semibold text-foreground truncate">
@@ -124,24 +130,26 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
                 </span>
               </h3>
             </div>
-            <p className="text-sm text-muted-foreground truncate">{representative.brand} {representative.model}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {representative.brand} {representative.model}
+            </p>
             {representative.location && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <MapPin className="w-3 h-3" />
+                <MapPin className="w-3 h-3" aria-hidden="true" />
                 {representative.location}
               </span>
             )}
           </div>
           {expanded ? (
-            <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
           )}
         </div>
       </button>
 
       {expanded && (
-        <div className="ml-6 space-y-1 border-l-2 border-primary/20 pl-3">
+        <div className="ml-6 space-y-1 border-l-2 border-primary/20 pl-3 slide-up">
           {machines.map((machine) => (
             <button
               key={machine.id}
@@ -150,17 +158,17 @@ export const MachineGroupCard = ({ machines, selectable, selectedIds, onToggleSe
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground font-mono truncate">
-                  S/N: {machine.serialNumber || (language === 'fr' ? 'Sans numéro' : 'No serial')}
+                  S/N: {machine.serialNumber || '—'}
                 </p>
                 {machine.location && (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                    <MapPin className="w-3 h-3" />
+                    <MapPin className="w-3 h-3" aria-hidden="true" />
                     {machine.location}
                   </span>
                 )}
               </div>
               <StatusBadge status={machine.status} />
-              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden="true" />
             </button>
           ))}
         </div>

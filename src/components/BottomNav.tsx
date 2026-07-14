@@ -3,6 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Wrench, PlusCircle, Settings, Package, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/**
+ * Mobile floating tab bar — Liquid Glass bubble.
+ * Hidden on lg+ (DesktopSidebar takes over via AppLayout).
+ */
 export const BottomNav = () => {
   const { t } = useLanguage();
   const location = useLocation();
@@ -17,42 +21,27 @@ export const BottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]">
-      {/* Liquid Glass Bubble Container */}
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]"
+      aria-label="Navigation principale"
+    >
       <div className="mx-3 mb-3">
         <div className="liquid-glass-bubble">
-          {/* Refraction layer - top highlight */}
-          <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none">
-            <div className="absolute top-0 left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-          </div>
-          
-          {/* Inner glow gradient */}
-          <div className="absolute inset-0 rounded-[28px] overflow-hidden pointer-events-none">
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  radial-gradient(ellipse 80% 50% at 50% 0%, hsla(0 0% 100% / 0.15) 0%, transparent 50%),
-                  radial-gradient(ellipse 60% 40% at 50% 100%, hsla(213 94% 60% / 0.1) 0%, transparent 50%)
-                `
-              }}
-            />
-          </div>
-          
-          {/* Navigation items */}
           <div className="relative flex items-center justify-around h-16 px-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
-              
+
               return (
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
+                  aria-label={item.label}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300',
-                    isActive 
-                      ? 'nav-item-active' 
+                    isActive
+                      ? 'nav-item-active'
                       : 'text-foreground/50 hover:text-foreground/90 hover:bg-foreground/5 active:scale-95'
                   )}
                 >
@@ -62,9 +51,6 @@ export const BottomNav = () => {
               );
             })}
           </div>
-          
-          {/* Bottom subtle shadow line */}
-          <div className="absolute bottom-0 left-[15%] right-[15%] h-[1px] bg-gradient-to-r from-transparent via-black/20 to-transparent pointer-events-none" />
         </div>
       </div>
     </nav>

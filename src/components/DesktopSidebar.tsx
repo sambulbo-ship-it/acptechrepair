@@ -3,12 +3,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Wrench, PlusCircle, Settings, Package, ShoppingCart,
-  BarChart3, Globe, LogOut, Building2, Bell, Cpu, Layers, Shield
+  BarChart3, Globe, LogOut, Building2, Cpu, Layers, Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationToggle } from './NotificationToggle';
 import { toast } from 'sonner';
 
+/**
+ * Persistent desktop sidebar (lg+). Full navigation, workspace context,
+ * user identity and quick actions — replaces Header + BottomNav on desktop.
+ */
 export const DesktopSidebar = () => {
   const { t, language, setLanguage } = useLanguage();
   const { currentWorkspace, user, signOut } = useAuth();
@@ -19,10 +23,10 @@ export const DesktopSidebar = () => {
     { path: '/', icon: Wrench, label: t('equipment') },
     { path: '/rental-sale', icon: ShoppingCart, label: t('rentalSale') },
     { path: '/add', icon: PlusCircle, label: t('addMachine'), badge: '+' },
-    { path: '/bulk-add', icon: Layers, label: language === 'fr' ? 'Stock en masse' : 'Bulk stock' },
+    { path: '/bulk-add', icon: Layers, label: t('bulkAdd') },
     { path: '/repair-resources', icon: Package, label: t('resources') },
-    { path: '/analytics', icon: BarChart3, label: language === 'fr' ? 'Statistiques' : 'Analytics' },
-    { path: '/ai-assistant', icon: Cpu, label: 'AI Assistant' },
+    { path: '/analytics', icon: BarChart3, label: t('analytics') },
+    { path: '/ai-assistant', icon: Cpu, label: t('aiAssistant') },
     { path: '/settings', icon: Settings, label: t('settings') },
   ];
 
@@ -31,13 +35,16 @@ export const DesktopSidebar = () => {
       await signOut();
       navigate('/auth');
     } catch {
-      toast.error('Erreur lors de la déconnexion');
+      toast.error(t('signOutError'));
     }
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 min-h-screen border-r border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 h-screen">
-      {/* Logo / Brand */}
+    <aside
+      className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 h-screen"
+      aria-label="Navigation principale"
+    >
+      {/* Brand */}
       <div className="px-6 py-5 border-b border-border/50">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -59,6 +66,7 @@ export const DesktopSidebar = () => {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                 isActive
@@ -69,18 +77,20 @@ export const DesktopSidebar = () => {
               <Icon className={cn('w-5 h-5 shrink-0', isActive && 'stroke-[2.5]')} />
               {item.label}
               {'badge' in item && item.badge && (
-                <span className="ml-auto text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-md font-semibold">{item.badge}</span>
+                <span className="ml-auto text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-md font-semibold">
+                  {item.badge}
+                </span>
               )}
             </button>
           );
         })}
       </nav>
 
-      {/* Bottom actions */}
+      {/* Footer actions */}
       <div className="px-3 pb-4 pt-2 border-t border-border/50 space-y-1">
         <div className="flex items-center gap-2 px-3 py-2">
           <NotificationToggle />
-          <span className="text-xs text-muted-foreground">{language === 'fr' ? 'Notifications' : 'Notifications'}</span>
+          <span className="text-xs text-muted-foreground">{t('notifications')}</span>
         </div>
 
         <button
@@ -97,7 +107,7 @@ export const DesktopSidebar = () => {
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all duration-200"
         >
           <Shield className="w-5 h-5 shrink-0" />
-          <span>{language === 'fr' ? 'Confidentialité' : 'Privacy'}</span>
+          <span>{t('privacy')}</span>
         </button>
 
         {user && (
@@ -115,7 +125,7 @@ export const DesktopSidebar = () => {
                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Building2 className="w-3 h-3" />
-                  {language === 'fr' ? 'Changer' : 'Switch'}
+                  {t('switchWorkspace')}
                 </button>
               </div>
             </div>
@@ -124,7 +134,7 @@ export const DesktopSidebar = () => {
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
             >
               <LogOut className="w-5 h-5 shrink-0" />
-              {language === 'fr' ? 'Déconnexion' : 'Sign out'}
+              {t('signOut')}
             </button>
           </div>
         )}

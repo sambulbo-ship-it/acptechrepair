@@ -71,7 +71,8 @@ const WorkspaceBranding = () => {
 
   if (!currentWorkspace) {
     return (
-      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+      <AppLayout>
+        <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title="Personnalisation" showBack />
         <div className="p-4 text-center text-muted-foreground">
           Sélectionnez un espace de travail
@@ -84,7 +85,8 @@ const WorkspaceBranding = () => {
 
   if (!isWorkspaceAdmin) {
     return (
-      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+      <AppLayout>
+        <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header title="Personnalisation" showBack />
         <div className="p-4 text-center">
           <Palette className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -102,7 +104,8 @@ const WorkspaceBranding = () => {
   }
 
   return (
-    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+    <AppLayout>
+      <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header title="Personnalisation" showBack />
 
       {/* Preview splash */}

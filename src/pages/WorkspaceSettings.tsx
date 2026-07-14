@@ -67,7 +67,8 @@ const WorkspaceSettings = () => {
 
   if (!currentWorkspace) {
     return (
-      <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+      <AppLayout>
+        <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
         <Header 
           title={language === 'fr' ? 'Paramètres workspace' : 'Workspace Settings'}
           showBack
@@ -84,7 +85,8 @@ const WorkspaceSettings = () => {
   }
 
   return (
-    <AppLayout><div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
+    <AppLayout>
+      <div className="min-h-screen lg:min-h-0 bg-background pb-24 lg:pb-0">
       <Header 
         title={language === 'fr' ? 'Paramètres workspace' : 'Workspace Settings'}
         showBack

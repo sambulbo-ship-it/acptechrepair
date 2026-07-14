@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -56,6 +56,7 @@ const queryClient = new QueryClient({
 // Protected route wrapper with splash screen
 const ProtectedRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const { user, loading, currentWorkspace, workspacesLoading, workspacesLoaded, workspaces } = useAuth();
+  const { t } = useLanguage();
   const [showSplash, setShowSplash] = useState(false);
   const [splashShown, setSplashShown] = useState(false);
 
@@ -79,7 +80,7 @@ const ProtectedRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>
 
   // Still checking auth state
   if (loading) {
-    return <LoadingScreen message="Vérification de la session..." />;
+    return <LoadingScreen message={t('checkingSession')} />;
   }
 
   // Not logged in — show landing page instead of redirecting to /auth
@@ -93,7 +94,7 @@ const ProtectedRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>
 
   // Wait until workspace list is actually loaded (prevents false "no workspace" state)
   if (workspacesLoading || !workspacesLoaded) {
-    return <LoadingScreen message="Chargement des espaces..." />;
+    return <LoadingScreen message={t('loadingWorkspaces')} />;
   }
 
   // If logged in but no workspaces at all, redirect to workspaces page to join/create
@@ -124,7 +125,7 @@ const PublicRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen message="Chargement..." />;
+    return <LoadingScreen />;
   }
 
   if (user) {
@@ -140,7 +141,7 @@ const WorkspacesRoute = forwardRef<HTMLDivElement, { children: React.ReactNode }
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen message="Chargement..." />;
+    return <LoadingScreen />;
   }
 
   if (!user) {

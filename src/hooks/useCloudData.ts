@@ -185,7 +185,6 @@ export const useCloudData = () => {
   const handleTeamChange = useCallback((payload: RealtimePostgresChangesPayload<DbTeamMember>) => {
     if (!isMountedRef.current) return;
     
-    console.log('Realtime team change:', payload.eventType);
     
     if (payload.eventType === 'INSERT' && payload.new) {
       const newMember = dbToTeamMember(payload.new as DbTeamMember);
@@ -312,7 +311,6 @@ export const useCloudData = () => {
   useEffect(() => {
     if (!currentWorkspace) return;
 
-    console.log('Setting up realtime subscriptions for workspace:', currentWorkspace.id);
 
     const channel = supabase
       .channel(`workspace-${currentWorkspace.id}`)
@@ -350,11 +348,9 @@ export const useCloudData = () => {
         handleTeamChange
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
       });
 
     return () => {
-      console.log('Cleaning up realtime subscriptions');
       supabase.removeChannel(channel);
     };
   }, [currentWorkspace, handleMachineChange, handleEntryChange, handleTeamChange]);
@@ -459,7 +455,6 @@ export const useCloudData = () => {
       return false;
     }
 
-    console.log('updateMachine called:', { id, updates });
 
     try {
       const dbUpdates: Record<string, unknown> = {};
@@ -476,7 +471,6 @@ export const useCloudData = () => {
       // Always update updated_at
       dbUpdates.updated_at = new Date().toISOString();
 
-      console.log('Sending to Supabase:', dbUpdates);
 
       const { data, error } = await supabase
         .from('machines')
@@ -490,7 +484,6 @@ export const useCloudData = () => {
         return false;
       }
 
-      console.log('Supabase update response:', data);
 
       // Update local state with the returned data
       if (data) {
