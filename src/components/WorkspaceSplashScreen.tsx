@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useWorkspaceBranding } from '@/hooks/useWorkspaceBranding';
 import { Loader2 } from 'lucide-react';
 
@@ -8,8 +9,13 @@ interface WorkspaceSplashScreenProps {
   duration?: number;
 }
 
+/**
+ * Branded workspace splash — shown once per session when a workspace
+ * is selected. Uses the workspace's custom colors and logo.
+ */
 export const WorkspaceSplashScreen = ({ onComplete, duration = 2000 }: WorkspaceSplashScreenProps) => {
   const { currentWorkspace } = useAuth();
+  const { t } = useLanguage();
   const { branding, loading } = useWorkspaceBranding();
   const [visible, setVisible] = useState(true);
 
@@ -28,6 +34,8 @@ export const WorkspaceSplashScreen = ({ onComplete, duration = 2000 }: Workspace
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-opacity duration-300 ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
@@ -45,8 +53,9 @@ export const WorkspaceSplashScreen = ({ onComplete, duration = 2000 }: Workspace
           <div
             className="h-32 w-32 rounded-2xl flex items-center justify-center text-4xl font-bold text-white"
             style={{ backgroundColor: branding.primary_color }}
+            aria-hidden="true"
           >
-            {currentWorkspace?.name?.charAt(0).toUpperCase() || 'R'}
+            {currentWorkspace?.name?.charAt(0).toUpperCase() || 'A'}
           </div>
         )}
       </div>
@@ -58,8 +67,8 @@ export const WorkspaceSplashScreen = ({ onComplete, duration = 2000 }: Workspace
 
       {/* Loading indicator */}
       <div className="flex items-center gap-2 text-white/70">
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: branding.primary_color }} />
-        <span className="text-sm">Chargement...</span>
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: branding.primary_color }} aria-hidden="true" />
+        <span className="text-sm">{t('loading')}</span>
       </div>
 
       {/* Branding badge */}

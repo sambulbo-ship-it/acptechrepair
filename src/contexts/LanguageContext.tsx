@@ -245,6 +245,9 @@ export const translations: Translations = {
 
   // Offline
   offline: { en: 'Offline — changes will sync when reconnected', fr: 'Hors ligne — synchronisation à la reconnexion' },
+  offlineShort: { en: 'Offline', fr: 'Hors-ligne' },
+  syncing: { en: 'Syncing…', fr: 'Synchronisation…' },
+  pendingShort: { en: 'pending', fr: 'en attente' },
 
   // Errors
   errorOccurred: { en: 'Something went wrong', fr: 'Une erreur est survenue' },
